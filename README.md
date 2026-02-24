@@ -1,6 +1,6 @@
 # CS-370-Justice-AI-Project
 
-##Justice AI v1
+## Justice AI v1
 
 ##Purpose:
 Legal professionals are highly specialized, and expensive individuals. Their time is best spent on complex tasks that involve intimate sector expertise, historical knowledge, and client interaction. Monotonous document review is not an efficient use of their time. Our aim in this project is to cut down total time spent on a given case, by providing a secure, locally run LLM system that prioritizes truth.  
