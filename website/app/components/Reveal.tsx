@@ -7,10 +7,17 @@ interface RevealProps {
   delay?: number
   className?: string
   style?: CSSProperties
+  variant?: 'up' | 'left' | 'right' | 'scale'
 }
 
-export function Reveal({ children, delay = 0, className = '', style }: RevealProps) {
+export function Reveal({ children, delay = 0, className = '', style, variant = 'up' }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null)
+
+  const baseClass =
+    variant === 'left'  ? 'reveal-left'  :
+    variant === 'right' ? 'reveal-right' :
+    variant === 'scale' ? 'reveal-scale' :
+    'reveal'
 
   useEffect(() => {
     const el = ref.current
@@ -23,7 +30,7 @@ export function Reveal({ children, delay = 0, className = '', style }: RevealPro
           observer.unobserve(el)
         }
       },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     )
 
     observer.observe(el)
@@ -31,7 +38,7 @@ export function Reveal({ children, delay = 0, className = '', style }: RevealPro
   }, [delay])
 
   return (
-    <div ref={ref} className={`reveal ${className}`} style={style}>
+    <div ref={ref} className={`${baseClass} ${className}`} style={style}>
       {children}
     </div>
   )
