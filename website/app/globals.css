@@ -2,27 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
-  background-color: #0a0a0a;
+  background-color: #080808;
   color: #ffffff;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Oxygen, Ubuntu, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer base {
-  * {
-    box-sizing: border-box;
-  }
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Hero animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.hero-icon       { animation: scaleUp 1s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.1s; }
+.hero-badge      { animation: fadeIn  0.8s ease both; animation-delay: 0.25s; }
+.hero-title      { animation: fadeUp  0.9s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.4s; }
+.hero-sub        { animation: fadeUp  0.9s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.55s; }
+.hero-body       { animation: fadeUp  0.9s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.65s; }
+.hero-disclaimer { animation: fadeUp  0.9s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.75s; }
+.hero-ctas       { animation: fadeUp  0.9s cubic-bezier(0.16,1,0.3,1) both; animation-delay: 0.85s; }
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.75s cubic-bezier(0.16,1,0.3,1), transform 0.75s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #080808; }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+
+@layer base { * { box-sizing: border-box; } }
