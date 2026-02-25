@@ -6,7 +6,7 @@
 
 ## Purpose
 
-Enterprise tools like ChatGPT cannot guarantee confidentiality. When sensitive case files, client communications, or privileged materials are sent to a third-party server, attorney-client privilege is put at risk. Justice AI eliminates this problem entirely by running a local LLM on the user's machine — no data ever leaves their control.
+Enterprise tools like ChatGPT cannot guarantee confidentiality. When sensitive case files, client communications, or privileged materials are sent to a third-party server, attorney-client privilege is put at risk. Justice AI eliminates this problem entirely by running a local LLM on the user's machine, so no data ever leaves their control.
 
 Justice AI is an **enhancement tool for legal professionals**. It searches through your case files so you can focus on analysis and strategy. It does not replace legal judgment.
 
@@ -38,6 +38,7 @@ Justice AI is an **enhancement tool for legal professionals**. It searches throu
 ## Desktop App Setup
 
 ### Prerequisites
+Note: prerequisites will only be necessary during the testing and development stage, the final product will be plug-and-play. 
 
 1. **Ollama** — Install from [ollama.ai](https://ollama.ai)
 2. **Pull the LLM model:**
