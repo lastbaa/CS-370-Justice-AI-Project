@@ -1,16 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Reveal } from './Reveal'
 import { WordReveal } from './WordReveal'
 
 type PlatformKey = 'mac' | 'windows' | 'linux'
+
+type DownloadState = 'idle' | 'downloading' | 'done'
 
 const platforms: {
   key: PlatformKey
   label: string
   sub: string
   file: string
+  ext: string
+  installSteps: string[]
   icon: React.ReactNode
 }[] = [
   {
@@ -18,6 +22,13 @@ const platforms: {
     label: 'macOS',
     sub: 'Universal · macOS 12+',
     file: '/releases/JusticeAI-1.0.0-mac.zip',
+    ext: '.zip',
+    installSteps: [
+      'Unzip the downloaded archive',
+      'Move JusticeAI.app to your Applications folder',
+      'Install Ollama from ollama.ai if you haven\'t already',
+      'Open JusticeAI — right-click → Open on first launch',
+    ],
     icon: (
       <svg width="17" height="21" viewBox="0 0 18 22" fill="currentColor">
         <path d="M14.94 11.44c-.02-2.53 2.06-3.75 2.16-3.81-1.18-1.72-3.01-1.96-3.66-1.98-1.56-.16-3.05.92-3.84.92-.79 0-2.01-.9-3.31-.88-1.7.03-3.27 1-4.14 2.52-1.77 3.07-.45 7.61 1.27 10.1.84 1.22 1.85 2.59 3.17 2.54 1.28-.05 1.76-.82 3.31-.82 1.54 0 1.98.82 3.33.8 1.37-.03 2.24-1.24 3.07-2.47.97-1.41 1.37-2.78 1.39-2.85-.03-.01-2.67-1.02-2.69-4.06zM12.47 3.8c.7-.85 1.17-2.02 1.04-3.2-1.01.04-2.22.67-2.94 1.52-.65.75-1.21 1.95-1.06 3.1 1.12.09 2.27-.57 2.96-1.42z" />
@@ -29,6 +40,13 @@ const platforms: {
     label: 'Windows',
     sub: 'Windows 10/11 · x64',
     file: '/releases/JusticeAI-1.0.0-win.zip',
+    ext: '.zip',
+    installSteps: [
+      'Unzip the downloaded archive',
+      'Run JusticeAI-Setup.exe',
+      'Install Ollama from ollama.ai if you haven\'t already',
+      'Launch JusticeAI from Start Menu or Desktop',
+    ],
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-13.051-1.8" />
@@ -40,6 +58,13 @@ const platforms: {
     label: 'Linux',
     sub: 'AppImage · x86_64',
     file: '/releases/JusticeAI-1.0.0-linux.zip',
+    ext: '.AppImage',
+    installSteps: [
+      'Unzip the archive and extract the AppImage',
+      'Run: chmod +x JusticeAI.AppImage',
+      'Install Ollama: curl -fsSL https://ollama.ai/install.sh | sh',
+      'Double-click or run ./JusticeAI.AppImage',
+    ],
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12.504 0c-.155 0-.315.008-.48.021C7.309.191 4.693 2.688 4.693 6.036c0 1.715.565 3.138 1.489 4.206-.226 1.09-.697 2.457-.697 3.768 0 2.316.792 4.142 2.305 5.354 1.226 1.205 2.978 1.862 5.042 1.862 2.163 0 3.985-.78 5.33-2.199.966-1.133 1.518-2.681 1.518-4.381 0-1.232-.308-2.46-.791-3.509l-.106-.222c.888-1.032 1.394-2.374 1.394-3.879 0-3.382-2.636-5.993-7.673-6.036zm.087 1.485c4.315.039 6.405 2.241 6.405 5.016 0 1.316-.458 2.5-1.244 3.328l-.344.363.219.451c.486 1.002.79 2.167.79 3.274 0 1.434-.473 2.724-1.285 3.681-1.111 1.217-2.659 1.856-4.519 1.856-1.787 0-3.271-.549-4.296-1.588-1.253-1.012-1.9-2.573-1.9-4.554 0-1.175.447-2.477.67-3.438l.115-.495-.355-.373C5.897 9.169 5.367 7.866 5.367 6.29c0-2.809 2.122-4.739 6.224-4.8l.085-.005h.915zm.404 6.435c-1.085 0-1.965.88-1.965 1.965s.88 1.965 1.965 1.965 1.965-.88 1.965-1.965-.88-1.965-1.965-1.965zm-4.929 0c-1.085 0-1.965.88-1.965 1.965s.88 1.965 1.965 1.965 1.965-.88 1.965-1.965-.88-1.965-1.965-1.965zm2.468 5.21c-.485 0-.921.145-1.278.388l-.194.134-.207-.117c-.362-.206-.788-.32-1.242-.32-.949 0-1.772.474-2.178 1.225l-.155.289.264.209c.695.546 1.569.871 2.516.871.482 0 .941-.085 1.363-.238l.24-.089.193.163c.376.317.875.513 1.424.513.554 0 1.055-.199 1.431-.52l.193-.162.242.089c.421.153.88.238 1.363.238.947 0 1.82-.325 2.516-.871l.265-.209-.156-.289c-.406-.751-1.228-1.225-2.177-1.225-.454 0-.88.114-1.242.32l-.207.117-.194-.134c-.357-.243-.793-.388-1.278-.388h-.112z" />
@@ -58,12 +83,29 @@ const requirements = [
 ]
 
 export default function Download() {
-  const [downloading, setDownloading] = useState<PlatformKey | null>(null)
+  const [downloadState, setDownloadState] = useState<Record<PlatformKey, DownloadState>>({
+    mac: 'idle',
+    windows: 'idle',
+    linux: 'idle',
+  })
+  const [progress, setProgress] = useState<Record<PlatformKey, number>>({
+    mac: 0,
+    windows: 0,
+    linux: 0,
+  })
+  const [activePlatform, setActivePlatform] = useState<PlatformKey | null>(null)
+  const progressRefs = useRef<Record<PlatformKey, ReturnType<typeof setInterval> | null>>({
+    mac: null, windows: null, linux: null,
+  })
 
   function handleDownload(platform: typeof platforms[0]) {
-    setDownloading(platform.key)
+    if (downloadState[platform.key] !== 'idle') return
 
-    // Trigger the actual file download
+    setActivePlatform(platform.key)
+    setDownloadState(s => ({ ...s, [platform.key]: 'downloading' }))
+    setProgress(p => ({ ...p, [platform.key]: 0 }))
+
+    // Trigger actual file download
     const a = document.createElement('a')
     a.href = platform.file
     a.download = platform.file.split('/').pop()!
@@ -71,9 +113,37 @@ export default function Download() {
     a.click()
     document.body.removeChild(a)
 
-    // Reset button state after 2s
-    setTimeout(() => setDownloading(null), 2000)
+    // Simulate progress bar
+    let current = 0
+    progressRefs.current[platform.key] = setInterval(() => {
+      // Non-linear: fast start, slow in the middle, fast at end
+      const increment = current < 30 ? 4 : current < 70 ? 1.2 : current < 90 ? 0.6 : 2.5
+      current = Math.min(current + increment, 100)
+      setProgress(p => ({ ...p, [platform.key]: current }))
+
+      if (current >= 100) {
+        clearInterval(progressRefs.current[platform.key]!)
+        progressRefs.current[platform.key] = null
+        setDownloadState(s => ({ ...s, [platform.key]: 'done' }))
+      }
+    }, 60)
   }
+
+  function handleReset(key: PlatformKey) {
+    setDownloadState(s => ({ ...s, [key]: 'idle' }))
+    setProgress(p => ({ ...p, [key]: 0 }))
+    if (activePlatform === key) setActivePlatform(null)
+  }
+
+  useEffect(() => {
+    return () => {
+      Object.values(progressRefs.current).forEach(t => t && clearInterval(t))
+    }
+  }, [])
+
+  const donePlatform = activePlatform && downloadState[activePlatform] === 'done'
+    ? platforms.find(p => p.key === activePlatform)
+    : null
 
   return (
     <section id="download" className="py-32 px-6" style={{ background: '#080808' }}>
@@ -84,7 +154,7 @@ export default function Download() {
       <div className="max-w-3xl mx-auto">
         {/* Section label */}
         <Reveal className="flex justify-center mb-6">
-          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>03 — Get Started</span>
+          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>04 — Get Started</span>
         </Reveal>
 
         <div className="text-center mb-4">
@@ -116,55 +186,120 @@ export default function Download() {
               </div>
 
               {/* Download buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch gap-3 mb-10">
+              <div className="flex flex-col sm:flex-row items-stretch gap-3 mb-4">
                 {platforms.map((p) => {
-                  const isDownloading = downloading === p.key
+                  const state = downloadState[p.key]
+                  const pct = progress[p.key]
+                  const isDownloading = state === 'downloading'
+                  const isDone = state === 'done'
+                  const isActive = isDownloading || isDone
+
                   return (
                     <button
                       key={p.key}
-                      onClick={() => handleDownload(p)}
+                      onClick={() => state === 'idle' ? handleDownload(p) : isDone ? handleReset(p.key) : undefined}
                       disabled={isDownloading}
-                      className="flex-1 inline-flex flex-col items-center justify-center gap-1.5 text-sm px-6 py-4 rounded-xl cursor-pointer font-medium"
+                      className="flex-1 relative inline-flex flex-col items-center justify-center gap-1.5 text-sm px-6 py-4 rounded-xl overflow-hidden"
                       style={{
-                        border: `1px solid ${isDownloading ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)'}`,
-                        color: isDownloading ? '#fff' : 'rgba(255,255,255,0.7)',
-                        background: isDownloading ? 'rgba(255,255,255,0.06)' : 'transparent',
+                        border: `1px solid ${isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+                        color: isDone ? '#fff' : isDownloading ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.7)',
+                        background: isActive ? 'rgba(255,255,255,0.04)' : 'transparent',
+                        cursor: isDownloading ? 'default' : 'pointer',
                         transition: 'all 0.2s ease',
                       }}
                       onMouseEnter={e => {
-                        if (!isDownloading) {
+                        if (state === 'idle') {
                           (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.28)'
                           ;(e.currentTarget as HTMLButtonElement).style.color = '#fff'
                           ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
                         }
                       }}
                       onMouseLeave={e => {
-                        if (!isDownloading) {
+                        if (state === 'idle') {
                           (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)'
                           ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)'
                           ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
                         }
                       }}
                     >
-                      <span className="flex items-center gap-2">
+                      {/* Progress bar fill */}
+                      {isDownloading && (
+                        <div
+                          className="absolute inset-0 origin-left"
+                          style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            width: `${pct}%`,
+                            transition: 'width 0.06s linear',
+                            borderRadius: 'inherit',
+                          }}
+                        />
+                      )}
+
+                      <span className="relative flex items-center gap-2 font-medium">
                         {isDownloading ? (
-                          /* Spinner */
-                          <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.2)" strokeWidth="2.5" />
+                          <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.15)" strokeWidth="2.5" />
                             <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                          </svg>
+                        ) : isDone ? (
+                          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 8.5l3.5 3.5 6.5-6.5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         ) : (
                           p.icon
                         )}
-                        {isDownloading ? 'Downloading…' : p.label}
+                        {isDone ? 'Complete' : isDownloading ? `${Math.round(pct)}%` : p.label}
                       </span>
-                      <span className="text-xs font-normal" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                        {isDownloading ? 'Starting download' : p.sub}
+                      <span className="relative text-xs font-normal" style={{ color: isDone ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)' }}>
+                        {isDone ? 'Click to reset' : isDownloading ? 'Downloading…' : p.sub}
                       </span>
                     </button>
                   )
                 })}
               </div>
+
+              {/* Progress bar (global, below buttons) */}
+              {activePlatform && downloadState[activePlatform] === 'downloading' && (
+                <div className="mb-6 rounded-full overflow-hidden" style={{ height: '2px', background: 'rgba(255,255,255,0.06)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${progress[activePlatform]}%`,
+                      background: 'rgba(255,255,255,0.35)',
+                      transition: 'width 0.06s linear',
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Post-download install instructions */}
+              {donePlatform && (
+                <div
+                  className="mb-6 rounded-xl p-5"
+                  style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    animation: 'fadeUp 0.4s ease both',
+                  }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    Install Instructions · {donePlatform.label}
+                  </p>
+                  <ol className="flex flex-col gap-2.5">
+                    {donePlatform.installSteps.map((step, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span
+                          className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold mt-px"
+                          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)' }}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
 
               <div className="border-t mb-8" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
 

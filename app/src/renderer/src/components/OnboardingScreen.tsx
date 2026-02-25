@@ -9,16 +9,8 @@ interface Props {
 
 function StatusBadge({ ok, label }: { ok: boolean; label: string }): JSX.Element {
   return (
-    <div className={`flex items-center gap-2 text-sm font-medium ${ok ? 'text-[#3fb950]' : 'text-[#f85149]'}`}>
-      {ok ? (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" />
-        </svg>
-      ) : (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z" />
-        </svg>
-      )}
+    <div className={`flex items-center gap-1.5 text-xs font-medium ${ok ? 'text-[#3fb950]' : 'text-[#8b949e]'}`}>
+      <div className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-[#3fb950]' : 'bg-[#30363d]'}`} />
       {label}
     </div>
   )
@@ -32,13 +24,13 @@ function CodeBlock({ children }: { children: string }): JSX.Element {
     setTimeout(() => setCopied(false), 1500)
   }
   return (
-    <div className="relative flex items-center justify-between rounded-md bg-[#0d1117] border border-[#30363d] px-4 py-3 font-mono text-sm text-[#e6edf3]">
-      <span>{children}</span>
+    <div className="relative flex items-center justify-between rounded-lg bg-[#0d1117] border border-[#30363d] px-4 py-3 font-mono text-sm text-[#e6edf3] group">
+      <span className="text-[#79c0ff]">{children}</span>
       <button
         onClick={copy}
-        className="ml-4 text-xs text-[#8b949e] hover:text-[#c9a84c] transition-colors no-drag"
+        className="ml-4 text-xs text-[#8b949e] hover:text-[#c9a84c] transition-colors no-drag opacity-0 group-hover:opacity-100"
       >
-        {copied ? 'Copied!' : 'Copy'}
+        {copied ? '✓ Copied' : 'Copy'}
       </button>
     </div>
   )
@@ -52,6 +44,9 @@ export default function OnboardingScreen({ ollamaStatus, onRetry, onComplete }: 
   const hasEmbed = ollamaStatus?.hasEmbedModel ?? false
   const allGood = isRunning && hasLlm && hasEmbed
 
+  const llmModel = ollamaStatus?.llmModelName ?? 'llama3.2'
+  const embedModel = ollamaStatus?.embedModelName ?? 'nomic-embed-text'
+
   async function handleRetry(): Promise<void> {
     setRetrying(true)
     try {
@@ -64,110 +59,118 @@ export default function OnboardingScreen({ ollamaStatus, onRetry, onComplete }: 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center bg-[#0d1117] px-8 overflow-auto">
       {/* Logo */}
-      <div className="mb-8 flex flex-col items-center gap-3">
-        <div className="flex items-center gap-3">
-          {/* Scales of justice SVG */}
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      <div className="mb-10 flex flex-col items-center gap-3">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[#30363d] bg-[#161b22]">
+          <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
             <circle cx="24" cy="6" r="3" fill="#c9a84c" />
-            <rect x="23" y="6" width="2" height="30" fill="#c9a84c" />
+            <rect x="23" y="6" width="2" height="28" fill="#c9a84c" />
             <rect x="6" y="8" width="36" height="2" rx="1" fill="#c9a84c" />
-            <line x1="8" y1="9" x2="16" y2="9" stroke="#c9a84c" strokeWidth="1.5" />
             <ellipse cx="12" cy="22" rx="8" ry="4" fill="none" stroke="#c9a84c" strokeWidth="1.5" />
             <line x1="4" y1="22" x2="20" y2="22" stroke="#c9a84c" strokeWidth="1.5" />
             <line x1="8" y1="9" x2="4" y2="22" stroke="#c9a84c" strokeWidth="1.5" />
             <line x1="16" y1="9" x2="20" y2="22" stroke="#c9a84c" strokeWidth="1.5" />
-            <line x1="32" y1="9" x2="40" y2="9" stroke="#c9a84c" strokeWidth="1.5" />
             <ellipse cx="36" cy="22" rx="8" ry="4" fill="none" stroke="#c9a84c" strokeWidth="1.5" />
             <line x1="28" y1="22" x2="44" y2="22" stroke="#c9a84c" strokeWidth="1.5" />
             <line x1="32" y1="9" x2="28" y2="22" stroke="#c9a84c" strokeWidth="1.5" />
             <line x1="40" y1="9" x2="44" y2="22" stroke="#c9a84c" strokeWidth="1.5" />
             <rect x="18" y="36" width="12" height="2" rx="1" fill="#c9a84c" />
-            <rect x="22" y="35" width="4" height="4" rx="1" fill="#c9a84c" />
           </svg>
-          <h1 className="text-3xl font-bold text-[#c9a84c] tracking-tight">Justice AI</h1>
         </div>
-        <p className="text-[#8b949e] text-sm">Private Legal Research Assistant</p>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Justice AI</h1>
+          <p className="text-sm text-[#8b949e] mt-1">Private Legal Research · Local Model Required</p>
+        </div>
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-lg rounded-xl border border-[#30363d] bg-[#161b22] p-8 shadow-2xl">
-        <h2 className="mb-2 text-xl font-semibold text-[#e6edf3]">Welcome to Justice AI</h2>
-        <p className="mb-8 text-sm text-[#8b949e]">
-          Before you begin, we need to set up your local AI model. All processing happens on your machine — no data ever leaves your device.
-        </p>
+      <div className="w-full max-w-md rounded-2xl border border-[#30363d] bg-[#161b22] overflow-hidden shadow-2xl">
 
-        {/* Step 1 */}
-        <div className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#21262d] text-xs font-bold text-[#c9a84c]">1</span>
-              <h3 className="font-medium text-[#e6edf3]">Install Ollama</h3>
-            </div>
-            <StatusBadge ok={isRunning} label={isRunning ? 'Ollama running' : 'Not detected'} />
-          </div>
-          <p className="ml-8 text-sm text-[#8b949e]">
-            Download and install Ollama from{' '}
-            <span className="text-[#c9a84c]">ollama.ai</span>, then start it.
+        {/* Status bar at top */}
+        <div className="flex items-center justify-between px-6 py-3 border-b border-[#30363d] bg-[#0d1117]">
+          <StatusBadge ok={isRunning} label={isRunning ? 'Ollama running' : 'Ollama not detected'} />
+          <StatusBadge ok={hasLlm} label={hasLlm ? `${llmModel} ready` : `${llmModel} missing`} />
+          <StatusBadge ok={hasEmbed} label={hasEmbed ? 'Embed model ready' : 'Embed model missing'} />
+        </div>
+
+        <div className="p-7">
+          <h2 className="text-base font-semibold text-[#e6edf3] mb-1">Set up your local model</h2>
+          <p className="text-sm text-[#8b949e] mb-7 leading-relaxed">
+            Justice AI runs entirely on your machine — no data leaves your device. You need Ollama and two models to get started.
           </p>
-        </div>
 
-        {/* Step 2 */}
-        <div className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#21262d] text-xs font-bold text-[#c9a84c]">2</span>
-              <h3 className="font-medium text-[#e6edf3]">Pull the LLM model</h3>
+          <div className="flex flex-col gap-5">
+            {/* Step 1 */}
+            <div className={`rounded-xl border p-4 transition-colors ${isRunning ? 'border-[#3fb950]/20 bg-[#3fb950]/5' : 'border-[#30363d] bg-[#21262d]'}`}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${isRunning ? 'bg-[#3fb950] text-[#0d1117]' : 'bg-[#30363d] text-[#8b949e]'}`}>
+                  {isRunning ? '✓' : '1'}
+                </span>
+                <span className="text-sm font-medium text-[#e6edf3]">Install &amp; start Ollama</span>
+              </div>
+              <p className="ml-8 text-xs text-[#8b949e] leading-relaxed">
+                Download from <span className="text-[#c9a84c]">ollama.ai</span> and run it. It will appear in your menu bar.
+              </p>
             </div>
-            <StatusBadge ok={hasLlm} label={hasLlm ? 'Model ready' : 'Not found'} />
-          </div>
-          <p className="ml-8 mb-2 text-sm text-[#8b949e]">Run this command in your terminal:</p>
-          <div className="ml-8">
-            <CodeBlock>ollama pull saul-7b</CodeBlock>
-          </div>
-        </div>
 
-        {/* Step 3 */}
-        <div className="mb-8">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#21262d] text-xs font-bold text-[#c9a84c]">3</span>
-              <h3 className="font-medium text-[#e6edf3]">Pull the embedding model</h3>
+            {/* Step 2 */}
+            <div className={`rounded-xl border p-4 transition-colors ${hasLlm ? 'border-[#3fb950]/20 bg-[#3fb950]/5' : 'border-[#30363d] bg-[#21262d]'}`}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${hasLlm ? 'bg-[#3fb950] text-[#0d1117]' : 'bg-[#30363d] text-[#8b949e]'}`}>
+                  {hasLlm ? '✓' : '2'}
+                </span>
+                <span className="text-sm font-medium text-[#e6edf3]">Pull language model</span>
+                <span className="ml-auto text-[10px] text-[#8b949e]">~2 GB</span>
+              </div>
+              <div className="ml-8">
+                <CodeBlock>ollama pull {llmModel}</CodeBlock>
+              </div>
             </div>
-            <StatusBadge ok={hasEmbed} label={hasEmbed ? 'Model ready' : 'Not found'} />
+
+            {/* Step 3 */}
+            <div className={`rounded-xl border p-4 transition-colors ${hasEmbed ? 'border-[#3fb950]/20 bg-[#3fb950]/5' : 'border-[#30363d] bg-[#21262d]'}`}>
+              <div className="flex items-center gap-3 mb-2">
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${hasEmbed ? 'bg-[#3fb950] text-[#0d1117]' : 'bg-[#30363d] text-[#8b949e]'}`}>
+                  {hasEmbed ? '✓' : '3'}
+                </span>
+                <span className="text-sm font-medium text-[#e6edf3]">Pull embedding model</span>
+                <span className="ml-auto text-[10px] text-[#8b949e]">~274 MB</span>
+              </div>
+              <div className="ml-8">
+                <CodeBlock>ollama pull {embedModel}</CodeBlock>
+              </div>
+            </div>
           </div>
-          <p className="ml-8 mb-2 text-sm text-[#8b949e]">Run this command:</p>
-          <div className="ml-8">
-            <CodeBlock>ollama pull nomic-embed-text</CodeBlock>
+
+          {allGood && (
+            <div className="mt-5 flex items-center gap-2 rounded-xl bg-[#3fb950]/10 border border-[#3fb950]/20 px-4 py-3">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="#3fb950">
+                <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z" />
+              </svg>
+              <span className="text-xs text-[#3fb950] font-medium">All systems ready — you can open Justice AI</span>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={handleRetry}
+              disabled={retrying}
+              className="no-drag flex-1 rounded-xl border border-[#30363d] bg-[#21262d] px-4 py-2.5 text-sm font-medium text-[#8b949e] hover:text-[#e6edf3] hover:border-[#8b949e] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {retrying ? 'Checking…' : 'Check Again'}
+            </button>
+            <button
+              onClick={onComplete}
+              className="no-drag flex-1 rounded-xl bg-[#c9a84c] px-4 py-2.5 text-sm font-semibold text-[#0d1117] hover:bg-[#e8c97e] transition-colors"
+            >
+              {allGood ? 'Open Justice AI' : 'Continue Anyway'}
+            </button>
           </div>
         </div>
-
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleRetry}
-            disabled={retrying}
-            className="no-drag flex-1 rounded-lg bg-[#c9a84c] px-4 py-2.5 text-sm font-semibold text-[#0d1117] hover:bg-[#e8c97e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {retrying ? 'Checking...' : 'Retry Check'}
-          </button>
-          <button
-            onClick={onComplete}
-            className="no-drag flex-1 rounded-lg border border-[#30363d] bg-transparent px-4 py-2.5 text-sm font-medium text-[#8b949e] hover:text-[#e6edf3] hover:border-[#8b949e] transition-colors"
-          >
-            {allGood ? 'Continue' : 'Continue Anyway'}
-          </button>
-        </div>
-
-        {allGood && (
-          <p className="mt-4 text-center text-xs text-[#3fb950]">
-            All systems ready. You can continue to the app.
-          </p>
-        )}
       </div>
 
-      {/* Privacy note */}
-      <p className="mt-6 text-center text-xs text-[#8b949e] max-w-md">
-        Justice AI runs entirely on your local machine. No data is sent to external servers.
+      <p className="mt-6 text-center text-xs text-[#8b949e] max-w-sm leading-relaxed">
+        All processing is local. No API keys, no subscriptions, no data sent anywhere.
       </p>
     </div>
   )

@@ -7,6 +7,7 @@ interface Props {
   isQuerying: boolean
   hasFiles: boolean
   onQuery: (question: string) => void
+  onNewChat: () => void
 }
 
 const EXAMPLE_QUESTIONS = [
@@ -41,7 +42,7 @@ function TypingIndicator(): JSX.Element {
   )
 }
 
-export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery }: Props): JSX.Element {
+export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery, onNewChat }: Props): JSX.Element {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)

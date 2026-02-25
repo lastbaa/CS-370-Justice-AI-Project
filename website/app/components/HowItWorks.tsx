@@ -57,7 +57,7 @@ export default function HowItWorks() {
 
         {/* Section label */}
         <Reveal className="flex justify-center mb-6">
-          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>02 — The Process</span>
+          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>03 — The Process</span>
         </Reveal>
 
         {/* Animated heading */}

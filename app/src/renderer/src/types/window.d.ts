@@ -1,4 +1,4 @@
-import { AppSettings, OllamaStatus, FileInfo, QueryResult } from '../../../../../shared/src/types'
+import { AppSettings, OllamaStatus, FileInfo, QueryResult, ChatSession } from '../../../../../shared/src/types'
 
 export {}
 
@@ -14,6 +14,9 @@ declare global {
       query: (question: string) => Promise<QueryResult>
       getSettings: () => Promise<AppSettings>
       saveSettings: (settings: AppSettings) => Promise<void>
+      saveSession: (session: ChatSession) => Promise<boolean>
+      getSessions: () => Promise<ChatSession[]>
+      deleteSession: (sessionId: string) => Promise<boolean>
     }
   }
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { AppSettings, ChatMessage, DEFAULT_SETTINGS, FileInfo, OllamaStatus } from '../../../../shared/src/types'
+import { useEffect, useRef, useState } from 'react'
+import { AppSettings, ChatMessage, ChatSession, DEFAULT_SETTINGS, FileInfo, OllamaStatus } from '../../../../shared/src/types'
 import { v4 as uuidv4 } from 'uuid'
 import OnboardingScreen from './components/OnboardingScreen'
 import Sidebar from './components/Sidebar'
@@ -8,14 +8,29 @@ import Settings from './components/Settings'
 
 type View = 'onboarding' | 'main' | 'settings'
 
+function makeSessionName(messages: ChatMessage[]): string {
+  const first = messages.find((m) => m.role === 'user')
+  if (!first) return 'New Session'
+  const text = first.content.trim()
+  return text.length > 48 ? text.slice(0, 48) + '…' : text
+}
+
 export default function App(): JSX.Element {
   const [view, setView] = useState<View>('onboarding')
   const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null)
   const [files, setFiles] = useState<FileInfo[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [sessions, setSessions] = useState<ChatSession[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState<string>(() => uuidv4())
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
   const [isLoading, setIsLoading] = useState(false)
   const [isQuerying, setIsQuerying] = useState(false)
+
+  // Ref so the auto-save effect always has the latest messages/session id
+  const messagesRef = useRef(messages)
+  const sessionIdRef = useRef(currentSessionId)
+  messagesRef.current = messages
+  sessionIdRef.current = currentSessionId
 
   useEffect(() => {
     async function init(): Promise<void> {
@@ -39,15 +54,43 @@ export default function App(): JSX.Element {
       } catch {
         setView('onboarding')
       }
+
+      try {
+        const saved = await window.api.getSessions()
+        setSessions(saved)
+      } catch {
+        // no sessions yet
+      }
     }
     init()
   }, [])
+
+  // Auto-save current session whenever messages change (debounced 1s)
+  useEffect(() => {
+    if (messages.length === 0) return
+    const timer = setTimeout(async () => {
+      const session: ChatSession = {
+        id: sessionIdRef.current,
+        name: makeSessionName(messagesRef.current),
+        messages: messagesRef.current,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      }
+      try {
+        await window.api.saveSession(session)
+        const updated = await window.api.getSessions()
+        setSessions(updated)
+      } catch {
+        // ignore save errors
+      }
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [messages])
 
   async function handleCheckOllama(): Promise<void> {
     try {
       const status = await window.api.checkOllama()
       setOllamaStatus(status)
-      return
     } catch {
       setOllamaStatus(null)
     }
@@ -115,6 +158,29 @@ export default function App(): JSX.Element {
     }
   }
 
+  function handleNewChat(): void {
+    setMessages([])
+    setCurrentSessionId(uuidv4())
+  }
+
+  async function handleLoadSession(session: ChatSession): Promise<void> {
+    setMessages(session.messages)
+    setCurrentSessionId(session.id)
+  }
+
+  async function handleDeleteSession(sessionId: string): Promise<void> {
+    try {
+      await window.api.deleteSession(sessionId)
+      setSessions((prev) => prev.filter((s) => s.id !== sessionId))
+      // If we deleted the current session, start fresh
+      if (sessionId === currentSessionId) {
+        handleNewChat()
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err)
+    }
+  }
+
   if (view === 'onboarding') {
     return (
       <OnboardingScreen
@@ -139,9 +205,14 @@ export default function App(): JSX.Element {
       <Sidebar
         files={files}
         isLoading={isLoading}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
         onFilesLoaded={handleFilesLoaded}
         onRemoveFile={handleRemoveFile}
         onOpenSettings={() => setView('settings')}
+        onNewChat={handleNewChat}
+        onLoadSession={handleLoadSession}
+        onDeleteSession={handleDeleteSession}
         setIsLoading={setIsLoading}
       />
 
@@ -152,6 +223,7 @@ export default function App(): JSX.Element {
           isQuerying={isQuerying}
           hasFiles={files.length > 0}
           onQuery={handleQuery}
+          onNewChat={handleNewChat}
         />
       </div>
 
