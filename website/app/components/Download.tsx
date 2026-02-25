@@ -192,67 +192,105 @@ export default function Download() {
                   const pct = progress[p.key]
                   const isDownloading = state === 'downloading'
                   const isDone = state === 'done'
-                  const isActive = isDownloading || isDone
 
                   return (
                     <button
                       key={p.key}
                       onClick={() => state === 'idle' ? handleDownload(p) : isDone ? handleReset(p.key) : undefined}
                       disabled={isDownloading}
-                      className="flex-1 relative inline-flex flex-col items-center justify-center gap-1.5 text-sm px-6 py-4 rounded-xl overflow-hidden"
+                      className="group flex-1 relative overflow-hidden rounded-2xl text-left"
                       style={{
-                        border: `1px solid ${isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
-                        color: isDone ? '#fff' : isDownloading ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.7)',
-                        background: isActive ? 'rgba(255,255,255,0.04)' : 'transparent',
+                        background: isDone
+                          ? 'rgba(255,255,255,0.06)'
+                          : isDownloading
+                          ? 'rgba(255,255,255,0.04)'
+                          : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${isDone ? 'rgba(255,255,255,0.2)' : isDownloading ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'}`,
                         cursor: isDownloading ? 'default' : 'pointer',
-                        transition: 'all 0.2s ease',
+                        transition: 'all 0.25s ease',
                       }}
                       onMouseEnter={e => {
                         if (state === 'idle') {
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.28)'
-                          ;(e.currentTarget as HTMLButtonElement).style.color = '#fff'
-                          ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
+                          const el = e.currentTarget as HTMLButtonElement
+                          el.style.background = 'rgba(255,255,255,0.06)'
+                          el.style.borderColor = 'rgba(255,255,255,0.18)'
+                          el.style.transform = 'translateY(-2px)'
+                          el.style.boxShadow = '0 12px 40px rgba(0,0,0,0.5)'
                         }
                       }}
                       onMouseLeave={e => {
                         if (state === 'idle') {
-                          (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.1)'
-                          ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)'
-                          ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+                          const el = e.currentTarget as HTMLButtonElement
+                          el.style.background = 'rgba(255,255,255,0.03)'
+                          el.style.borderColor = 'rgba(255,255,255,0.08)'
+                          el.style.transform = 'translateY(0)'
+                          el.style.boxShadow = 'none'
                         }
                       }}
                     >
                       {/* Progress bar fill */}
                       {isDownloading && (
                         <div
-                          className="absolute inset-0 origin-left"
+                          className="absolute bottom-0 left-0 h-0.5"
                           style={{
-                            background: 'rgba(255,255,255,0.05)',
+                            background: 'rgba(255,255,255,0.4)',
                             width: `${pct}%`,
                             transition: 'width 0.06s linear',
-                            borderRadius: 'inherit',
                           }}
                         />
                       )}
 
-                      <span className="relative flex items-center gap-2 font-medium">
-                        {isDownloading ? (
-                          <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.15)" strokeWidth="2.5" />
-                            <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                          </svg>
-                        ) : isDone ? (
-                          <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                            <path d="M3 8.5l3.5 3.5 6.5-6.5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        ) : (
-                          p.icon
-                        )}
-                        {isDone ? 'Complete' : isDownloading ? `${Math.round(pct)}%` : p.label}
-                      </span>
-                      <span className="relative text-xs font-normal" style={{ color: isDone ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)' }}>
-                        {isDone ? 'Click to reset' : isDownloading ? 'Downloading…' : p.sub}
-                      </span>
+                      <div className="px-5 py-5">
+                        {/* Top row: icon + download arrow */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style={{
+                              background: isDone ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              color: isDone ? '#fff' : 'rgba(255,255,255,0.7)',
+                            }}
+                          >
+                            {isDownloading ? (
+                              <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.15)" strokeWidth="2.5" />
+                                <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                              </svg>
+                            ) : isDone ? (
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2.5 8.5l3.5 3.5 7-7" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            ) : (
+                              p.icon
+                            )}
+                          </div>
+
+                          {/* Download arrow — shown on idle */}
+                          {state === 'idle' && (
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 2v9M4.5 7.5L8 11l3.5-3.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                          )}
+                          {isDownloading && (
+                            <span className="text-xs font-mono tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                              {Math.round(pct)}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Label */}
+                        <p className="text-sm font-semibold text-white mb-0.5">
+                          {isDone ? 'Downloaded' : isDownloading ? 'Downloading…' : `Download for ${p.label}`}
+                        </p>
+                        <p className="text-xs" style={{ color: isDone ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.3)' }}>
+                          {isDone ? 'Click to reset' : p.sub}
+                        </p>
+                      </div>
                     </button>
                   )
                 })}
@@ -265,7 +303,7 @@ export default function Download() {
                     className="h-full rounded-full"
                     style={{
                       width: `${progress[activePlatform]}%`,
-                      background: 'rgba(255,255,255,0.35)',
+                      background: 'rgba(255,255,255,0.4)',
                       transition: 'width 0.06s linear',
                     }}
                   />
