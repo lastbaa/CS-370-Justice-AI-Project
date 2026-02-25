@@ -4,11 +4,11 @@
 
 /* ── CSS Variables ─────────────────────────────────────────────────────────── */
 :root {
-  --bg: #0d1117;
-  --sidebar: #161b22;
-  --surface: #21262d;
-  --border: #30363d;
-  --text-primary: #e6edf3;
+  --bg: #080808;
+  --sidebar: #0d0d0d;
+  --surface: #141414;
+  --border: #1e1e1e;
+  --text-primary: #ffffff;
   --text-secondary: #8b949e;
   --gold: #c9a84c;
   --gold-hover: #e8c97e;

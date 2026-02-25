@@ -17,7 +17,7 @@ export default function MessageBubble({ message }: Props): JSX.Element {
       <div className="flex justify-end">
         <div className="max-w-[75%]">
           <div className="rounded-2xl rounded-tr-sm border border-[#c9a84c]/40 bg-[#c9a84c]/10 px-4 py-3">
-            <p className="text-sm text-[#e6edf3] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm text-[#ffffff] leading-relaxed whitespace-pre-wrap">{message.content}</p>
           </div>
           <p className="mt-1 text-right text-[10px] text-[#8b949e]">{formatTime(message.timestamp)}</p>
         </div>
@@ -61,8 +61,8 @@ export default function MessageBubble({ message }: Props): JSX.Element {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl rounded-tl-sm bg-[#21262d] border border-[#30363d] px-4 py-3">
-                <p className="text-sm text-[#e6edf3] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+              <div className="rounded-xl rounded-tl-sm bg-[#141414] border border-[#1e1e1e] px-4 py-3">
+                <p className="text-sm text-[#ffffff] leading-relaxed whitespace-pre-wrap">{message.content}</p>
               </div>
             )}
 

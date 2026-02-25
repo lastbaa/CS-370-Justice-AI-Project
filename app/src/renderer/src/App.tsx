@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppSettings, ChatMessage, ChatSession, DEFAULT_SETTINGS, FileInfo, OllamaStatus } from '../../../../shared/src/types'
 import { v4 as uuidv4 } from 'uuid'
-import OnboardingScreen from './components/OnboardingScreen'
 import Sidebar from './components/Sidebar'
 import ChatInterface from './components/ChatInterface'
 import Settings from './components/Settings'
 
-type View = 'onboarding' | 'main' | 'settings'
+type View = 'main' | 'settings'
 
 function makeSessionName(messages: ChatMessage[]): string {
   const first = messages.find((m) => m.role === 'user')
@@ -16,7 +15,7 @@ function makeSessionName(messages: ChatMessage[]): string {
 }
 
 export default function App(): JSX.Element {
-  const [view, setView] = useState<View>('onboarding')
+  const [view, setView] = useState<View>('main')
   const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null)
   const [files, setFiles] = useState<FileInfo[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -41,18 +40,19 @@ export default function App(): JSX.Element {
         // use defaults
       }
 
+      // Load existing files and sessions — model availability is handled separately
+      try {
+        const existingFiles = await window.api.getFiles()
+        setFiles(existingFiles)
+      } catch {
+        // no files yet
+      }
+
       try {
         const status = await window.api.checkOllama()
         setOllamaStatus(status)
-        if (status.running && status.hasLlmModel && status.hasEmbedModel) {
-          const existingFiles = await window.api.getFiles()
-          setFiles(existingFiles)
-          setView('main')
-        } else {
-          setView('onboarding')
-        }
       } catch {
-        setView('onboarding')
+        // Ollama not running — chat will show model-unavailable state when queried
       }
 
       try {
@@ -86,15 +86,6 @@ export default function App(): JSX.Element {
     }, 1000)
     return () => clearTimeout(timer)
   }, [messages])
-
-  async function handleCheckOllama(): Promise<void> {
-    try {
-      const status = await window.api.checkOllama()
-      setOllamaStatus(status)
-    } catch {
-      setOllamaStatus(null)
-    }
-  }
 
   async function handleFilesLoaded(newFiles: FileInfo[]): Promise<void> {
     setFiles((prev) => {
@@ -181,26 +172,8 @@ export default function App(): JSX.Element {
     }
   }
 
-  if (view === 'onboarding') {
-    return (
-      <OnboardingScreen
-        ollamaStatus={ollamaStatus}
-        onRetry={async () => {
-          await handleCheckOllama()
-          const fresh = await window.api.checkOllama().catch(() => null)
-          if (fresh) setOllamaStatus(fresh)
-        }}
-        onComplete={async () => {
-          const existingFiles = await window.api.getFiles()
-          setFiles(existingFiles)
-          setView('main')
-        }}
-      />
-    )
-  }
-
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0d1117]">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#080808]">
       {/* Sidebar */}
       <Sidebar
         files={files}

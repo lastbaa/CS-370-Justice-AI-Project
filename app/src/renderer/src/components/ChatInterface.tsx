@@ -30,7 +30,7 @@ function TypingIndicator(): JSX.Element {
           <line x1="29" y1="22" x2="43" y2="22" stroke="#c9a84c" strokeWidth="2" />
         </svg>
       </div>
-      <div className="rounded-xl rounded-tl-sm bg-[#21262d] border border-[#30363d] px-4 py-3">
+      <div className="rounded-xl rounded-tl-sm bg-[#141414] border border-[#1e1e1e] px-4 py-3">
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-full bg-[#8b949e] animate-bounce" style={{ animationDelay: '0ms' }} />
           <div className="h-2 w-2 rounded-full bg-[#8b949e] animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -78,13 +78,13 @@ export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery,
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex flex-1 flex-col h-screen overflow-hidden bg-[#0d1117]">
+    <div className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808]">
       {/* Title bar */}
-      <div className="drag-region flex items-center justify-between border-b border-[#30363d] bg-[#161b22] px-6 py-3">
+      <div className="drag-region flex items-center justify-between border-b border-[#1e1e1e] bg-[#0d0d0d] px-6 py-3">
         <div className="no-drag flex items-center gap-3">
-          <h2 className="text-sm font-semibold text-[#e6edf3]">Legal Research Assistant</h2>
+          <h2 className="text-sm font-semibold text-[#ffffff]">Legal Research Assistant</h2>
           {messages.length > 0 && (
-            <span className="rounded-full bg-[#21262d] border border-[#30363d] px-2 py-0.5 text-[10px] font-medium text-[#8b949e]">
+            <span className="rounded-full bg-[#141414] border border-[#1e1e1e] px-2 py-0.5 text-[10px] font-medium text-[#8b949e]">
               {messages.filter((m) => m.role === 'user').length} {messages.filter((m) => m.role === 'user').length === 1 ? 'query' : 'queries'}
             </span>
           )}
@@ -105,7 +105,7 @@ export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery,
           <div className="flex h-full flex-col items-center justify-center text-center">
             {/* Empty state */}
             <div className="mb-6">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#30363d] bg-[#161b22]">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-[#1e1e1e] bg-[#0d0d0d]">
                 <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="6" r="3" fill="#c9a84c" />
                   <rect x="23" y="6" width="2" height="30" fill="#c9a84c" />
@@ -121,7 +121,7 @@ export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery,
                   <rect x="18" y="36" width="12" height="2" rx="1" fill="#c9a84c" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-[#e6edf3]">Ask a question about your documents</h3>
+              <h3 className="text-lg font-semibold text-[#ffffff]">Ask a question about your documents</h3>
               <p className="mt-1 text-sm text-[#8b949e]">
                 Justice AI searches only your loaded documents — no external data.
               </p>
@@ -136,7 +136,7 @@ export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery,
                       setInput(q)
                       textareaRef.current?.focus()
                     }}
-                    className="rounded-full border border-[#30363d] bg-[#161b22] px-3 py-1.5 text-xs text-[#8b949e] hover:border-[#c9a84c]/50 hover:text-[#e6edf3] transition-all"
+                    className="rounded-full border border-[#1e1e1e] bg-[#0d0d0d] px-3 py-1.5 text-xs text-[#8b949e] hover:border-[#c9a84c]/50 hover:text-[#ffffff] transition-all"
                   >
                     {q}
                   </button>
@@ -163,13 +163,13 @@ export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery,
       </div>
 
       {/* Input area */}
-      <div className="border-t border-[#30363d] bg-[#161b22] px-6 py-4">
+      <div className="border-t border-[#1e1e1e] bg-[#0d0d0d] px-6 py-4">
         <div className="max-w-3xl mx-auto">
           <div
-            className={`flex items-end gap-3 rounded-xl border bg-[#21262d] px-4 py-3 transition-colors ${
+            className={`flex items-end gap-3 rounded-xl border bg-[#141414] px-4 py-3 transition-colors ${
               hasFiles
-                ? 'border-[#30363d] focus-within:border-[#c9a84c]/60'
-                : 'border-[#30363d] opacity-60'
+                ? 'border-[#1e1e1e] focus-within:border-[#c9a84c]/60'
+                : 'border-[#1e1e1e] opacity-60'
             }`}
           >
             <textarea
@@ -184,13 +184,13 @@ export default function ChatInterface({ messages, isQuerying, hasFiles, onQuery,
                   : 'Load documents first to ask questions'
               }
               rows={1}
-              className="flex-1 bg-transparent text-sm text-[#e6edf3] placeholder-[#8b949e] outline-none disabled:cursor-not-allowed leading-6"
+              className="flex-1 bg-transparent text-sm text-[#ffffff] placeholder-[#8b949e] outline-none disabled:cursor-not-allowed leading-6"
               style={{ maxHeight: '120px', overflowY: 'auto' }}
             />
             <button
               onClick={handleSend}
               disabled={!hasFiles || isQuerying || !input.trim()}
-              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-[#c9a84c] text-[#0d1117] hover:bg-[#e8c97e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-[#c9a84c] text-[#080808] hover:bg-[#e8c97e] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               title="Send"
             >
               {isQuerying ? (
