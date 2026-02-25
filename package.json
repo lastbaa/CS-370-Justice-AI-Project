@@ -1,0 +1,16 @@
+{
+  "name": "justice-ai",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "website",
+    "app",
+    "shared"
+  ],
+  "scripts": {
+    "website": "npm run dev --workspace=website",
+    "app": "npm run dev --workspace=app",
+    "build:website": "npm run build --workspace=website",
+    "build:app": "npm run build --workspace=app"
+  }
+}
