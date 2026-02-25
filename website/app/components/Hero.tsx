@@ -1,5 +1,7 @@
 'use client'
 
+import { Typewriter } from './Typewriter'
+
 export default function Hero() {
   return (
     <section
@@ -15,9 +17,9 @@ export default function Hero() {
       {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-48" style={{ background: 'linear-gradient(to top, #080808, transparent)' }} />
 
-      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center">
+      <div className="relative z-20 max-w-4xl mx-auto flex flex-col items-center">
 
-        {/* Icon — gold is ONLY here and in the "AI" text */}
+        {/* Icon — gold only here and "AI" text */}
         <div className="hero-icon mb-10">
           <svg width="68" height="68" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="48" cy="48" r="44" fill="rgba(201,168,76,0.04)" />
@@ -40,15 +42,21 @@ export default function Hero() {
           </span>
         </div>
 
-        {/* Title — only "AI" stays gold */}
-        <h1 className="hero-title text-7xl sm:text-8xl lg:text-9xl font-bold tracking-tight leading-none mb-6" style={{ letterSpacing: '-0.03em' }}>
+        {/* Title */}
+        <h1 className="hero-title text-7xl sm:text-8xl lg:text-9xl font-bold tracking-tight leading-none mb-7" style={{ letterSpacing: '-0.03em' }}>
           Justice <span style={{ color: '#c9a84c' }}>AI</span>
         </h1>
 
-        {/* Subheading */}
-        <p className="hero-sub text-xl sm:text-2xl font-light mb-5 tracking-tight" style={{ color: 'rgba(255,255,255,0.65)', letterSpacing: '-0.01em' }}>
-          The research assistant that never leaves your office.
-        </p>
+        {/* Typewriter subheading — replaces the static hero-sub */}
+        <div className="hero-sub mb-6" style={{ minHeight: '2.5rem' }}>
+          <p className="text-xl sm:text-2xl font-light tracking-tight" style={{ color: 'rgba(255,255,255,0.65)', letterSpacing: '-0.01em' }}>
+            <Typewriter
+              text="The research assistant that never leaves your office."
+              startDelay={900}
+              speed={36}
+            />
+          </p>
+        </div>
 
         {/* Body */}
         <p className="hero-body text-base sm:text-lg leading-relaxed max-w-2xl mb-6" style={{ color: 'rgba(255,255,255,0.38)' }}>
@@ -60,17 +68,22 @@ export default function Hero() {
           Not legal advice — a research tool for the attorneys who give it.
         </p>
 
-        {/* CTAs — white primary, ghost secondary */}
+        {/* CTAs */}
         <div className="hero-ctas flex flex-col sm:flex-row items-center justify-center gap-3">
+          {/* Primary: generic Download → scrolls to all OS options */}
           <a
             href="#download"
-            className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-lg transition-all duration-200"
+            className="inline-flex items-center gap-2.5 font-semibold text-sm px-8 py-3.5 rounded-lg transition-all duration-200"
             style={{ background: '#ffffff', color: '#080808' }}
             onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.88)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#ffffff' }}
           >
-            <svg width="15" height="18" viewBox="0 0 18 22" fill="currentColor"><path d="M14.94 11.44c-.02-2.53 2.06-3.75 2.16-3.81-1.18-1.72-3.01-1.96-3.66-1.98-1.56-.16-3.05.92-3.84.92-.79 0-2.01-.9-3.31-.88-1.7.03-3.27 1-4.14 2.52-1.77 3.07-.45 7.61 1.27 10.1.84 1.22 1.85 2.59 3.17 2.54 1.28-.05 1.76-.82 3.31-.82 1.54 0 1.98.82 3.33.8 1.37-.03 2.24-1.24 3.07-2.47.97-1.41 1.37-2.78 1.39-2.85-.03-.01-2.67-1.02-2.69-4.06zM12.47 3.8c.7-.85 1.17-2.02 1.04-3.2-1.01.04-2.22.67-2.94 1.52-.65.75-1.21 1.95-1.06 3.1 1.12.09 2.27-.57 2.96-1.42z" /></svg>
-            Download for macOS
+            {/* Download arrow icon */}
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2v9M4 8l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 14h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            Download
           </a>
           <a
             href="#how-it-works"
