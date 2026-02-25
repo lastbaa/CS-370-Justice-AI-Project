@@ -11,15 +11,16 @@
     "package": "electron-vite build && electron-builder"
   },
   "dependencies": {
+    "electron-store": "^8.2.0",
+    "mammoth": "^1.8.0",
     "ollama": "^0.5.12",
     "pdf-parse": "^1.1.1",
-    "mammoth": "^1.8.0",
-    "vectra": "^0.12.3",
     "uuid": "^9.0.0",
-    "electron-store": "^8.2.0"
+    "vectra": "^0.12.3"
   },
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",
+    "@electron-toolkit/tsconfig": "^2.0.0",
     "@electron-toolkit/utils": "^3.0.0",
     "@types/node": "^20.14.0",
     "@types/pdf-parse": "^1.1.4",
@@ -46,7 +47,9 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["universal"]
+          "arch": [
+            "universal"
+          ]
         }
       ]
     },
