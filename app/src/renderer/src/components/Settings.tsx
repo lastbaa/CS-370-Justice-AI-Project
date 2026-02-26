@@ -1,10 +1,66 @@
 import { useState } from 'react'
-import { AppSettings } from '../../../../../shared/src/types'
+import { AppSettings, OllamaStatus } from '../../../../../shared/src/types'
 
 interface Props {
   settings: AppSettings
+  ollamaStatus: OllamaStatus | null
   onSave: (settings: AppSettings) => void
   onClose: () => void
+  onCheckStatus: () => Promise<void>
+}
+
+function CopyButton({ text }: { text: string }): JSX.Element {
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy(): void {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    })
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="shrink-0 flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium transition-all"
+      style={{
+        background: copied ? 'rgba(63,185,80,0.12)' : 'rgba(255,255,255,0.05)',
+        border: `1px solid ${copied ? 'rgba(63,185,80,0.3)' : 'rgba(255,255,255,0.08)'}`,
+        color: copied ? '#3fb950' : 'rgba(255,255,255,0.4)',
+      }}
+    >
+      {copied ? (
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ) : (
+        <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z" />
+          <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+        </svg>
+      )}
+      {copied ? 'Copied' : 'Copy'}
+    </button>
+  )
+}
+
+function CommandRow({ label, command }: { label: string; command: string }): JSX.Element {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="shrink-0 text-[10px] font-semibold w-5 text-right" style={{ color: 'rgba(201,168,76,0.5)' }}>
+        {label}
+      </span>
+      <div
+        className="flex flex-1 items-center justify-between gap-3 rounded-lg px-3 py-2"
+        style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        <code className="text-[11.5px] font-mono" style={{ color: 'rgba(255,255,255,0.65)' }}>
+          {command}
+        </code>
+        <CopyButton text={command} />
+      </div>
+    </div>
+  )
 }
 
 function Field({
@@ -18,8 +74,8 @@ function Field({
 }): JSX.Element {
   return (
     <div>
-      <label className="block text-sm font-medium text-[#ffffff] mb-1">{label}</label>
-      {description && <p className="text-xs text-[#8b949e] mb-2">{description}</p>}
+      <label className="block text-[12px] font-medium text-white mb-1">{label}</label>
+      {description && <p className="text-[11px] mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>{description}</p>}
       {children}
     </div>
   )
@@ -40,7 +96,10 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-[#1e1e1e] bg-[#080808] px-3 py-2 text-sm text-[#ffffff] placeholder-[#8b949e] outline-none focus:border-[#c9a84c]/60 transition-colors"
+      className="w-full rounded-lg px-3 py-2 text-[12px] text-white placeholder-white/20 outline-none transition-colors"
+      style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.08)' }}
+      onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = 'rgba(201,168,76,0.4)' }}
+      onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
     />
   )
 }
@@ -63,44 +122,102 @@ function NumberInput({
       onChange={(e) => onChange(Number(e.target.value))}
       min={min}
       max={max}
-      className="w-full rounded-lg border border-[#1e1e1e] bg-[#080808] px-3 py-2 text-sm text-[#ffffff] outline-none focus:border-[#c9a84c]/60 transition-colors"
+      className="w-full rounded-lg px-3 py-2 text-[12px] text-white outline-none transition-colors"
+      style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.08)' }}
+      onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = 'rgba(201,168,76,0.4)' }}
+      onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
     />
   )
 }
 
 function SectionHeader({ children }: { children: React.ReactNode }): JSX.Element {
   return (
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-[#8b949e] mb-4 pb-2 border-b border-[#1e1e1e]">
+    <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-4 pb-2 border-b" style={{ color: 'rgba(255,255,255,0.3)', borderColor: 'rgba(255,255,255,0.06)' }}>
       {children}
     </h3>
   )
 }
 
-export default function Settings({ settings, onSave, onClose }: Props): JSX.Element {
+export default function Settings({ settings, ollamaStatus, onSave, onClose, onCheckStatus }: Props): JSX.Element {
   const [local, setLocal] = useState<AppSettings>({ ...settings })
+  const [isChecking, setIsChecking] = useState(false)
 
   function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]): void {
     setLocal((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleCheckStatus(): Promise<void> {
+    setIsChecking(true)
+    await onCheckStatus()
+    setIsChecking(false)
   }
 
   function handleSave(): void {
     onSave(local)
   }
 
+  // Derive status display
+  const statusInfo = (() => {
+    if (!ollamaStatus) return {
+      dot: '#3a3a3a',
+      label: 'Not checked',
+      detail: 'Click "Check Connection" to verify Ollama is running.',
+      ready: false,
+    }
+    if (!ollamaStatus.running) return {
+      dot: '#f85149',
+      label: 'Ollama not running',
+      detail: 'Start Ollama with: ollama serve',
+      ready: false,
+    }
+    if (!ollamaStatus.hasLlmModel && !ollamaStatus.hasEmbedModel) return {
+      dot: '#e3b341',
+      label: 'Models not installed',
+      detail: `Pull both models using the commands below.`,
+      ready: false,
+    }
+    if (!ollamaStatus.hasLlmModel) return {
+      dot: '#e3b341',
+      label: `Missing LLM model`,
+      detail: `Pull ${local.llmModel} using the command below.`,
+      ready: false,
+    }
+    if (!ollamaStatus.hasEmbedModel) return {
+      dot: '#e3b341',
+      label: `Missing embed model`,
+      detail: `Pull ${local.embedModel} using the command below.`,
+      ready: false,
+    }
+    return {
+      dot: '#3fb950',
+      label: 'Ready',
+      detail: `${ollamaStatus.llmModelName} · ${ollamaStatus.embedModelName}`,
+      ready: true,
+    }
+  })()
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-xl border border-[#1e1e1e] bg-[#0d0d0d] shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+      <div
+        className="w-full max-w-lg rounded-2xl overflow-hidden"
+        style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 100px rgba(0,0,0,0.8)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1e1e1e] px-6 py-4">
-          <div className="flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#c9a84c]">
-              <path d="M8 0a8.2 8.2 0 0 1 .701.031C9.444.095 9.99.645 10.16 1.29l.288 1.107c.018.066.079.158.212.224.231.114.454.243.668.386.123.082.233.09.299.071l1.103-.303c.644-.176 1.392.021 1.82.63.27.385.506.792.704 1.218.315.675.111 1.422-.364 1.891l-.814.806c-.049.048-.098.147-.088.294.016.257.016.515 0 .772-.01.147.038.246.088.294l.814.806c.475.469.679 1.216.364 1.891a7.977 7.977 0 0 1-.704 1.217c-.428.61-1.176.807-1.82.63l-1.103-.303c-.066-.019-.176-.011-.299.071a5.909 5.909 0 0 1-.668.386c-.133.066-.194.158-.212.224l-.288 1.107c-.17.645-.715 1.195-1.459 1.259a8.205 8.205 0 0 1-1.402 0c-.744-.064-1.289-.614-1.459-1.259l-.288-1.107c-.017-.066-.079-.158-.212-.224a5.738 5.738 0 0 1-.668-.386c-.123-.082-.233-.09-.299-.071l-1.103.303c-.644.176-1.392-.021-1.82-.63a8.12 8.12 0 0 1-.704-1.218c-.315-.675-.111-1.422.363-1.891l.815-.806c.05-.048.098-.147.088-.294a6.214 6.214 0 0 1 0-.772c.01-.147-.038-.246-.088-.294l-.815-.806C.635 6.045.431 5.298.746 4.623a7.92 7.92 0 0 1 .704-1.217c.428-.61 1.176-.807 1.82-.63l1.103.303c.066.019.176.011.299-.071.214-.143.437-.272.668-.386.133-.066.194-.158.212-.224l.288-1.107C6.01.645 6.556.095 7.299.03 7.53.01 7.765 0 8 0zm-.571 1.525c-.036.003-.108.036-.137.146l-.289 1.105c-.147.561-.549.967-.998 1.189-.173.086-.34.183-.5.29-.417.278-.97.423-1.529.27l-1.103-.303c-.109-.03-.175.016-.195.045-.22.312-.412.644-.573.99-.014.031-.021.11.059.19l.815.806c.411.406.562.957.53 1.456a4.709 4.709 0 0 0 0 .582c.032.499-.119 1.05-.53 1.456l-.815.806c-.081.08-.073.159-.059.19.162.346.353.677.573.989.02.03.085.076.195.046l1.102-.303c.56-.153 1.113-.008 1.53.27.161.107.328.204.501.29.447.222.85.629.997 1.189l.289 1.105c.029.109.101.143.137.146a6.6 6.6 0 0 0 1.142 0c.036-.003.108-.036.137-.146l.289-1.105c.147-.561.549-.967.998-1.189.173-.086.34-.183.5-.29.417-.278.97-.423 1.529-.27l1.103.303c.109.029.175-.016.195-.045.22-.313.411-.644.573-.99.014-.031.021-.11-.059-.19l-.815-.806c-.411-.406-.562-.957-.53-1.456a4.709 4.709 0 0 0 0-.582c-.032-.499.119-1.05.53-1.456l.815-.806c.081-.08.073-.159.059-.19a6.464 6.464 0 0 0-.573-.989c-.02-.03-.085-.076-.195-.046l-1.102.303c-.56.153-1.113.008-1.53-.27a4.44 4.44 0 0 0-.501-.29c-.447-.222-.85-.629-.997-1.189l-.289-1.105c-.029-.11-.101-.143-.137-.146a6.6 6.6 0 0 0-1.142 0zM8 5.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z" />
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-2.5">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+              <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
+              <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
+              <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
             </svg>
-            <h2 className="text-base font-semibold text-[#ffffff]">Settings</h2>
+            <h2 className="text-[14px] font-semibold text-white">Settings</h2>
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-[#8b949e] hover:bg-[#141414] hover:text-[#ffffff] transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+            style={{ color: 'rgba(255,255,255,0.3)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)' }}
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
               <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z" />
@@ -109,14 +226,91 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto px-6 py-5" style={{ maxHeight: '60vh' }}>
-          {/* Model Configuration */}
-          <div className="mb-6">
+        <div className="overflow-y-auto px-6 py-5 flex flex-col gap-6" style={{ maxHeight: '65vh' }}>
+
+          {/* ── Connection Status ── */}
+          <div>
+            <SectionHeader>Connection Status</SectionHeader>
+            <div
+              className="rounded-xl p-4 flex flex-col gap-3"
+              style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              {/* Status row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ background: statusInfo.dot }} />
+                  <span className="text-[13px] font-semibold text-white">{statusInfo.label}</span>
+                </div>
+                <button
+                  onClick={handleCheckStatus}
+                  disabled={isChecking}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium transition-all disabled:opacity-50"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}
+                >
+                  {isChecking ? (
+                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
+                      <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.001 7.001 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.501 5.501 0 0 0 8 2.5zM1.705 8.005a.75.75 0 0 1 .834.656 5.501 5.501 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.001 7.001 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834z" />
+                    </svg>
+                  )}
+                  {isChecking ? 'Checking…' : 'Check Connection'}
+                </button>
+              </div>
+
+              {/* Detail text */}
+              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {statusInfo.detail}
+              </p>
+
+              {/* Model chips when ready */}
+              {statusInfo.ready && ollamaStatus && (
+                <div className="flex gap-2 flex-wrap">
+                  <span
+                    className="text-[10px] font-medium px-2 py-1 rounded-md"
+                    style={{ background: 'rgba(63,185,80,0.08)', border: '1px solid rgba(63,185,80,0.2)', color: '#3fb950' }}
+                  >
+                    ✓ {ollamaStatus.llmModelName}
+                  </span>
+                  <span
+                    className="text-[10px] font-medium px-2 py-1 rounded-md"
+                    style={{ background: 'rgba(63,185,80,0.08)', border: '1px solid rgba(63,185,80,0.2)', color: '#3fb950' }}
+                  >
+                    ✓ {ollamaStatus.embedModelName}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Quick Setup ── */}
+          <div>
+            <SectionHeader>Quick Setup</SectionHeader>
+            <div className="flex flex-col gap-2.5">
+              <p className="text-[11px] mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                Run these commands in Terminal to get started:
+              </p>
+              <CommandRow label="1." command="brew install ollama" />
+              <CommandRow label="2." command={`ollama pull ${local.llmModel || 'saul-7b'}`} />
+              <CommandRow label="3." command={`ollama pull ${local.embedModel || 'nomic-embed-text'}`} />
+              <CommandRow label="4." command="ollama serve" />
+              <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                No Homebrew? Download from{' '}
+                <span style={{ color: 'rgba(201,168,76,0.6)' }}>ollama.ai</span>
+              </p>
+            </div>
+          </div>
+
+          {/* ── Model Configuration ── */}
+          <div>
             <SectionHeader>Model Configuration</SectionHeader>
             <div className="flex flex-col gap-4">
               <Field
                 label="LLM Model"
-                description="The language model used to generate answers. Must be pulled in Ollama."
+                description="Language model for generating answers. Must be pulled in Ollama."
               >
                 <TextInput
                   value={local.llmModel}
@@ -126,7 +320,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
               </Field>
               <Field
                 label="Embedding Model"
-                description="The model used to embed document chunks and queries."
+                description="Model used to embed document chunks and queries for semantic search."
               >
                 <TextInput
                   value={local.embedModel}
@@ -136,7 +330,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
               </Field>
               <Field
                 label="Ollama Base URL"
-                description="The URL where Ollama is running locally."
+                description="URL where Ollama is running."
               >
                 <TextInput
                   value={local.ollamaBaseUrl}
@@ -147,8 +341,8 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
             </div>
           </div>
 
-          {/* RAG Configuration */}
-          <div className="mb-6">
+          {/* ── RAG Configuration ── */}
+          <div>
             <SectionHeader>RAG Configuration</SectionHeader>
             <div className="grid grid-cols-3 gap-4">
               <Field label="Chunk Size" description="Characters per chunk (100–2000)">
@@ -178,39 +372,42 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
             </div>
           </div>
 
-          {/* Privacy Notice */}
-          <div className="rounded-lg border border-[#1e1e1e] bg-[#080808] px-4 py-3">
-            <div className="flex items-start gap-2">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-                className="flex-shrink-0 mt-0.5 text-[#3fb950]"
-              >
-                <path d="M8.533.133a1.75 1.75 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48V7c0 1.566.832 3.125 2.561 4.608.458.391.978.752 1.535 1.078a11.865 11.865 0 0 0 2.904 1.218c1.11 0 3.028-.877 4.439-2.296C13.168 10.125 14 8.566 14 7V3.48a1.75 1.75 0 0 0-1.217-1.667L8.533.133zm-.61 1.429a.25.25 0 0 1 .153 0l5.25 1.68a.25.25 0 0 1 .174.237V7c0 1.32-.69 2.6-2.249 3.933C10.157 12.022 8.63 12.75 8 12.75c-.63 0-2.157-.728-3.251-1.817C3.19 9.6 2.5 8.32 2.5 7V3.48a.25.25 0 0 1 .174-.238z" />
-              </svg>
-              <div>
-                <p className="text-xs font-medium text-[#3fb950] mb-1">Privacy Guarantee</p>
-                <p className="text-xs text-[#8b949e] leading-relaxed">
-                  All data remains on your machine. No network requests are made except to your local Ollama instance at the configured base URL. Your documents and queries never leave your device.
-                </p>
-              </div>
+          {/* ── Privacy notice ── */}
+          <div
+            className="rounded-xl px-4 py-3 flex items-start gap-3"
+            style={{ background: 'rgba(63,185,80,0.04)', border: '1px solid rgba(63,185,80,0.12)' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
+              <path d="M8.533.133a1.75 1.75 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48V7c0 1.566.832 3.125 2.561 4.608.458.391.978.752 1.535 1.078a11.865 11.865 0 0 0 2.904 1.218c1.11 0 3.028-.877 4.439-2.296C13.168 10.125 14 8.566 14 7V3.48a1.75 1.75 0 0 0-1.217-1.667L8.533.133zm-.61 1.429a.25.25 0 0 1 .153 0l5.25 1.68a.25.25 0 0 1 .174.237V7c0 1.32-.69 2.6-2.249 3.933C10.157 12.022 8.63 12.75 8 12.75c-.63 0-2.157-.728-3.251-1.817C3.19 9.6 2.5 8.32 2.5 7V3.48a.25.25 0 0 1 .174-.238z" stroke="#3fb950" strokeWidth="0.3" fill="#3fb950" opacity="0.7" />
+              <path d="M5.5 8l2 2 3-3" stroke="#3fb950" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div>
+              <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#3fb950' }}>Privacy Guarantee</p>
+              <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                All data stays on your machine. The only network request made is to your local Ollama instance. Your documents and queries never leave your device.
+              </p>
             </div>
           </div>
+
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-[#1e1e1e] px-6 py-4">
+        <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <button
             onClick={onClose}
-            className="rounded-lg border border-[#1e1e1e] bg-transparent px-4 py-2 text-sm text-[#8b949e] hover:text-[#ffffff] hover:border-[#8b949e] transition-colors"
+            className="rounded-lg px-4 py-2 text-[12px] font-medium transition-colors"
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.4)' }}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="rounded-lg bg-[#c9a84c] px-4 py-2 text-sm font-semibold text-[#080808] hover:bg-[#e8c97e] transition-colors"
+            className="rounded-lg px-5 py-2 text-[12px] font-semibold transition-colors"
+            style={{ background: '#c9a84c', color: '#080808' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#e8c97e' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#c9a84c' }}
           >
             Save Settings
           </button>

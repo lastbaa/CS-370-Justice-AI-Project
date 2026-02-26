@@ -5,6 +5,7 @@ import {
   ChatSession,
   DEFAULT_SETTINGS,
   FileInfo,
+  OllamaStatus,
 } from '../../../../shared/src/types'
 import { v4 as uuidv4 } from 'uuid'
 import Sidebar from './components/Sidebar'
@@ -27,6 +28,8 @@ export default function App(): JSX.Element {
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string>(() => uuidv4())
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null)
+  const [chatMode, setChatMode] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isQuerying, setIsQuerying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -36,6 +39,15 @@ export default function App(): JSX.Element {
   const sessionIdRef = useRef(currentSessionId)
   messagesRef.current = messages
   sessionIdRef.current = currentSessionId
+
+  async function checkOllamaStatus(): Promise<void> {
+    try {
+      const status = await window.api.checkOllama()
+      setOllamaStatus(status)
+    } catch {
+      setOllamaStatus(null)
+    }
+  }
 
   useEffect(() => {
     async function init(): Promise<void> {
@@ -51,6 +63,7 @@ export default function App(): JSX.Element {
         const saved = await window.api.getSessions()
         setSessions(saved)
       } catch { }
+      await checkOllamaStatus()
     }
     init()
   }, [])
@@ -132,20 +145,30 @@ export default function App(): JSX.Element {
     setMessages((prev) => [...prev, userMessage])
     setIsQuerying(true)
 
-    // Preview build — simulate AI processing pipeline
-    await new Promise<void>((resolve) => setTimeout(resolve, 4200))
-
-    setIsQuerying(false)
-    const mockMessage: ChatMessage = {
-      id: uuidv4(),
-      role: 'assistant',
-      content:
-        'Justice AI analyzed your documents and identified the most relevant passages. In the full release, this response will include the exact cited answer — referencing the specific filename, page number, and a direct quoted excerpt from the source material.\n\nEvery response is grounded strictly in your loaded documents. Nothing is extrapolated, assumed, or sent to any external server.',
-      citations: [],
-      notFound: false,
-      timestamp: Date.now(),
+    try {
+      const result = await window.api.query(question)
+      const assistantMessage: ChatMessage = {
+        id: uuidv4(),
+        role: 'assistant',
+        content: result.answer,
+        citations: result.citations,
+        notFound: result.notFound,
+        timestamp: Date.now(),
+      }
+      setMessages((prev) => [...prev, assistantMessage])
+    } catch (err) {
+      const errorMessage: ChatMessage = {
+        id: uuidv4(),
+        role: 'assistant',
+        content: `Unable to get a response. ${err instanceof Error ? err.message : 'Check that Ollama is running and your models are pulled.'}`,
+        citations: [],
+        notFound: true,
+        timestamp: Date.now(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsQuerying(false)
     }
-    setMessages((prev) => [...prev, mockMessage])
   }
 
   // ── Navigation ────────────────────────────────────────────────
@@ -184,6 +207,7 @@ export default function App(): JSX.Element {
       await window.api.saveSettings(newSettings)
       setSettings(newSettings)
       setView('main')
+      await checkOllamaStatus()
     } catch (err) {
       console.error('Failed to save settings:', err)
     }
@@ -221,7 +245,13 @@ export default function App(): JSX.Element {
       </div>
 
       {view === 'settings' && (
-        <Settings settings={settings} onSave={handleSaveSettings} onClose={() => setView('main')} />
+        <Settings
+          settings={settings}
+          ollamaStatus={ollamaStatus}
+          onSave={handleSaveSettings}
+          onClose={() => setView('main')}
+          onCheckStatus={checkOllamaStatus}
+        />
       )}
     </div>
   )
