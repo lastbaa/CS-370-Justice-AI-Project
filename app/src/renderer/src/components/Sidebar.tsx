@@ -5,7 +5,7 @@ interface Props {
   sessions: ChatSession[]
   currentSessionId: string
   isLoading: boolean
-  ollamaStatus: OllamaStatus | null
+  onGoHome: () => void
   onNewChat: () => void
   onLoadSession: (session: ChatSession) => void
   onDeleteSession: (sessionId: string) => void
@@ -92,7 +92,7 @@ export default function Sidebar({
   sessions,
   currentSessionId,
   isLoading,
-  ollamaStatus,
+  onGoHome,
   onNewChat,
   onLoadSession,
   onDeleteSession,
@@ -109,20 +109,22 @@ export default function Sidebar({
   })()
 
   return (
-    <aside className="flex h-screen w-[240px] shrink-0 flex-col border-r border-[#141414] bg-[#0a0a0a]">
-
-      {/* ── Traffic light zone ── */}
-      {/* macOS hiddenInset puts ⬤⬤⬤ at x≈12, y≈14. h-11 (44px) gives comfortable clearance. */}
-      <div className="drag-region h-11 shrink-0" />
-
-      {/* ── Logo + New Chat ── */}
-      <div className="flex items-center justify-between px-4 pb-3">
-        <div className="no-drag flex items-center gap-2">
-          <GavelIcon size={16} />
-          <span className="text-[13.5px] font-semibold tracking-[-0.01em] text-white">
+    <aside className="flex h-screen w-[240px] shrink-0 flex-col border-r border-[#161616] bg-[#090909]">
+      {/* Drag region + logo */}
+      <div className="drag-region flex items-center gap-2.5 px-4 pt-5 pb-4">
+        <button
+          onClick={onGoHome}
+          className="no-drag flex items-center gap-2 hover:opacity-75 transition-opacity"
+        >
+          <GavelIcon size={18} />
+          <span className="text-[14px] font-semibold tracking-[-0.01em] text-white">
             Justice <span style={{ color: '#c9a84c' }}>AI</span>
           </span>
-        </div>
+        </button>
+      </div>
+
+      {/* New Chat */}
+      <div className="px-3 pb-2">
         <button
           onClick={onNewChat}
           title="New chat"

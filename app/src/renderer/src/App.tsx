@@ -171,6 +171,14 @@ export default function App(): JSX.Element {
     }
   }
 
+  // ── Navigation ────────────────────────────────────────────────
+  function handleGoHome(): void {
+    setChatMode(false)
+    setMessages([])
+    setCurrentSessionId(uuidv4())
+    setView('main')
+  }
+
   // ── Sessions ──────────────────────────────────────────────────
   function handleNewChat(): void {
     setMessages([])
@@ -211,7 +219,7 @@ export default function App(): JSX.Element {
         sessions={sessions}
         currentSessionId={currentSessionId}
         isLoading={isLoading}
-        ollamaStatus={ollamaStatus}
+        onGoHome={handleGoHome}
         onNewChat={handleNewChat}
         onLoadSession={handleLoadSession}
         onDeleteSession={handleDeleteSession}
