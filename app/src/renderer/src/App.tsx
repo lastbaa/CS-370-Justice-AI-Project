@@ -33,7 +33,6 @@ export default function App(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false)
   const [isQuerying, setIsQuerying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [chatMode, setChatMode] = useState(false)
 
   const messagesRef = useRef(messages)
   const sessionIdRef = useRef(currentSessionId)

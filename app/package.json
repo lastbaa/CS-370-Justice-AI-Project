@@ -42,6 +42,7 @@
   "build": {
     "appId": "com.justiceai.app",
     "productName": "Justice AI",
+    "electronVersion": "31.7.7",
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
