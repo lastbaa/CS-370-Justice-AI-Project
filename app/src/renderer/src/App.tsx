@@ -130,29 +130,21 @@ export default function App(): JSX.Element {
     }
     setMessages((prev) => [...prev, userMessage])
     setIsQuerying(true)
-    try {
-      const result = await window.api.query(question)
-      const assistantMessage: ChatMessage = {
-        id: uuidv4(),
-        role: 'assistant',
-        content: result.answer,
-        citations: result.citations,
-        notFound: result.notFound,
-        timestamp: Date.now(),
-      }
-      setMessages((prev) => [...prev, assistantMessage])
-    } catch (err) {
-      const errorMessage: ChatMessage = {
-        id: uuidv4(),
-        role: 'assistant',
-        content: `Error: ${err instanceof Error ? err.message : 'An unexpected error occurred'}`,
-        notFound: true,
-        timestamp: Date.now(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsQuerying(false)
+
+    // Preview build — simulate AI processing pipeline
+    await new Promise<void>((resolve) => setTimeout(resolve, 4200))
+
+    setIsQuerying(false)
+    const mockMessage: ChatMessage = {
+      id: uuidv4(),
+      role: 'assistant',
+      content:
+        'Justice AI analyzed your documents and identified the most relevant passages. In the full release, this response will include the exact cited answer — referencing the specific filename, page number, and a direct quoted excerpt from the source material.\n\nEvery response is grounded strictly in your loaded documents. Nothing is extrapolated, assumed, or sent to any external server.',
+      citations: [],
+      notFound: false,
+      timestamp: Date.now(),
     }
+    setMessages((prev) => [...prev, mockMessage])
   }
 
   // ── Sessions ──────────────────────────────────────────────────

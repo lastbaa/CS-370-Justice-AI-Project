@@ -4,28 +4,28 @@ import { useEffect, useRef, useState } from 'react'
 import { Reveal } from './Reveal'
 import { WordReveal } from './WordReveal'
 
-const QUESTION = 'What are the termination conditions in the Hendricks partnership agreement?'
+const QUESTION = 'What standard of care was Calloway Landscaping held to under the arborist contract?'
 
 const ANSWER_PARTS = [
   { delay: 0,    text: 'Based on ' },
-  { delay: 60,   text: 'Section 14.2' },
+  { delay: 60,   text: 'Section 4.1' },
   { delay: 160,  text: ' of ' },
-  { delay: 220,  text: 'Hendricks_Partnership_2024.pdf' },
-  { delay: 400,  text: ' (Page 7):\n\n' },
-  { delay: 600,  text: '"Either party may terminate this Agreement upon ' },
-  { delay: 900,  text: 'thirty (30) days\' written notice' },
-  { delay: 1100, text: ' to the other party. Termination for material breach requires no notice period if the breaching party fails to cure within ' },
-  { delay: 1600, text: '15 business days' },
-  { delay: 1750, text: ' of written notification."\n\n' },
-  { delay: 2000, text: 'Section 14.6 (Page 8) additionally provides that any outstanding invoices become immediately due upon termination.' },
+  { delay: 220,  text: 'Calloway_Contract_2024.pdf' },
+  { delay: 400,  text: ' (Page 3):\n\n' },
+  { delay: 600,  text: '"Contractor shall perform all work in accordance with ' },
+  { delay: 900,  text: 'ISA ANSI A300 standards' },
+  { delay: 1100, text: ' and applicable Georgia arborist licensing requirements. Failure to comply constitutes ' },
+  { delay: 1600, text: 'material breach' },
+  { delay: 1750, text: ' of this Agreement."\n\n' },
+  { delay: 2000, text: 'The Expert Arborist Report (Page 6) confirms the oak removal deviated from ANSI A300 Part 1 Section 5.2, establishing the standard of care violation central to the plaintiff\'s negligence claim.' },
 ]
 
 const FULL_ANSWER = ANSWER_PARTS.map(p => p.text).join('')
 
 const files = [
-  { name: 'Hendricks_Partnership_2024.pdf', pages: 22, size: '1.4 MB' },
-  { name: 'NDA_Hendricks_Corp.pdf', pages: 8, size: '340 KB' },
-  { name: 'Amendment_1_Signed.docx', pages: 3, size: '88 KB' },
+  { name: 'Williams_v_Calloway_Complaint.pdf', pages: 18, size: '1.1 MB' },
+  { name: 'Calloway_Contract_2024.pdf', pages: 12, size: '620 KB' },
+  { name: 'Expert_Arborist_Report.pdf', pages: 24, size: '2.3 MB' },
 ]
 
 export default function ProductDemo() {
@@ -76,8 +76,8 @@ export default function ProductDemo() {
   const formatAnswer = (text: string) =>
     text.split('\n').map((line, i) => (
       <span key={i}>
-        {line.split(/(Section \d+\.\d+|Page \d+|\d+ days?|thirty \(30\) days'|15 business days|Hendricks_Partnership_2024\.pdf)/).map((chunk, j) =>
-          /Section \d+\.\d+|Page \d+|\d+ days?|thirty \(30\)|15 business|Hendricks_Partnership/.test(chunk)
+        {line.split(/(Section \d+\.\d+|Page \d+|ISA ANSI A300|ANSI A300 Part \d+|material breach|Calloway_Contract_2024\.pdf)/).map((chunk, j) =>
+          /Section \d+\.\d+|Page \d+|ISA ANSI|ANSI A300|material breach|Calloway_Contract/.test(chunk)
             ? <span key={j} style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>{chunk}</span>
             : chunk
         )}
@@ -145,7 +145,7 @@ export default function ProductDemo() {
                 </svg>
                 <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>Justice AI</span>
               </div>
-              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>3 documents</span>
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Williams v. Calloway · Decatur, GA</span>
             </div>
 
             <div className="flex flex-col md:flex-row" style={{ minHeight: '420px' }}>
@@ -273,7 +273,7 @@ export default function ProductDemo() {
                                 <path d="M3 2h7l3 3v9H3V2z" stroke="rgba(255,255,255,0.3)" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
                               </svg>
                               <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                                Hendricks_Partnership_2024.pdf · Pages 7–8
+                                Calloway_Contract_2024.pdf · Page 3
                               </span>
                               <span className="ml-auto text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}>
                                 Verified citation

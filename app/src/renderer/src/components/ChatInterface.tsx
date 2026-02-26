@@ -16,197 +16,316 @@ interface Props {
   onLoadPaths: (paths: string[]) => void
 }
 
-// ── Mini animated demo ──────────────────────────────────────────────────────
-const DEMO_Q = 'What are the termination conditions in the Hendricks agreement?'
+// ── Animated product demo ────────────────────────────────────────────────────
+const DEMO_Q = 'Does the Calloway contract limit liability for underground infrastructure damage?'
 const DEMO_A =
-  'Based on Section 14.2 (Page 7), either party may terminate upon thirty (30) days\' written notice. Termination for material breach requires no notice if the breaching party fails to cure within 15 business days of written notification.'
+  'Based on Section 8.3 (Page 4), Calloway Landscaping LLC disclaimed liability for "pre-existing or underground utilities not marked by owner." However, Exhibit C confirms a utility map was provided to Calloway prior to excavation — this disclosure likely voids the disclaimer under Georgia O.C.G.A. § 25-9-6.'
 
-function MiniDemo(): JSX.Element {
+function ProductDemo(): JSX.Element {
   const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
   const [answerText, setAnswerText] = useState('')
+  const [cursorVisible, setCursorVisible] = useState(true)
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 700)
-    const t2 = setTimeout(() => setPhase(2), 1600)
+    const t1 = setTimeout(() => setPhase(1), 800)
+    const t2 = setTimeout(() => setPhase(2), 1800)
     const t3 = setTimeout(() => {
       setPhase(3)
       let i = 0
       const interval = setInterval(() => {
-        i += 4
+        i += 3
         setAnswerText(DEMO_A.slice(0, i))
         if (i >= DEMO_A.length) {
           setAnswerText(DEMO_A)
           clearInterval(interval)
         }
-      }, 20)
+      }, 18)
       return () => clearInterval(interval)
-    }, 2900)
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+    }, 3000)
+
+    // Blinking cursor
+    const cursorInterval = setInterval(() => setCursorVisible((v) => !v), 530)
+
+    return () => {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
+      clearInterval(cursorInterval)
+    }
   }, [])
+
+  const isTyping = phase === 3 && answerText.length < DEMO_A.length
+  const isDone = phase === 3 && answerText.length >= DEMO_A.length
 
   return (
     <div
-      className="w-full rounded-xl overflow-hidden"
-      style={{ border: '1px solid rgba(255,255,255,0.07)', background: '#070707' }}
+      className="w-full rounded-2xl overflow-hidden"
+      style={{ border: '1px solid rgba(255,255,255,0.08)', background: '#060606' }}
     >
       {/* Fake title bar */}
       <div
-        className="flex items-center gap-2 px-4 py-2.5 border-b"
-        style={{ borderColor: 'rgba(255,255,255,0.05)', background: '#060606' }}
+        className="flex items-center gap-3 px-5 py-3 border-b"
+        style={{ borderColor: 'rgba(255,255,255,0.05)', background: '#050505' }}
       >
         <div className="flex gap-1.5">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+            <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
           ))}
         </div>
-        <span className="ml-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-          Justice AI · 3 documents
-        </span>
+        <div className="flex-1 flex items-center justify-center gap-2">
+          <svg width="11" height="11" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
+            <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+          <span className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Justice AI — Williams v. Calloway, Decatur GA
+          </span>
+        </div>
+        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>3 docs</span>
       </div>
 
-      <div className="p-5 flex flex-col gap-3" style={{ minHeight: 160 }}>
-        {phase >= 1 && (
-          <div
-            className="self-end max-w-xs rounded-2xl rounded-tr-sm px-3.5 py-2.5 text-[11px] leading-relaxed"
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.7)',
-              animation: 'fadeUp 0.35s ease both',
-            }}
-          >
-            {DEMO_Q}
-          </div>
-        )}
-
-        {phase >= 2 && (
-          <div
-            className="self-start max-w-sm rounded-2xl rounded-tl-sm px-4 py-3"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              animation: 'fadeUp 0.35s ease both',
-            }}
-          >
+      {/* Demo content */}
+      <div className="flex" style={{ minHeight: 220 }}>
+        {/* Sidebar stub */}
+        <div
+          className="w-36 shrink-0 border-r p-3 flex flex-col gap-1"
+          style={{ borderColor: 'rgba(255,255,255,0.04)', background: '#040404' }}
+        >
+          <p className="text-[9px] uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.15)' }}>
+            Williams v. Calloway
+          </p>
+          {[
+            'Williams_v_Calloway_Complaint.pdf',
+            'Calloway_Contract_2024.docx',
+            'Expert_Arborist_Report.pdf',
+          ].map((name, i) => (
             <div
-              className="flex items-center gap-1.5 mb-2 pb-2"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+              key={i}
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg"
+              style={{ background: i === 0 ? 'rgba(255,255,255,0.05)' : 'transparent' }}
             >
-              <span className="text-[10px] font-semibold" style={{ color: 'rgba(201,168,76,0.6)' }}>
-                Justice AI
+              <svg width="9" height="9" viewBox="0 0 16 16" fill="rgba(201,168,76,0.5)">
+                <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
+              </svg>
+              <span
+                className="text-[9px] truncate leading-snug"
+                style={{ color: i === 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)' }}
+              >
+                {name}
               </span>
-              {phase === 2 && (
-                <span className="text-[10px] italic" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  searching…
-                </span>
-              )}
             </div>
-            {phase === 2 && (
-              <div className="flex gap-1.5 items-center">
-                {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{
-                      background: 'rgba(255,255,255,0.2)',
-                      animation: `blink 1.2s ease ${i * 0.2}s infinite`,
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            {phase >= 3 && (
-              <div>
-                <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {answerText}
-                </p>
-                {answerText.length >= DEMO_A.length && (
-                  <div
-                    className="mt-2.5 pt-2.5 flex items-center gap-2"
-                    style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-                      <path
-                        d="M3 2h7l3 3v9H3V2z"
-                        stroke="rgba(201,168,76,0.5)"
-                        strokeWidth="1.2"
-                        fill="none"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
-                      Hendricks_Partnership_2024.pdf · p. 7–8
-                    </span>
-                    <span
-                      className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-medium"
-                      style={{
-                        background: 'rgba(201,168,76,0.08)',
-                        color: 'rgba(201,168,76,0.6)',
-                        border: '1px solid rgba(201,168,76,0.15)',
-                      }}
-                    >
-                      Cited
-                    </span>
-                  </div>
+          ))}
+        </div>
+
+        {/* Chat area */}
+        <div className="flex-1 flex flex-col justify-end p-4 gap-3">
+          {phase >= 1 && (
+            <div
+              className="self-end max-w-[65%] rounded-xl rounded-tr-sm px-3.5 py-2.5 text-[11.5px] leading-relaxed"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.75)',
+                animation: 'fadeUp 0.3s ease both',
+              }}
+            >
+              {DEMO_Q}
+            </div>
+          )}
+
+          {phase >= 2 && (
+            <div style={{ animation: 'fadeUp 0.3s ease both' }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <div
+                  className="flex h-5 w-5 items-center justify-center rounded-full"
+                  style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)' }}
+                >
+                  <svg width="9" height="9" viewBox="0 0 20 20" fill="none">
+                    <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
+                    <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <span className="text-[10px] font-semibold" style={{ color: 'rgba(201,168,76,0.6)' }}>
+                  Justice AI
+                </span>
+                {phase === 2 && (
+                  <span className="text-[9px] italic" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                    searching…
+                  </span>
                 )}
               </div>
-            )}
-          </div>
-        )}
+
+              {phase === 2 && (
+                <div className="flex gap-1.5 pl-7">
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.2)', animation: `blink 1.2s ease ${i * 0.2}s infinite` }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {phase >= 3 && (
+                <div className="pl-7">
+                  <p className="text-[11.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {answerText}
+                    {isTyping && cursorVisible && (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: '1.5px',
+                          height: '0.85em',
+                          background: 'rgba(255,255,255,0.5)',
+                          marginLeft: '2px',
+                          verticalAlign: 'text-bottom',
+                        }}
+                      />
+                    )}
+                  </p>
+                  {isDone && (
+                    <div
+                      className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2"
+                      style={{
+                        background: 'rgba(201,168,76,0.05)',
+                        border: '1px solid rgba(201,168,76,0.12)',
+                        animation: 'fadeUp 0.3s ease both',
+                      }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="rgba(201,168,76,0.7)">
+                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
+                      </svg>
+                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        Calloway_Contract_2024.docx · p. 4
+                      </span>
+                      <span
+                        className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-semibold"
+                        style={{
+                          background: 'rgba(201,168,76,0.08)',
+                          color: 'rgba(201,168,76,0.7)',
+                          border: '1px solid rgba(201,168,76,0.15)',
+                        }}
+                      >
+                        Cited
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-// ── Typing indicator ────────────────────────────────────────────────────────
+// ── Sophisticated multi-step loading indicator ────────────────────────────────
 function TypingIndicator(): JSX.Element {
+  const [step, setStep] = useState(0)
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setStep(1), 1000),
+      setTimeout(() => setStep(2), 2200),
+      setTimeout(() => setStep(3), 3400),
+    ]
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const steps = [
+    { label: 'Reading your documents' },
+    { label: 'Finding relevant sections' },
+    { label: 'Analyzing legal context' },
+    { label: 'Drafting response' },
+  ]
+
   return (
-    <div className="flex gap-3 max-w-3xl mx-auto w-full">
+    <div className="flex gap-3 max-w-3xl mx-auto w-full" style={{ animation: 'fadeUp 0.3s ease both' }}>
       <div
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-        style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)' }}
+        className="flex h-7 w-7 shrink-0 mt-1 items-center justify-center rounded-full"
+        style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.22)' }}
       >
-        <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
           <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
           <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
           <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
         </svg>
       </div>
+
       <div
-        className="rounded-2xl rounded-tl-sm px-4 py-3 flex flex-col gap-1.5"
-        style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.07)' }}
+        className="rounded-2xl rounded-tl-sm px-5 py-4 flex flex-col gap-3"
+        style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <div className="flex gap-1.5 items-center">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-1.5 w-1.5 rounded-full"
-              style={{
-                background: 'rgba(255,255,255,0.25)',
-                animation: `blink 1.2s ease ${i * 0.18}s infinite`,
-              }}
-            />
-          ))}
-        </div>
-        <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          Searching documents…
+        <p className="text-[11px] font-semibold" style={{ color: 'rgba(201,168,76,0.65)' }}>
+          Justice AI
         </p>
+
+        <div className="flex flex-col gap-2.5">
+          {steps.map((s, i) => {
+            const isDone = i < step
+            const isActive = i === step
+
+            return (
+              <div key={s.label} className="flex items-center gap-2.5">
+                {/* Status icon */}
+                <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                  {isDone ? (
+                    <div
+                      className="w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}
+                    >
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                        <path d="M1.5 4l2 2 3-3" stroke="#c9a84c" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  ) : isActive ? (
+                    <div
+                      className="animate-spin w-3.5 h-3.5 rounded-full"
+                      style={{ border: '2px solid rgba(201,168,76,0.2)', borderTopColor: '#c9a84c' }}
+                    />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  )}
+                </div>
+
+                <span
+                  className="text-[12px]"
+                  style={{
+                    color: isDone
+                      ? 'rgba(255,255,255,0.22)'
+                      : isActive
+                        ? 'rgba(255,255,255,0.7)'
+                        : 'rgba(255,255,255,0.15)',
+                    transition: 'color 0.4s ease',
+                    textDecoration: isDone ? 'line-through' : 'none',
+                    textDecorationColor: 'rgba(255,255,255,0.12)',
+                  }}
+                >
+                  {s.label}
+                  {isActive && (
+                    <span style={{ color: 'rgba(201,168,76,0.45)' }}>…</span>
+                  )}
+                </span>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
 }
 
-// ── Example questions ───────────────────────────────────────────────────────
+// ── Example questions ────────────────────────────────────────────────────────
 const EXAMPLES = [
-  'What are the termination clauses?',
-  'Summarize the key obligations of each party',
-  'Find all indemnification references',
-  'What are the payment terms and schedule?',
-  'List all defined terms in this agreement',
-  'Identify any unusual or non-standard provisions',
+  'What liability limitations does the Calloway contract include?',
+  'What standard of care applies to licensed arborists in Georgia?',
+  'Identify all property damage claims in the complaint',
+  'When did defendant receive written notice of the foundation damage?',
+  'What does the expert arborist report say about root system spread?',
+  'Find all references to the irrigation system in the case documents',
 ]
 
-// ── Main component ──────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 export default function ChatInterface({
   messages,
   isQuerying,
@@ -239,7 +358,6 @@ export default function ChatInterface({
     el.style.height = Math.min(el.scrollHeight, 128) + 'px'
   }, [input])
 
-  // Close file panel on outside click
   useEffect(() => {
     function handler(e: MouseEvent): void {
       if (filePanelRef.current && !filePanelRef.current.contains(e.target as Node)) {
@@ -269,7 +387,8 @@ export default function ChatInterface({
     setIsDragging(true)
   }
 
-  function handleDragLeave(): void {
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>): void {
+    e.preventDefault()
     setIsDragging(false)
   }
 
@@ -284,9 +403,7 @@ export default function ChatInterface({
     if (paths.length > 0) onLoadPaths(paths)
   }
 
-  const isEmpty = messages.length === 0
-
-  // ── Welcome screen (no files loaded) ──────────────────────────────────────
+  // ── WELCOME SCREEN ──────────────────────────────────────────────────────────
   if (!hasFiles) {
     return (
       <div
@@ -295,22 +412,23 @@ export default function ChatInterface({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* macOS traffic light spacing */}
-        <div className="drag-region h-10 shrink-0" />
+        {/* Traffic light zone — matches sidebar's h-9 */}
+        <div className="drag-region h-9 shrink-0" />
 
         <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col items-center min-h-full px-8 py-14 justify-center">
+          <div className="flex flex-col items-center min-h-full px-10 pb-10 pt-8 justify-center">
 
-            {/* Logo */}
+            {/* Icon */}
             <div
-              className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl"
+              className="mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-[20px]"
               style={{
-                background: 'rgba(201,168,76,0.07)',
+                background: 'rgba(201,168,76,0.06)',
                 border: '1px solid rgba(201,168,76,0.18)',
+                boxShadow: '0 0 40px rgba(201,168,76,0.06)',
                 animation: 'floatY 4s ease-in-out infinite',
               }}
             >
-              <svg width="26" height="26" viewBox="0 0 20 20" fill="none">
+              <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
                 <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
                 <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
                 <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
@@ -318,27 +436,30 @@ export default function ChatInterface({
             </div>
 
             {/* Heading */}
-            <h1
-              className="mb-2 text-[22px] font-bold tracking-[-0.02em] text-white"
-            >
+            <h1 className="mb-2 text-[26px] font-bold tracking-[-0.025em] text-white leading-tight text-center">
               Welcome to Justice <span style={{ color: '#c9a84c' }}>AI</span>
             </h1>
             <p
-              className="mb-10 text-[13px] text-center max-w-xs leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.35)' }}
+              className="mb-9 text-[13px] text-center leading-relaxed"
+              style={{ color: 'rgba(255,255,255,0.32)', maxWidth: 340 }}
             >
-              Private legal research on your machine. Your documents never leave this device.
+              Private legal research powered by a local AI model.
+              Your documents never leave this device — ever.
             </p>
 
-            {/* Mini demo */}
-            <div className="w-full max-w-md mb-9">
-              <p
-                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-center"
-                style={{ color: 'rgba(201,168,76,0.5)' }}
-              >
-                See it in action
-              </p>
-              <MiniDemo />
+            {/* Demo */}
+            <div className="w-full mb-8" style={{ maxWidth: 560 }}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                <span
+                  className="text-[10px] font-semibold uppercase tracking-[0.16em] px-3"
+                  style={{ color: 'rgba(201,168,76,0.45)' }}
+                >
+                  Live Demo
+                </span>
+                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
+              </div>
+              <ProductDemo />
             </div>
 
             {/* Drop zone */}
@@ -347,85 +468,132 @@ export default function ChatInterface({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className="w-full max-w-md rounded-2xl border-2 border-dashed px-8 py-8 text-center cursor-pointer transition-all"
+              className="w-full rounded-2xl cursor-pointer transition-all"
               style={{
-                borderColor: isDragging ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.1)',
+                maxWidth: 560,
+                border: `1.5px dashed ${isDragging ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.1)'}`,
                 background: isDragging ? 'rgba(201,168,76,0.03)' : 'transparent',
+                padding: '28px 32px',
               }}
               onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLDivElement
                 if (!isDragging) {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.2)'
-                  ;(e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.02)'
+                  el.style.borderColor = 'rgba(255,255,255,0.18)'
+                  el.style.background = 'rgba(255,255,255,0.02)'
                 }
               }}
               onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLDivElement
                 if (!isDragging) {
-                  (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.1)'
-                  ;(e.currentTarget as HTMLDivElement).style.background = 'transparent'
+                  el.style.borderColor = 'rgba(255,255,255,0.1)'
+                  el.style.background = 'transparent'
                 }
               }}
             >
-              <div className="flex justify-center mb-3">
+              <div className="flex flex-col items-center text-center">
                 <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
                   style={{
-                    background: 'rgba(201,168,76,0.07)',
-                    border: '1px solid rgba(201,168,76,0.18)',
+                    background: isDragging ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${isDragging ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" style={{ color: '#c9a84c' }}>
+                  <svg width="20" height="20" viewBox="0 0 16 16" fill={isDragging ? '#c9a84c' : 'rgba(255,255,255,0.4)'} style={{ transition: 'all 0.2s ease' }}>
                     <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75zM8.75 9.25a.75.75 0 0 0-1.5 0v1.5H5.75a.75.75 0 0 0 0 1.5h1.5v1.5a.75.75 0 0 0 1.5 0v-1.5h1.5a.75.75 0 0 0 0-1.5H8.75v-1.5z" />
                   </svg>
                 </div>
+
+                <p className="text-[14px] font-semibold text-white mb-1">
+                  {isDragging ? 'Drop your files here' : 'Load your documents'}
+                </p>
+                <p className="text-[12px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Click to browse files · or drag & drop PDF or DOCX documents
+                </p>
+
+                {/* Primary CTA */}
+                <div
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.7)',
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75z" />
+                  </svg>
+                  Browse files
+                </div>
+
+                {isLoading && (
+                  <p className="mt-3 text-[12px]" style={{ color: '#c9a84c' }}>
+                    Processing documents…
+                  </p>
+                )}
+                {loadError && (
+                  <p className="mt-3 text-[12px]" style={{ color: '#f85149' }}>
+                    {loadError}
+                  </p>
+                )}
               </div>
-              <p className="text-[13px] font-semibold text-white mb-1">
-                {isDragging ? 'Drop your files here' : 'Load your documents'}
-              </p>
-              <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                Click to browse · Drag & drop PDF or DOCX files
-              </p>
-              {isLoading && (
-                <p className="mt-3 text-[11px]" style={{ color: '#c9a84c' }}>
-                  Processing…
-                </p>
-              )}
-              {loadError && (
-                <p className="mt-3 text-[11px]" style={{ color: '#f85149' }}>
-                  {loadError}
-                </p>
-              )}
             </div>
 
             <button
               onClick={onAddFolder}
-              className="mt-3 text-[11px] transition-colors"
-              style={{ color: 'rgba(255,255,255,0.22)' }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)'
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.22)'
-              }}
+              className="mt-3 text-[11px] transition-colors no-drag"
+              style={{ color: 'rgba(255,255,255,0.2)' }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.45)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.2)' }}
             >
               Or load an entire folder →
             </button>
 
-            {/* Three callouts */}
-            <div className="mt-10 grid grid-cols-3 gap-3 w-full max-w-md">
+            {/* Feature callouts */}
+            <div className="mt-10 grid grid-cols-3 gap-3 w-full" style={{ maxWidth: 560 }}>
               {[
-                { label: 'Cited answers', body: 'Every response references its exact source.' },
-                { label: 'Fully private', body: 'Nothing leaves your machine, ever.' },
-                { label: 'No hallucinations', body: 'Grounded strictly in your documents.' },
+                {
+                  icon: (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="rgba(201,168,76,0.7)">
+                      <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
+                    </svg>
+                  ),
+                  label: 'Cited answers',
+                  body: 'Exact source — file and page',
+                },
+                {
+                  icon: (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 1L2 3.5v5c0 3.8 2.6 7.3 6 8 3.4-.7 6-4.2 6-8v-5L8 1z" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" fill="none" strokeLinejoin="round" />
+                      <path d="M5.5 8l2 2 3-3" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ),
+                  label: 'Fully private',
+                  body: 'Nothing leaves your device',
+                },
+                {
+                  icon: (
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6.5" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" />
+                      <path d="M5 8l2 2 4-4" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ),
+                  label: 'No hallucinations',
+                  body: 'Document-grounded only',
+                },
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-xl p-3.5 text-center"
+                  className="rounded-xl px-4 py-4 flex flex-col gap-2"
                   style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.05)' }}
                 >
-                  <p className="text-[11px] font-semibold text-white mb-1">{item.label}</p>
-                  <p className="text-[10.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                    {item.body}
-                  </p>
+                  {item.icon}
+                  <div>
+                    <p className="text-[11.5px] font-semibold text-white leading-snug">{item.label}</p>
+                    <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                      {item.body}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -436,73 +604,84 @@ export default function ChatInterface({
     )
   }
 
-  // ── Chat view (files loaded) ────────────────────────────────────────────────
+  // ── CHAT VIEW ───────────────────────────────────────────────────────────────
+  const isEmpty = messages.length === 0
+
   return (
     <div className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808]">
-      {/* Header */}
+
+      {/* Header — matches sidebar's h-9 traffic zone + logo row */}
       <div
-        className="drag-region flex items-center justify-between border-b px-5 py-3 shrink-0"
-        style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#080808' }}
+        className="drag-region flex h-9 items-center justify-between shrink-0 px-5"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <div className="no-drag flex items-center">
+        <div className="no-drag flex items-center gap-2">
+          <svg width="11" height="11" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="3" width="8" height="4" rx="1.25" fill="rgba(201,168,76,0.5)" transform="rotate(45 5 5)" />
+            <line x1="10" y1="10" x2="18" y2="18" stroke="rgba(201,168,76,0.5)" strokeWidth="3" strokeLinecap="round" />
+          </svg>
           {isEmpty ? (
-            <span className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            <span className="text-[12.5px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
               New Chat
             </span>
           ) : (
             <span
-              className="text-[13px] font-medium truncate max-w-[400px]"
-              style={{ color: 'rgba(255,255,255,0.55)' }}
+              className="text-[12.5px] font-medium truncate"
+              style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 400 }}
             >
-              {messages.find((m) => m.role === 'user')?.content.slice(0, 60) ?? 'Chat'}
+              {messages.find((m) => m.role === 'user')?.content.slice(0, 55) ?? 'Chat'}
             </span>
           )}
         </div>
 
-        {/* File count chip with popover */}
+        {/* File chip with popover */}
         <div className="no-drag relative" ref={filePanelRef}>
           <button
             onClick={() => setShowFilePanel((v) => !v)}
             className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all"
             style={{
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: showFilePanel ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              color: showFilePanel ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.28)',
               background: showFilePanel ? 'rgba(255,255,255,0.05)' : 'transparent',
             }}
             onMouseEnter={(e) => {
               if (!showFilePanel)
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)'
+                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
             }}
             onMouseLeave={(e) => {
               if (!showFilePanel)
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.35)'
+                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.28)'
             }}
           >
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="#c9a84c">
-              <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75z" />
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="#c9a84c">
+              <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
             </svg>
             {files.length} {files.length === 1 ? 'doc' : 'docs'}
-            <svg width="8" height="8" viewBox="0 0 12 12" fill="currentColor" className="ml-0.5">
+            <svg
+              width="7" height="7" viewBox="0 0 12 12" fill="currentColor"
+              style={{ transform: showFilePanel ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+            >
               <path d="M6 8.5L1.5 4h9L6 8.5z" />
             </svg>
           </button>
 
           {showFilePanel && (
             <div
-              className="absolute right-0 top-full mt-2 w-72 rounded-xl overflow-hidden z-50"
+              className="absolute right-0 top-full mt-1.5 w-72 rounded-xl overflow-hidden"
               style={{
                 background: '#0f0f0f',
                 border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-                animation: 'fadeUp 0.2s ease both',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+                animation: 'fadeUp 0.18s ease both',
+                zIndex: 50,
               }}
             >
-              <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <div className="px-4 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'rgba(255,255,255,0.28)' }}>
                   Loaded Documents
                 </p>
               </div>
-              <div className="max-h-56 overflow-y-auto">
+              <div className="max-h-52 overflow-y-auto">
                 {files.map((file) => {
                   const ext = file.fileName.split('.').pop()?.toUpperCase() ?? 'DOC'
                   return (
@@ -518,16 +697,19 @@ export default function ChatInterface({
                       </span>
                       <span
                         className="flex-1 text-[11px] truncate"
-                        style={{ color: 'rgba(255,255,255,0.6)' }}
+                        style={{ color: 'rgba(255,255,255,0.55)' }}
                         title={file.fileName}
                       >
                         {file.fileName}
                       </span>
                       <button
-                        onClick={() => { onRemoveFile(file.id); if (files.length <= 1) setShowFilePanel(false) }}
-                        className="no-drag shrink-0 h-5 w-5 flex items-center justify-center rounded text-[#444] hover:text-[#f85149] opacity-0 group-hover:opacity-100 transition-all"
+                        onClick={() => {
+                          onRemoveFile(file.id)
+                          if (files.length <= 1) setShowFilePanel(false)
+                        }}
+                        className="no-drag shrink-0 h-5 w-5 flex items-center justify-center rounded text-[#383838] hover:text-[#f85149] opacity-0 group-hover:opacity-100 transition-all"
                       >
-                        <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
                           <path d="M1.22 1.22a.75.75 0 0 1 1.06 0L6 4.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L7.06 6l3.72 3.72a.75.75 0 1 1-1.06 1.06L6 7.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06L4.94 6 1.22 2.28a.75.75 0 0 1 0-1.06z" />
                         </svg>
                       </button>
@@ -535,13 +717,13 @@ export default function ChatInterface({
                   )
                 })}
               </div>
-              <div className="px-4 py-2.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+              <div className="px-4 py-2.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                 <button
                   onClick={() => { onAddFiles(); setShowFilePanel(false) }}
-                  className="no-drag w-full text-left text-[11px] transition-colors"
-                  style={{ color: 'rgba(255,255,255,0.3)' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)' }}
+                  className="no-drag text-[11px] transition-colors"
+                  style={{ color: 'rgba(255,255,255,0.28)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.28)' }}
                 >
                   + Add more documents
                 </button>
@@ -551,48 +733,42 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* Messages area */}
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
-          // Empty state — files loaded, no messages yet
-          <div className="flex h-full flex-col items-center justify-center px-6 py-16 text-center">
+          <div className="flex h-full flex-col items-center justify-center px-8 py-16 text-center">
             <div
-              className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl"
-              style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.18)' }}
+              className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl"
+              style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.16)' }}
             >
-              <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
                 <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
                 <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
               </svg>
             </div>
-            <h3 className="mb-1.5 text-[17px] font-semibold tracking-[-0.01em] text-white">
+            <h3 className="mb-2 text-[18px] font-semibold tracking-[-0.015em] text-white">
               What would you like to know?
             </h3>
-            <p className="mb-8 text-[12.5px] max-w-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              {files.length} {files.length === 1 ? 'document' : 'documents'} ready · Ask anything about
-              {files.length === 1 ? ' it' : ' them'}
+            <p className="mb-8 text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)', maxWidth: 300 }}>
+              {files.length} {files.length === 1 ? 'document' : 'documents'} loaded and ready to search
             </p>
-            <div className="grid grid-cols-2 gap-2 w-full max-w-md">
+            <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
               {EXAMPLES.map((q) => (
                 <button
                   key={q}
                   onClick={() => { setInput(q); textareaRef.current?.focus() }}
-                  className="rounded-xl px-3.5 py-3 text-left text-[11.5px] leading-snug transition-all"
-                  style={{
-                    background: '#0d0d0d',
-                    border: '1px solid rgba(255,255,255,0.07)',
-                    color: 'rgba(255,255,255,0.45)',
-                  }}
+                  className="rounded-xl px-4 py-3 text-left text-[12px] leading-snug transition-all"
+                  style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.42)' }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = 'rgba(201,168,76,0.25)'
+                    el.style.borderColor = 'rgba(201,168,76,0.22)'
                     el.style.color = 'rgba(255,255,255,0.75)'
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLButtonElement
                     el.style.borderColor = 'rgba(255,255,255,0.07)'
-                    el.style.color = 'rgba(255,255,255,0.45)'
+                    el.style.color = 'rgba(255,255,255,0.42)'
                   }}
                 >
                   {q}
@@ -611,25 +787,20 @@ export default function ChatInterface({
         )}
       </div>
 
-      {/* Input area */}
+      {/* Input */}
       <div
         className="shrink-0 px-6 py-4"
         style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: '#080808' }}
       >
         <div className="max-w-3xl mx-auto">
           <div
-            className="rounded-2xl transition-all"
-            style={{
-              background: '#0d0d0d',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
+            className="rounded-2xl transition-colors"
+            style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)' }}
             onFocusCapture={(e) => {
-              const target = e.currentTarget as HTMLDivElement
-              target.style.borderColor = 'rgba(201,168,76,0.35)'
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(201,168,76,0.3)'
             }}
             onBlurCapture={(e) => {
-              const target = e.currentTarget as HTMLDivElement
-              target.style.borderColor = 'rgba(255,255,255,0.08)'
+              (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)'
             }}
           >
             <div className="flex items-end gap-3 px-4 py-3.5">
@@ -666,9 +837,15 @@ export default function ChatInterface({
               </button>
             </div>
           </div>
-          <p className="mt-2 text-center text-[10px]" style={{ color: 'rgba(255,255,255,0.15)' }}>
-            Enter to send · Shift+Enter for new line · Answers sourced strictly from your documents
-          </p>
+          <div className="mt-2 flex items-center justify-center gap-1.5">
+            <svg width="9" height="9" viewBox="0 0 20 20" fill="none">
+              <rect x="1" y="3" width="8" height="4" rx="1.25" fill="rgba(201,168,76,0.3)" transform="rotate(45 5 5)" />
+              <line x1="10" y1="10" x2="18" y2="18" stroke="rgba(201,168,76,0.3)" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.13)' }}>
+              Justice AI · Enter to send · Answers grounded in your documents
+            </p>
+          </div>
         </div>
       </div>
     </div>

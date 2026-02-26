@@ -94,8 +94,16 @@ body::before {
 }
 .card-lift:hover {
   transform: translateY(-5px);
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  border-color: rgba(201,168,76,0.18) !important;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 32px rgba(201,168,76,0.05);
 }
+
+/* ─── Ring pulse (hero icon) ───────────────────────────────────── */
+@keyframes ringPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 0.2; transform: scale(1.06); }
+}
+.ring-pulse { animation: ringPulse 3s ease-in-out infinite; }
 
 /* ─── Spinner ─────────────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
