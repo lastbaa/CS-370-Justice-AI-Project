@@ -30,6 +30,7 @@ export default function App(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false)
   const [isQuerying, setIsQuerying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [chatMode, setChatMode] = useState(false)
 
   const messagesRef = useRef(messages)
   const sessionIdRef = useRef(currentSessionId)
@@ -151,6 +152,8 @@ export default function App(): JSX.Element {
   function handleNewChat(): void {
     setMessages([])
     setCurrentSessionId(uuidv4())
+    setChatMode(true)
+    setView('main')
   }
 
   async function handleLoadSession(session: ChatSession): Promise<void> {
@@ -198,6 +201,7 @@ export default function App(): JSX.Element {
           isQuerying={isQuerying}
           isLoading={isLoading}
           loadError={loadError}
+          chatMode={chatMode}
           onQuery={handleQuery}
           onNewChat={handleNewChat}
           onAddFiles={handleAddFiles}

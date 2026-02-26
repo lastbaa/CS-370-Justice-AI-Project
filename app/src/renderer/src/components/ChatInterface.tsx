@@ -8,6 +8,7 @@ interface Props {
   files: FileInfo[]
   isLoading: boolean
   loadError: string | null
+  chatMode: boolean
   onQuery: (question: string) => void
   onNewChat: () => void
   onAddFiles: () => void
@@ -332,6 +333,7 @@ export default function ChatInterface({
   files,
   isLoading,
   loadError,
+  chatMode,
   onQuery,
   onAddFiles,
   onAddFolder,
@@ -404,7 +406,7 @@ export default function ChatInterface({
   }
 
   // ── WELCOME SCREEN ──────────────────────────────────────────────────────────
-  if (!hasFiles) {
+  if (!hasFiles && !chatMode) {
     return (
       <div
         className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808]"
@@ -751,7 +753,9 @@ export default function ChatInterface({
               What would you like to know?
             </h3>
             <p className="mb-8 text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)', maxWidth: 300 }}>
-              {files.length} {files.length === 1 ? 'document' : 'documents'} loaded and ready to search
+              {hasFiles
+                ? `${files.length} ${files.length === 1 ? 'document' : 'documents'} loaded and ready to search`
+                : 'Load documents to start searching'}
             </p>
             <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
               {EXAMPLES.map((q) => (
