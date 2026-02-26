@@ -414,8 +414,8 @@ export default function ChatInterface({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Traffic light zone — matches sidebar's h-9 */}
-        <div className="drag-region h-9 shrink-0" />
+        {/* Traffic light zone — matches sidebar's h-11 */}
+        <div className="drag-region h-11 shrink-0" />
 
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col items-center min-h-full px-10 pb-10 pt-8 justify-center">
@@ -612,9 +612,9 @@ export default function ChatInterface({
   return (
     <div className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808]">
 
-      {/* Header — matches sidebar's h-9 traffic zone + logo row */}
+      {/* Header — matches sidebar's h-11 traffic zone + content row */}
       <div
-        className="drag-region flex h-9 items-center justify-between shrink-0 px-5"
+        className="drag-region flex h-11 items-center justify-between shrink-0 px-5"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <div className="no-drag flex items-center gap-2">
