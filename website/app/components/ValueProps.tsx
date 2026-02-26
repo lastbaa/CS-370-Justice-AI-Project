@@ -67,7 +67,7 @@ export default function ValueProps() {
       <div className="max-w-6xl mx-auto">
 
         <Reveal className="flex justify-center mb-6">
-          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
+          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(201,168,76,0.55)' }}>
             01 — Why It Matters
           </span>
         </Reveal>

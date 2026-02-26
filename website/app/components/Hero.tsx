@@ -57,9 +57,9 @@ export default function Hero() {
           <span
             className="text-xs font-medium tracking-[0.2em] uppercase px-4 py-1.5 rounded-full"
             style={{
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.35)',
-              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              color: 'rgba(201,168,76,0.65)',
+              background: 'rgba(201,168,76,0.04)',
             }}
           >
             Private · Local · Open Source

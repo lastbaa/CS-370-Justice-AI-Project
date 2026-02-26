@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { AppSettings, ChatMessage, ChatSession, DEFAULT_SETTINGS, FileInfo, OllamaStatus } from '../../../../shared/src/types'
+import {
+  AppSettings,
+  ChatMessage,
+  ChatSession,
+  DEFAULT_SETTINGS,
+  FileInfo,
+} from '../../../../shared/src/types'
 import { v4 as uuidv4 } from 'uuid'
 import Sidebar from './components/Sidebar'
 import ChatInterface from './components/ChatInterface'
@@ -9,14 +15,13 @@ type View = 'main' | 'settings'
 
 function makeSessionName(messages: ChatMessage[]): string {
   const first = messages.find((m) => m.role === 'user')
-  if (!first) return 'New Session'
+  if (!first) return 'New Chat'
   const text = first.content.trim()
-  return text.length > 48 ? text.slice(0, 48) + '…' : text
+  return text.length > 52 ? text.slice(0, 52) + '…' : text
 }
 
 export default function App(): JSX.Element {
   const [view, setView] = useState<View>('main')
-  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null)
   const [files, setFiles] = useState<FileInfo[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [sessions, setSessions] = useState<ChatSession[]>([])
@@ -24,8 +29,8 @@ export default function App(): JSX.Element {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
   const [isLoading, setIsLoading] = useState(false)
   const [isQuerying, setIsQuerying] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  // Ref so the auto-save effect always has the latest messages/session id
   const messagesRef = useRef(messages)
   const sessionIdRef = useRef(currentSessionId)
   messagesRef.current = messages
@@ -36,36 +41,20 @@ export default function App(): JSX.Element {
       try {
         const savedSettings = await window.api.getSettings()
         setSettings(savedSettings)
-      } catch {
-        // use defaults
-      }
-
-      // Load existing files and sessions — model availability is handled separately
+      } catch { }
       try {
         const existingFiles = await window.api.getFiles()
         setFiles(existingFiles)
-      } catch {
-        // no files yet
-      }
-
-      try {
-        const status = await window.api.checkOllama()
-        setOllamaStatus(status)
-      } catch {
-        // Ollama not running — chat will show model-unavailable state when queried
-      }
-
+      } catch { }
       try {
         const saved = await window.api.getSessions()
         setSessions(saved)
-      } catch {
-        // no sessions yet
-      }
+      } catch { }
     }
     init()
   }, [])
 
-  // Auto-save current session whenever messages change (debounced 1s)
+  // Auto-save current session (debounced 1s)
   useEffect(() => {
     if (messages.length === 0) return
     const timer = setTimeout(async () => {
@@ -80,19 +69,46 @@ export default function App(): JSX.Element {
         await window.api.saveSession(session)
         const updated = await window.api.getSessions()
         setSessions(updated)
-      } catch {
-        // ignore save errors
-      }
+      } catch { }
     }, 1000)
     return () => clearTimeout(timer)
   }, [messages])
 
-  async function handleFilesLoaded(newFiles: FileInfo[]): Promise<void> {
-    setFiles((prev) => {
-      const existingIds = new Set(prev.map((f) => f.id))
-      const unique = newFiles.filter((f) => !existingIds.has(f.id))
-      return [...prev, ...unique]
-    })
+  // ── File management ───────────────────────────────────────────
+  async function handleLoadPaths(paths: string[]): Promise<void> {
+    setLoadError(null)
+    setIsLoading(true)
+    try {
+      const loaded = await window.api.loadFiles(paths)
+      if (loaded.length === 0) {
+        setLoadError('No supported files found. Try PDF or DOCX files.')
+        return
+      }
+      setFiles((prev) => {
+        const existingIds = new Set(prev.map((f) => f.id))
+        return [...prev, ...loaded.filter((f) => !existingIds.has(f.id))]
+      })
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load files.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleAddFiles(): Promise<void> {
+    try {
+      const paths = await window.api.openFileDialog()
+      if (!paths || paths.length === 0) return
+      await handleLoadPaths(paths)
+    } catch { }
+  }
+
+  async function handleAddFolder(): Promise<void> {
+    try {
+      const folderPath = await window.api.openFolderDialog()
+      if (!folderPath) return
+      await handleLoadPaths([folderPath])
+    } catch { }
   }
 
   async function handleRemoveFile(id: string): Promise<void> {
@@ -104,6 +120,7 @@ export default function App(): JSX.Element {
     }
   }
 
+  // ── Chat ──────────────────────────────────────────────────────
   async function handleQuery(question: string): Promise<void> {
     const userMessage: ChatMessage = {
       id: uuidv4(),
@@ -113,7 +130,6 @@ export default function App(): JSX.Element {
     }
     setMessages((prev) => [...prev, userMessage])
     setIsQuerying(true)
-
     try {
       const result = await window.api.query(question)
       const assistantMessage: ChatMessage = {
@@ -139,16 +155,7 @@ export default function App(): JSX.Element {
     }
   }
 
-  async function handleSaveSettings(newSettings: AppSettings): Promise<void> {
-    try {
-      await window.api.saveSettings(newSettings)
-      setSettings(newSettings)
-      setView('main')
-    } catch (err) {
-      console.error('Failed to save settings:', err)
-    }
-  }
-
+  // ── Sessions ──────────────────────────────────────────────────
   function handleNewChat(): void {
     setMessages([])
     setCurrentSessionId(uuidv4())
@@ -163,50 +170,53 @@ export default function App(): JSX.Element {
     try {
       await window.api.deleteSession(sessionId)
       setSessions((prev) => prev.filter((s) => s.id !== sessionId))
-      // If we deleted the current session, start fresh
-      if (sessionId === currentSessionId) {
-        handleNewChat()
-      }
+      if (sessionId === currentSessionId) handleNewChat()
     } catch (err) {
       console.error('Failed to delete session:', err)
     }
   }
 
+  async function handleSaveSettings(newSettings: AppSettings): Promise<void> {
+    try {
+      await window.api.saveSettings(newSettings)
+      setSettings(newSettings)
+      setView('main')
+    } catch (err) {
+      console.error('Failed to save settings:', err)
+    }
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#080808]">
-      {/* Sidebar */}
       <Sidebar
-        files={files}
-        isLoading={isLoading}
         sessions={sessions}
         currentSessionId={currentSessionId}
-        onFilesLoaded={handleFilesLoaded}
-        onRemoveFile={handleRemoveFile}
-        onOpenSettings={() => setView('settings')}
+        isLoading={isLoading}
         onNewChat={handleNewChat}
         onLoadSession={handleLoadSession}
         onDeleteSession={handleDeleteSession}
-        setIsLoading={setIsLoading}
+        onAddFiles={handleAddFiles}
+        onOpenSettings={() => setView('settings')}
       />
 
-      {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <ChatInterface
           messages={messages}
+          files={files}
           isQuerying={isQuerying}
-          hasFiles={files.length > 0}
+          isLoading={isLoading}
+          loadError={loadError}
           onQuery={handleQuery}
           onNewChat={handleNewChat}
+          onAddFiles={handleAddFiles}
+          onAddFolder={handleAddFolder}
+          onRemoveFile={handleRemoveFile}
+          onLoadPaths={handleLoadPaths}
         />
       </div>
 
-      {/* Settings overlay */}
       {view === 'settings' && (
-        <Settings
-          settings={settings}
-          onSave={handleSaveSettings}
-          onClose={() => setView('main')}
-        />
+        <Settings settings={settings} onSave={handleSaveSettings} onClose={() => setView('main')} />
       )}
     </div>
   )

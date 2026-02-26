@@ -57,7 +57,7 @@ export default function HowItWorks() {
 
         {/* Section label */}
         <Reveal className="flex justify-center mb-6">
-          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>03 — The Process</span>
+          <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(201,168,76,0.55)' }}>03 — The Process</span>
         </Reveal>
 
         {/* Animated heading */}
@@ -126,8 +126,8 @@ export default function HowItWorks() {
             </div>
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
               <span className="text-white font-medium">Fully air-gapped operation.</span>{' '}
-              After the initial model download, Justice AI requires no internet connection. Everything
-              — embedding, retrieval, and generation — runs on your hardware. Nothing leaves your machine.
+              Once installed, Justice AI requires no internet connection. The AI model is included in the installer —
+              embedding, retrieval, and generation all run on your hardware from day one. Nothing ever leaves your machine.
             </p>
           </div>
         </Reveal>

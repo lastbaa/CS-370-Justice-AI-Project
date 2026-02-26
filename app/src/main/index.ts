@@ -43,7 +43,7 @@ function createWindow(): void {
     minHeight: 600,
     show: false,
     titleBarStyle: 'hiddenInset',
-    backgroundColor: '#0d1117',
+    backgroundColor: '#080808',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
