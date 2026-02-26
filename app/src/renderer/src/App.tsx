@@ -148,6 +148,14 @@ export default function App(): JSX.Element {
     setMessages((prev) => [...prev, mockMessage])
   }
 
+  // ── Navigation ────────────────────────────────────────────────
+  function handleGoHome(): void {
+    setChatMode(false)
+    setMessages([])
+    setCurrentSessionId(uuidv4())
+    setView('main')
+  }
+
   // ── Sessions ──────────────────────────────────────────────────
   function handleNewChat(): void {
     setMessages([])
@@ -187,6 +195,7 @@ export default function App(): JSX.Element {
         sessions={sessions}
         currentSessionId={currentSessionId}
         isLoading={isLoading}
+        onGoHome={handleGoHome}
         onNewChat={handleNewChat}
         onLoadSession={handleLoadSession}
         onDeleteSession={handleDeleteSession}

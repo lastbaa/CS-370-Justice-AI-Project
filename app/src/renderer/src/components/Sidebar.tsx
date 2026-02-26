@@ -5,6 +5,7 @@ interface Props {
   sessions: ChatSession[]
   currentSessionId: string
   isLoading: boolean
+  onGoHome: () => void
   onNewChat: () => void
   onLoadSession: (session: ChatSession) => void
   onDeleteSession: (sessionId: string) => void
@@ -96,6 +97,7 @@ export default function Sidebar({
   sessions,
   currentSessionId,
   isLoading,
+  onGoHome,
   onNewChat,
   onLoadSession,
   onDeleteSession,
@@ -108,12 +110,15 @@ export default function Sidebar({
     <aside className="flex h-screen w-[240px] shrink-0 flex-col border-r border-[#161616] bg-[#090909]">
       {/* Drag region + logo */}
       <div className="drag-region flex items-center gap-2.5 px-4 pt-5 pb-4">
-        <div className="no-drag flex items-center gap-2">
+        <button
+          onClick={onGoHome}
+          className="no-drag flex items-center gap-2 hover:opacity-75 transition-opacity"
+        >
           <GavelIcon size={18} />
           <span className="text-[14px] font-semibold tracking-[-0.01em] text-white">
             Justice <span style={{ color: '#c9a84c' }}>AI</span>
           </span>
-        </div>
+        </button>
       </div>
 
       {/* New Chat */}
