@@ -19,7 +19,7 @@ const platforms: {
     key: 'mac',
     label: 'macOS',
     sub: 'Universal · macOS 12+',
-    file: '/releases/JusticeAI-1.0.0-mac.zip',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/JusticeAI-1.0.0-mac.zip',
     installSteps: [
       'Unzip the downloaded archive',
       'Move JusticeAI.app to your Applications folder',
@@ -36,7 +36,7 @@ const platforms: {
     key: 'windows',
     label: 'Windows',
     sub: 'Windows 10/11 · x64',
-    file: '/releases/JusticeAI-1.0.0-win.zip',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/JusticeAI-1.0.0-win.zip',
     installSteps: [
       'Unzip the downloaded archive',
       'Run JusticeAI-Setup.exe and follow the installer',
@@ -53,7 +53,7 @@ const platforms: {
     key: 'linux',
     label: 'Linux',
     sub: 'AppImage · x86_64',
-    file: '/releases/JusticeAI-1.0.0-linux.zip',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/JusticeAI-1.0.0-linux.zip',
     installSteps: [
       'Unzip the archive and extract the AppImage',
       'Run: chmod +x JusticeAI.AppImage',
@@ -106,12 +106,8 @@ export default function Download() {
     setDownloadState(s => ({ ...s, [platform.key]: 'downloading' }))
     setProgress(p => ({ ...p, [platform.key]: 0 }))
 
-    const a = document.createElement('a')
-    a.href = platform.file
-    a.download = platform.file.split('/').pop()!
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    // GitHub release assets require navigating to the URL directly
+    window.open(platform.file, '_blank', 'noopener')
 
     let current = 0
     progressRefs.current[platform.key] = setInterval(() => {
