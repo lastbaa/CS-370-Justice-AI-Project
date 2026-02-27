@@ -29,7 +29,7 @@
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
-    "electron": "^31.0.2",
+    "electron": "^31.7.7",
     "electron-builder": "^24.13.3",
     "electron-vite": "^2.3.0",
     "postcss": "^8.4.39",
@@ -48,9 +48,7 @@
       "target": [
         {
           "target": "dmg",
-          "arch": [
-            "universal"
-          ]
+          "arch": ["arm64"]
         }
       ]
     },
@@ -58,8 +56,14 @@
       "output": "dist"
     },
     "files": [
-      "out/**/*"
-    ],
-    "extraResources": []
+      "!**/.vscode/*",
+      "!src/*",
+      "!electron.vite.config.*",
+      "!{.eslintignore,.eslintrc*,.prettierignore,.prettierrc*}",
+      "!{.env,.env.*,.npmrc}",
+      "!tailwind.config.*",
+      "!postcss.config.*",
+      "!tsconfig*"
+    ]
   }
 }

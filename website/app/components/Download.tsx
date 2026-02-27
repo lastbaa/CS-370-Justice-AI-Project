@@ -19,12 +19,12 @@ const platforms: {
     key: 'mac',
     label: 'macOS',
     sub: 'Universal · macOS 12+',
-    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/JusticeAI-1.0.0-mac.zip',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/Justice%20AI-1.0.0-arm64.dmg',
     installSteps: [
-      'Unzip the downloaded archive',
-      'Move JusticeAI.app to your Applications folder',
-      'Open JusticeAI — right-click → Open on first launch',
-      'The AI model launches automatically — no setup required',
+      'Open the downloaded .dmg file',
+      'Drag Justice AI to your Applications folder',
+      'Right-click Justice AI → Open on first launch (macOS security)',
+      'Install Ollama and pull models — see Settings inside the app',
     ],
     icon: (
       <svg width="17" height="21" viewBox="0 0 18 22" fill="currentColor">
@@ -36,7 +36,7 @@ const platforms: {
     key: 'windows',
     label: 'Windows',
     sub: 'Windows 10/11 · x64',
-    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/JusticeAI-1.0.0-win.zip',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/tag/v1.0.0',
     installSteps: [
       'Unzip the downloaded archive',
       'Run JusticeAI-Setup.exe and follow the installer',
@@ -53,7 +53,7 @@ const platforms: {
     key: 'linux',
     label: 'Linux',
     sub: 'AppImage · x86_64',
-    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/JusticeAI-1.0.0-linux.zip',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/tag/v1.0.0',
     installSteps: [
       'Unzip the archive and extract the AppImage',
       'Run: chmod +x JusticeAI.AppImage',
