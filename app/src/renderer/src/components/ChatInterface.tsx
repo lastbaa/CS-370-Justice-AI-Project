@@ -17,209 +17,6 @@ interface Props {
   onLoadPaths: (paths: string[]) => void
 }
 
-// ── Animated product demo ────────────────────────────────────────────────────
-const DEMO_Q = 'Does the Calloway contract limit liability for underground infrastructure damage?'
-const DEMO_A =
-  'Based on Section 8.3 (Page 4), Calloway Landscaping LLC disclaimed liability for "pre-existing or underground utilities not marked by owner." However, Exhibit C confirms a utility map was provided to Calloway prior to excavation — this disclosure likely voids the disclaimer under Georgia O.C.G.A. § 25-9-6.'
-
-function ProductDemo(): JSX.Element {
-  const [phase, setPhase] = useState<0 | 1 | 2 | 3>(0)
-  const [answerText, setAnswerText] = useState('')
-  const [cursorVisible, setCursorVisible] = useState(true)
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 800)
-    const t2 = setTimeout(() => setPhase(2), 1800)
-    const t3 = setTimeout(() => {
-      setPhase(3)
-      let i = 0
-      const interval = setInterval(() => {
-        i += 3
-        setAnswerText(DEMO_A.slice(0, i))
-        if (i >= DEMO_A.length) {
-          setAnswerText(DEMO_A)
-          clearInterval(interval)
-        }
-      }, 18)
-      return () => clearInterval(interval)
-    }, 3000)
-
-    // Blinking cursor
-    const cursorInterval = setInterval(() => setCursorVisible((v) => !v), 530)
-
-    return () => {
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
-      clearInterval(cursorInterval)
-    }
-  }, [])
-
-  const isTyping = phase === 3 && answerText.length < DEMO_A.length
-  const isDone = phase === 3 && answerText.length >= DEMO_A.length
-
-  return (
-    <div
-      className="w-full rounded-2xl overflow-hidden"
-      style={{ border: '1px solid rgba(255,255,255,0.08)', background: '#060606' }}
-    >
-      {/* Fake title bar */}
-      <div
-        className="flex items-center gap-3 px-5 py-3 border-b"
-        style={{ borderColor: 'rgba(255,255,255,0.05)', background: '#050505' }}
-      >
-        <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          ))}
-        </div>
-        <div className="flex-1 flex items-center justify-center gap-2">
-          <svg width="11" height="11" viewBox="0 0 20 20" fill="none">
-            <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
-            <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-          <span className="text-[11px] font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            Justice AI — Williams v. Calloway, Decatur GA
-          </span>
-        </div>
-        <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>3 docs</span>
-      </div>
-
-      {/* Demo content */}
-      <div className="flex" style={{ minHeight: 220 }}>
-        {/* Sidebar stub */}
-        <div
-          className="w-36 shrink-0 border-r p-3 flex flex-col gap-1"
-          style={{ borderColor: 'rgba(255,255,255,0.04)', background: '#040404' }}
-        >
-          <p className="text-[9px] uppercase tracking-widest mb-2" style={{ color: 'rgba(255,255,255,0.15)' }}>
-            Williams v. Calloway
-          </p>
-          {[
-            'Williams_v_Calloway_Complaint.pdf',
-            'Calloway_Contract_2024.docx',
-            'Expert_Arborist_Report.pdf',
-          ].map((name, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg"
-              style={{ background: i === 0 ? 'rgba(255,255,255,0.05)' : 'transparent' }}
-            >
-              <svg width="9" height="9" viewBox="0 0 16 16" fill="rgba(201,168,76,0.5)">
-                <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
-              </svg>
-              <span
-                className="text-[9px] truncate leading-snug"
-                style={{ color: i === 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)' }}
-              >
-                {name}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Chat area */}
-        <div className="flex-1 flex flex-col justify-end p-4 gap-3">
-          {phase >= 1 && (
-            <div
-              className="self-end max-w-[65%] rounded-xl rounded-tr-sm px-3.5 py-2.5 text-[11.5px] leading-relaxed"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.75)',
-                animation: 'fadeUp 0.3s ease both',
-              }}
-            >
-              {DEMO_Q}
-            </div>
-          )}
-
-          {phase >= 2 && (
-            <div style={{ animation: 'fadeUp 0.3s ease both' }}>
-              <div className="flex items-center gap-2 mb-1.5">
-                <div
-                  className="flex h-5 w-5 items-center justify-center rounded-full"
-                  style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)' }}
-                >
-                  <svg width="9" height="9" viewBox="0 0 20 20" fill="none">
-                    <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
-                    <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <span className="text-[10px] font-semibold" style={{ color: 'rgba(201,168,76,0.6)' }}>
-                  Justice AI
-                </span>
-                {phase === 2 && (
-                  <span className="text-[9px] italic" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                    searching…
-                  </span>
-                )}
-              </div>
-
-              {phase === 2 && (
-                <div className="flex gap-1.5 pl-7">
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ background: 'rgba(255,255,255,0.2)', animation: `blink 1.2s ease ${i * 0.2}s infinite` }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {phase >= 3 && (
-                <div className="pl-7">
-                  <p className="text-[11.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                    {answerText}
-                    {isTyping && cursorVisible && (
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          width: '1.5px',
-                          height: '0.85em',
-                          background: 'rgba(255,255,255,0.5)',
-                          marginLeft: '2px',
-                          verticalAlign: 'text-bottom',
-                        }}
-                      />
-                    )}
-                  </p>
-                  {isDone && (
-                    <div
-                      className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2"
-                      style={{
-                        background: 'rgba(201,168,76,0.05)',
-                        border: '1px solid rgba(201,168,76,0.12)',
-                        animation: 'fadeUp 0.3s ease both',
-                      }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 16 16" fill="rgba(201,168,76,0.7)">
-                        <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
-                      </svg>
-                      <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                        Calloway_Contract_2024.docx · p. 4
-                      </span>
-                      <span
-                        className="ml-auto text-[9px] px-1.5 py-0.5 rounded font-semibold"
-                        style={{
-                          background: 'rgba(201,168,76,0.08)',
-                          color: 'rgba(201,168,76,0.7)',
-                          border: '1px solid rgba(201,168,76,0.15)',
-                        }}
-                      >
-                        Cited
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ── Thinking animation ────────────────────────────────────────────────────────
 const THINKING_PHRASES = [
   'Reading your documents',
@@ -425,112 +222,118 @@ export default function ChatInterface({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {/* Traffic light zone — matches sidebar's h-11 */}
+        {/* Title bar drag zone */}
         <div className="drag-region h-11 shrink-0" />
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col items-center min-h-full px-10 pb-10 pt-8 justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center px-10 pb-16">
 
-            {/* Icon */}
+          {/* Ambient glow behind icon */}
+          <div className="relative mb-7">
             <div
-              className="mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-[20px]"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%)' }}
+            />
+            <div
+              className="relative flex h-[68px] w-[68px] items-center justify-center rounded-[20px]"
               style={{
-                background: 'rgba(201,168,76,0.06)',
-                border: '1px solid rgba(201,168,76,0.18)',
-                boxShadow: '0 0 40px rgba(201,168,76,0.06)',
+                background: 'rgba(201,168,76,0.07)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                boxShadow: '0 8px 32px rgba(201,168,76,0.08)',
                 animation: 'floatY 4s ease-in-out infinite',
               }}
             >
-              <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
+              <svg width="30" height="30" viewBox="0 0 20 20" fill="none">
                 <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
                 <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
                 <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
               </svg>
             </div>
+          </div>
 
-            {/* Heading */}
-            <h1 className="mb-2 text-[26px] font-bold tracking-[-0.025em] text-white leading-tight text-center">
-              Welcome to Justice <span style={{ color: '#c9a84c' }}>AI</span>
-            </h1>
-            <p
-              className="mb-9 text-[13px] text-center leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.32)', maxWidth: 340 }}
-            >
-              Private legal research powered by a local AI model.
-              Your documents never leave this device — ever.
-            </p>
+          {/* Heading */}
+          <h1 className="mb-2 text-[28px] font-bold tracking-[-0.03em] text-white leading-tight text-center">
+            Justice <span style={{ color: '#c9a84c' }}>AI</span>
+          </h1>
+          <p
+            className="mb-10 text-[13.5px] text-center leading-relaxed"
+            style={{ color: 'rgba(255,255,255,0.3)', maxWidth: 320 }}
+          >
+            Ask anything about your case files.
+            Every query runs locally — nothing leaves your device.
+          </p>
 
-            {/* Demo */}
-            <div className="w-full mb-8" style={{ maxWidth: 560 }}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-[0.16em] px-3"
-                  style={{ color: 'rgba(201,168,76,0.45)' }}
-                >
-                  Live Demo
-                </span>
-                <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
-              </div>
-              <ProductDemo />
-            </div>
-
-            {/* Drop zone */}
-            <div
-              onClick={onAddFiles}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className="w-full rounded-2xl cursor-pointer transition-all"
-              style={{
-                maxWidth: 560,
-                border: `1.5px dashed ${isDragging ? 'rgba(201,168,76,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                background: isDragging ? 'rgba(201,168,76,0.03)' : 'transparent',
-                padding: '28px 32px',
-              }}
-              onMouseEnter={(e) => {
+          {/* Drop zone */}
+          <div
+            onClick={onAddFiles}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className="w-full cursor-pointer transition-all"
+            style={{
+              maxWidth: 480,
+              borderRadius: 18,
+              border: `1.5px dashed ${isDragging ? 'rgba(201,168,76,0.55)' : 'rgba(255,255,255,0.1)'}`,
+              background: isDragging ? 'rgba(201,168,76,0.04)' : 'rgba(255,255,255,0.01)',
+              padding: '36px 32px',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!isDragging) {
                 const el = e.currentTarget as HTMLDivElement
-                if (!isDragging) {
-                  el.style.borderColor = 'rgba(255,255,255,0.18)'
-                  el.style.background = 'rgba(255,255,255,0.02)'
-                }
-              }}
-              onMouseLeave={(e) => {
+                el.style.borderColor = 'rgba(255,255,255,0.18)'
+                el.style.background = 'rgba(255,255,255,0.025)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isDragging) {
                 const el = e.currentTarget as HTMLDivElement
-                if (!isDragging) {
-                  el.style.borderColor = 'rgba(255,255,255,0.1)'
-                  el.style.background = 'transparent'
-                }
-              }}
-            >
-              <div className="flex flex-col items-center text-center">
-                <div
-                  className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
-                  style={{
-                    background: isDragging ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${isDragging ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 16 16" fill={isDragging ? '#c9a84c' : 'rgba(255,255,255,0.4)'} style={{ transition: 'all 0.2s ease' }}>
-                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75zM8.75 9.25a.75.75 0 0 0-1.5 0v1.5H5.75a.75.75 0 0 0 0 1.5h1.5v1.5a.75.75 0 0 0 1.5 0v-1.5h1.5a.75.75 0 0 0 0-1.5H8.75v-1.5z" />
+                el.style.borderColor = 'rgba(255,255,255,0.1)'
+                el.style.background = 'rgba(255,255,255,0.01)'
+              }
+            }}
+          >
+            <div className="flex flex-col items-center text-center gap-4">
+              {/* Upload icon */}
+              <div
+                className="flex h-14 w-14 items-center justify-center rounded-2xl"
+                style={{
+                  background: isDragging ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${isDragging ? 'rgba(201,168,76,0.28)' : 'rgba(255,255,255,0.07)'}`,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {isDragging ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                </div>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                )}
+              </div>
 
-                <p className="text-[14px] font-semibold text-white mb-1">
-                  {isDragging ? 'Drop your files here' : 'Load your documents'}
+              <div>
+                <p className="text-[15px] font-semibold text-white leading-snug">
+                  {isDragging ? 'Release to load' : 'Drop your documents here'}
                 </p>
-                <p className="text-[12px] mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  Click to browse files · or drag & drop PDF or DOCX documents
+                <p className="mt-1 text-[12.5px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                  PDF and DOCX · or click to browse
                 </p>
+              </div>
 
-                {/* Primary CTA */}
+              {/* CTA buttons */}
+              <div className="flex items-center gap-3 mt-1">
                 <div
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[12.5px] font-semibold"
                   style={{
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: 'rgba(255,255,255,0.7)',
+                    background: 'rgba(201,168,76,0.1)',
+                    border: '1px solid rgba(201,168,76,0.22)',
+                    color: '#c9a84c',
                   }}
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
@@ -538,80 +341,62 @@ export default function ChatInterface({
                   </svg>
                   Browse files
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAddFolder() }}
+                  className="text-[12px] transition-colors no-drag"
+                  style={{ color: 'rgba(255,255,255,0.25)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)' }}
+                >
+                  Load folder
+                </button>
+              </div>
 
-                {isLoading && (
-                  <p className="mt-3 text-[12px]" style={{ color: '#c9a84c' }}>
+              {isLoading && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div
+                    className="h-3.5 w-3.5 rounded-full animate-spin"
+                    style={{ border: '2px solid rgba(201,168,76,0.2)', borderTopColor: '#c9a84c' }}
+                  />
+                  <p className="text-[12px]" style={{ color: '#c9a84c' }}>
                     Processing documents…
                   </p>
-                )}
-                {loadError && (
-                  <p className="mt-3 text-[12px]" style={{ color: '#f85149' }}>
-                    {loadError}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={onAddFolder}
-              className="mt-3 text-[11px] transition-colors no-drag"
-              style={{ color: 'rgba(255,255,255,0.2)' }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.45)' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.2)' }}
-            >
-              Or load an entire folder →
-            </button>
-
-            {/* Feature callouts */}
-            <div className="mt-10 grid grid-cols-3 gap-3 w-full" style={{ maxWidth: 560 }}>
-              {[
-                {
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="rgba(201,168,76,0.7)">
-                      <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
-                    </svg>
-                  ),
-                  label: 'Cited answers',
-                  body: 'Exact source — file and page',
-                },
-                {
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M8 1L2 3.5v5c0 3.8 2.6 7.3 6 8 3.4-.7 6-4.2 6-8v-5L8 1z" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" fill="none" strokeLinejoin="round" />
-                      <path d="M5.5 8l2 2 3-3" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ),
-                  label: 'Fully private',
-                  body: 'Nothing leaves your device',
-                },
-                {
-                  icon: (
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="6.5" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" />
-                      <path d="M5 8l2 2 4-4" stroke="rgba(201,168,76,0.7)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  ),
-                  label: 'No hallucinations',
-                  body: 'Document-grounded only',
-                },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-xl px-4 py-4 flex flex-col gap-2"
-                  style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.05)' }}
-                >
-                  {item.icon}
-                  <div>
-                    <p className="text-[11.5px] font-semibold text-white leading-snug">{item.label}</p>
-                    <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                      {item.body}
-                    </p>
-                  </div>
                 </div>
-              ))}
+              )}
+              {loadError && (
+                <p className="mt-1 text-[12px]" style={{ color: '#f85149' }}>
+                  {loadError}
+                </p>
+              )}
             </div>
-
           </div>
+
+          {/* Feature pills */}
+          <div className="flex items-center gap-2.5 mt-8 flex-wrap justify-center">
+            {[
+              { label: 'Cited answers' },
+              { label: '100% local' },
+              { label: 'No hallucinations' },
+              { label: 'Air-gapped safe' },
+            ].map((f) => (
+              <div
+                key={f.label}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  color: 'rgba(255,255,255,0.3)',
+                }}
+              >
+                <span
+                  className="w-1 h-1 rounded-full shrink-0"
+                  style={{ background: 'rgba(201,168,76,0.6)' }}
+                />
+                {f.label}
+              </div>
+            ))}
+          </div>
+
         </div>
       </div>
     )
@@ -665,40 +450,32 @@ export default function ChatInterface({
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center px-8 py-16 text-center">
-            <div
-              className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl"
-              style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.16)' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
-                <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
-                <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-[18px] font-semibold tracking-[-0.015em] text-white">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'rgba(201,168,76,0.5)' }}>
+              {hasFiles
+                ? `${files.length} ${files.length === 1 ? 'document' : 'documents'} ready`
+                : 'No documents loaded'}
+            </p>
+            <h3 className="mb-7 text-[22px] font-semibold tracking-[-0.02em] text-white">
               What would you like to know?
             </h3>
-            <p className="mb-8 text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)', maxWidth: 300 }}>
-              {hasFiles
-                ? `${files.length} ${files.length === 1 ? 'document' : 'documents'} loaded and ready to search`
-                : 'Load documents to start searching'}
-            </p>
             <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
               {EXAMPLES.map((q) => (
                 <button
                   key={q}
                   onClick={() => { setInput(q); textareaRef.current?.focus() }}
-                  className="rounded-xl px-4 py-3 text-left text-[12px] leading-snug transition-all"
-                  style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.42)' }}
+                  className="rounded-xl px-4 py-3.5 text-left text-[12px] leading-relaxed transition-all"
+                  style={{ background: '#0c0c0c', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.38)' }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = 'rgba(201,168,76,0.22)'
-                    el.style.color = 'rgba(255,255,255,0.75)'
+                    el.style.background = '#111'
+                    el.style.borderColor = 'rgba(201,168,76,0.2)'
+                    el.style.color = 'rgba(255,255,255,0.72)'
                   }}
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLButtonElement
-                    el.style.borderColor = 'rgba(255,255,255,0.07)'
-                    el.style.color = 'rgba(255,255,255,0.42)'
+                    el.style.background = '#0c0c0c'
+                    el.style.borderColor = 'rgba(255,255,255,0.06)'
+                    el.style.color = 'rgba(255,255,255,0.38)'
                   }}
                 >
                   {q}

@@ -13,7 +13,7 @@ function GavelAvatar(): JSX.Element {
   return (
     <div
       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full mt-0.5"
-      style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.22)' }}
+      style={{ background: 'rgba(201,168,76,0.09)', border: '1px solid rgba(201,168,76,0.2)' }}
     >
       <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
         <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
@@ -29,20 +29,20 @@ export default function MessageBubble({ message }: Props): JSX.Element {
 
   if (isUser) {
     return (
-      <div className="flex justify-end">
-        <div className="max-w-[72%]">
+      <div className="flex justify-end" style={{ animation: 'fadeUp 0.25s ease both' }}>
+        <div style={{ maxWidth: '72%' }}>
           <div
             className="rounded-2xl rounded-tr-sm px-4 py-3"
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.09)',
+              background: '#141414',
+              border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
             <p className="text-[13px] text-white leading-relaxed whitespace-pre-wrap">
               {message.content}
             </p>
           </div>
-          <p className="mt-1.5 text-right text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+          <p className="mt-1.5 text-right text-[10px]" style={{ color: 'rgba(255,255,255,0.14)' }}>
             {formatTime(message.timestamp)}
           </p>
         </div>
@@ -53,39 +53,48 @@ export default function MessageBubble({ message }: Props): JSX.Element {
   const isNotFound = message.notFound
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3" style={{ animation: 'fadeUp 0.25s ease both' }}>
       <GavelAvatar />
 
       <div className="flex-1 min-w-0">
         <p
-          className="mb-2 text-[10.5px] font-semibold tracking-wide"
-          style={{ color: 'rgba(201,168,76,0.65)' }}
+          className="mb-2.5 text-[10px] font-bold tracking-[0.12em] uppercase"
+          style={{ color: 'rgba(201,168,76,0.55)' }}
         >
           Justice AI
         </p>
 
         {isNotFound ? (
           <div
-            className="rounded-xl px-4 py-3"
+            className="rounded-xl px-4 py-3.5"
             style={{
-              background: 'rgba(248,81,73,0.06)',
-              border: '1px solid rgba(248,81,73,0.18)',
+              background: 'rgba(248,81,73,0.05)',
+              border: '1px solid rgba(248,81,73,0.14)',
             }}
           >
             <p
               className="text-[13px] leading-relaxed whitespace-pre-wrap"
-              style={{ color: 'rgba(255,180,180,0.8)' }}
+              style={{ color: 'rgba(255,160,160,0.75)' }}
             >
               {message.content}
             </p>
           </div>
         ) : (
-          <p className="text-[13px] text-white leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </p>
+          <div
+            className="rounded-2xl rounded-tl-sm px-4 py-4"
+            style={{
+              background: '#0d0d0d',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderLeft: '2px solid rgba(201,168,76,0.22)',
+            }}
+          >
+            <p className="text-[13.5px] text-white leading-[1.75] whitespace-pre-wrap">
+              {message.content}
+            </p>
+          </div>
         )}
 
-        <p className="mt-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+        <p className="mt-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.14)' }}>
           {formatTime(message.timestamp)}
         </p>
 
@@ -93,7 +102,7 @@ export default function MessageBubble({ message }: Props): JSX.Element {
           <div className="mt-3">
             <p
               className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em]"
-              style={{ color: 'rgba(255,255,255,0.22)' }}
+              style={{ color: 'rgba(255,255,255,0.18)' }}
             >
               Sources · {message.citations.length}
             </p>
