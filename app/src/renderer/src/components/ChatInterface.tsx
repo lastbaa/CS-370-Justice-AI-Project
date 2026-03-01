@@ -365,10 +365,8 @@ export default function ChatInterface({
 }: Props): JSX.Element {
   const [input, setInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
-  const [showFilePanel, setShowFilePanel] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const filePanelRef = useRef<HTMLDivElement>(null)
 
   const hasFiles = files.length > 0
 
@@ -382,16 +380,6 @@ export default function ChatInterface({
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 128) + 'px'
   }, [input])
-
-  useEffect(() => {
-    function handler(e: MouseEvent): void {
-      if (filePanelRef.current && !filePanelRef.current.contains(e.target as Node)) {
-        setShowFilePanel(false)
-      }
-    }
-    if (showFilePanel) document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [showFilePanel])
 
   function handleSend(): void {
     const trimmed = input.trim()
@@ -659,103 +647,18 @@ export default function ChatInterface({
           )}
         </div>
 
-        {/* File chip with popover */}
-        <div className="no-drag relative" ref={filePanelRef}>
-          <button
-            onClick={() => setShowFilePanel((v) => !v)}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all"
-            style={{
-              border: '1px solid rgba(255,255,255,0.07)',
-              color: showFilePanel ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.28)',
-              background: showFilePanel ? 'rgba(255,255,255,0.05)' : 'transparent',
-            }}
-            onMouseEnter={(e) => {
-              if (!showFilePanel)
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
-            }}
-            onMouseLeave={(e) => {
-              if (!showFilePanel)
-                (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.28)'
-            }}
+        {/* Minimal doc count pill — documents managed in Context panel */}
+        {files.length > 0 && (
+          <div
+            className="no-drag flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px]"
+            style={{ border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.25)' }}
           >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="#c9a84c">
+            <svg width="9" height="9" viewBox="0 0 16 16" fill="rgba(201,168,76,0.5)">
               <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
             </svg>
             {files.length} {files.length === 1 ? 'doc' : 'docs'}
-            <svg
-              width="7" height="7" viewBox="0 0 12 12" fill="currentColor"
-              style={{ transform: showFilePanel ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
-            >
-              <path d="M6 8.5L1.5 4h9L6 8.5z" />
-            </svg>
-          </button>
-
-          {showFilePanel && (
-            <div
-              className="absolute right-0 top-full mt-1.5 w-72 rounded-xl overflow-hidden"
-              style={{
-                background: '#0f0f0f',
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
-                animation: 'fadeUp 0.18s ease both',
-                zIndex: 50,
-              }}
-            >
-              <div className="px-4 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                  Loaded Documents
-                </p>
-              </div>
-              <div className="max-h-52 overflow-y-auto">
-                {files.map((file) => {
-                  const ext = file.fileName.split('.').pop()?.toUpperCase() ?? 'DOC'
-                  return (
-                    <div
-                      key={file.id}
-                      className="group flex items-center gap-2.5 px-4 py-2.5 hover:bg-[#161616] transition-colors"
-                    >
-                      <span
-                        className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded"
-                        style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c' }}
-                      >
-                        {ext}
-                      </span>
-                      <span
-                        className="flex-1 text-[11px] truncate"
-                        style={{ color: 'rgba(255,255,255,0.55)' }}
-                        title={file.fileName}
-                      >
-                        {file.fileName}
-                      </span>
-                      <button
-                        onClick={() => {
-                          onRemoveFile(file.id)
-                          if (files.length <= 1) setShowFilePanel(false)
-                        }}
-                        className="no-drag shrink-0 h-5 w-5 flex items-center justify-center rounded text-[#383838] hover:text-[#f85149] opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                        <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
-                          <path d="M1.22 1.22a.75.75 0 0 1 1.06 0L6 4.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L7.06 6l3.72 3.72a.75.75 0 1 1-1.06 1.06L6 7.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06L4.94 6 1.22 2.28a.75.75 0 0 1 0-1.06z" />
-                        </svg>
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="px-4 py-2.5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                <button
-                  onClick={() => { onAddFiles(); setShowFilePanel(false) }}
-                  className="no-drag text-[11px] transition-colors"
-                  style={{ color: 'rgba(255,255,255,0.28)' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.28)' }}
-                >
-                  + Add more documents
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Messages */}

@@ -9,6 +9,7 @@ import {
 } from '../../../../shared/src/types'
 import { v4 as uuidv4 } from 'uuid'
 import Sidebar from './components/Sidebar'
+import ContextPanel from './components/ContextPanel'
 import ChatInterface from './components/ChatInterface'
 import Settings from './components/Settings'
 
@@ -33,6 +34,7 @@ export default function App(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false)
   const [isQuerying, setIsQuerying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [lastCitations, setLastCitations] = useState<import('../../../../shared/src/types').Citation[]>([])
 
   const messagesRef = useRef(messages)
   const sessionIdRef = useRef(currentSessionId)
@@ -155,6 +157,7 @@ export default function App(): JSX.Element {
         timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, assistantMessage])
+      setLastCitations(result.citations)
     } catch (err) {
       const errorMessage: ChatMessage = {
         id: uuidv4(),
@@ -183,6 +186,7 @@ export default function App(): JSX.Element {
     setMessages([])
     setCurrentSessionId(uuidv4())
     setChatMode(true)
+    setLastCitations([])
     setView('main')
   }
 
@@ -224,6 +228,15 @@ export default function App(): JSX.Element {
         onDeleteSession={handleDeleteSession}
         onAddFiles={handleAddFiles}
         onOpenSettings={() => setView('settings')}
+      />
+
+      <ContextPanel
+        files={files}
+        citations={lastCitations}
+        isQuerying={isQuerying}
+        isLoading={isLoading}
+        onAddFiles={handleAddFiles}
+        onRemoveFile={handleRemoveFile}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
