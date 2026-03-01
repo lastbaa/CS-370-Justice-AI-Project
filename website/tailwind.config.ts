@@ -22,6 +22,14 @@ const config: Config = {
           primary: '#ffffff',
           secondary: '#8a8a8a',
         },
+        /* shadcn CSS-variable colours */
+        border: 'hsl(var(--border))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
       },
       fontFamily: {
         sans: [

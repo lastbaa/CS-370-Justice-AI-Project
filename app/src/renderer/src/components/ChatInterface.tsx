@@ -220,31 +220,53 @@ function ProductDemo(): JSX.Element {
   )
 }
 
-// ── Sophisticated multi-step loading indicator ────────────────────────────────
+// ── Thinking animation ────────────────────────────────────────────────────────
+const THINKING_PHRASES = [
+  'Reading your documents',
+  'Finding relevant sections',
+  'Cross-referencing passages',
+  'Analyzing legal context',
+  'Weighing relevant statutes',
+  'Synthesizing key findings',
+  'Building your answer',
+  'Reviewing source citations',
+]
+
 function TypingIndicator(): JSX.Element {
-  const [step, setStep] = useState(0)
+  const [phraseIdx, setPhraseIdx] = useState(0)
+  const [dotTick, setDotTick] = useState(0)
+  const [elapsed, setElapsed] = useState(0)
+  const [phraseKey, setPhraseKey] = useState(0)
+  const startRef = useRef(Date.now())
 
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setStep(1), 1000),
-      setTimeout(() => setStep(2), 2200),
-      setTimeout(() => setStep(3), 3400),
-    ]
-    return () => timers.forEach(clearTimeout)
+    const phraseTimer = setInterval(() => {
+      setPhraseIdx((i) => (i + 1) % THINKING_PHRASES.length)
+      setPhraseKey((k) => k + 1)
+    }, 2800)
+    const dotsTimer = setInterval(() => setDotTick((t) => t + 1), 500)
+    const elapsedTimer = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startRef.current) / 1000))
+    }, 1000)
+    return () => {
+      clearInterval(phraseTimer)
+      clearInterval(dotsTimer)
+      clearInterval(elapsedTimer)
+    }
   }, [])
 
-  const steps = [
-    { label: 'Reading your documents' },
-    { label: 'Finding relevant sections' },
-    { label: 'Analyzing legal context' },
-    { label: 'Drafting response' },
-  ]
+  const dots = ['·', '··', '···'][dotTick % 3]
 
   return (
     <div className="flex gap-3 max-w-3xl mx-auto w-full" style={{ animation: 'fadeUp 0.3s ease both' }}>
+      {/* Avatar */}
       <div
         className="flex h-7 w-7 shrink-0 mt-1 items-center justify-center rounded-full"
-        style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.22)' }}
+        style={{
+          background: 'rgba(201,168,76,0.1)',
+          border: '1px solid rgba(201,168,76,0.22)',
+          animation: 'pulseGlow 2.4s ease-in-out infinite',
+        }}
       >
         <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
           <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
@@ -253,64 +275,65 @@ function TypingIndicator(): JSX.Element {
         </svg>
       </div>
 
+      {/* Card */}
       <div
-        className="rounded-2xl rounded-tl-sm px-5 py-4 flex flex-col gap-3"
-        style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)' }}
+        className="rounded-2xl rounded-tl-sm px-5 py-4 flex flex-col gap-3 relative overflow-hidden"
+        style={{
+          background: '#0f0f0f',
+          border: '1px solid rgba(201,168,76,0.14)',
+          animation: 'pulseGlow 2.4s ease-in-out infinite',
+          minWidth: 220,
+        }}
       >
         <p className="text-[11px] font-semibold" style={{ color: 'rgba(201,168,76,0.65)' }}>
           Justice AI
         </p>
 
-        <div className="flex flex-col gap-2.5">
-          {steps.map((s, i) => {
-            const isDone = i < step
-            const isActive = i === step
-
-            return (
-              <div key={s.label} className="flex items-center gap-2.5">
-                {/* Status icon */}
-                <div className="w-4 h-4 flex items-center justify-center shrink-0">
-                  {isDone ? (
-                    <div
-                      className="w-4 h-4 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.3)' }}
-                    >
-                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                        <path d="M1.5 4l2 2 3-3" stroke="#c9a84c" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  ) : isActive ? (
-                    <div
-                      className="animate-spin w-3.5 h-3.5 rounded-full"
-                      style={{ border: '2px solid rgba(201,168,76,0.2)', borderTopColor: '#c9a84c' }}
-                    />
-                  ) : (
-                    <div className="w-2 h-2 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                  )}
-                </div>
-
-                <span
-                  className="text-[12px]"
-                  style={{
-                    color: isDone
-                      ? 'rgba(255,255,255,0.22)'
-                      : isActive
-                        ? 'rgba(255,255,255,0.7)'
-                        : 'rgba(255,255,255,0.15)',
-                    transition: 'color 0.4s ease',
-                    textDecoration: isDone ? 'line-through' : 'none',
-                    textDecorationColor: 'rgba(255,255,255,0.12)',
-                  }}
-                >
-                  {s.label}
-                  {isActive && (
-                    <span style={{ color: 'rgba(201,168,76,0.45)' }}>…</span>
-                  )}
-                </span>
-              </div>
-            )
-          })}
+        {/* Phrase + spinner row */}
+        <div className="flex items-center gap-2.5">
+          <div
+            className="animate-spin shrink-0 w-3.5 h-3.5 rounded-full"
+            style={{ border: '2px solid rgba(201,168,76,0.18)', borderTopColor: '#c9a84c' }}
+          />
+          <span
+            key={phraseKey}
+            className="text-[13px]"
+            style={{
+              color: 'rgba(255,255,255,0.65)',
+              animation: 'phraseIn 0.35s ease both',
+            }}
+          >
+            {THINKING_PHRASES[phraseIdx]}
+            <span style={{ color: 'rgba(201,168,76,0.55)', fontWeight: 600, letterSpacing: '0.05em' }}>
+              {dots}
+            </span>
+          </span>
         </div>
+
+        {/* Scanning bar */}
+        <div
+          className="h-px w-full overflow-hidden rounded-full"
+          style={{ background: 'rgba(255,255,255,0.05)' }}
+        >
+          <div
+            style={{
+              height: '100%',
+              width: '30%',
+              background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.55), transparent)',
+              animation: 'scan 1.6s ease-in-out infinite',
+            }}
+          />
+        </div>
+
+        {/* Elapsed hint */}
+        {elapsed >= 8 && (
+          <p
+            className="text-[10px]"
+            style={{ color: 'rgba(255,255,255,0.18)', animation: 'fadeUp 0.4s ease both' }}
+          >
+            {elapsed}s · complex queries can take up to 30s
+          </p>
+        )}
       </div>
     </div>
   )

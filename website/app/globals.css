@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── shadcn CSS variables ─────────────────────────────────────── */
+:root {
+  --background: 0 0% 3%;           /* #080808 */
+  --foreground: 0 0% 100%;         /* white */
+  --border: 0 0% 16%;              /* #2a2a2a */
+  --muted: 0 0% 8%;                /* #141414 */
+  --muted-foreground: 0 0% 54%;    /* #8a8a8a */
+}
+
 html { scroll-behavior: smooth; }
 
 body {
