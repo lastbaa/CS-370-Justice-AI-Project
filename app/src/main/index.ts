@@ -101,7 +101,7 @@ ipcMain.handle(IPC.CHECK_OLLAMA, async () => {
     const settings = store.get('settings', DEFAULT_SETTINGS)
     return await ollamaService.checkStatus(
       settings.ollamaBaseUrl,
-      settings.llmModel,
+      'saul-7b-instruct',
       settings.embedModel
     )
   } catch (err) {
@@ -111,7 +111,7 @@ ipcMain.handle(IPC.CHECK_OLLAMA, async () => {
       models: [],
       hasLlmModel: false,
       hasEmbedModel: false,
-      llmModelName: DEFAULT_SETTINGS.llmModel,
+      llmModelName: 'saul-7b-instruct',
       embedModelName: DEFAULT_SETTINGS.embedModel,
     }
   }

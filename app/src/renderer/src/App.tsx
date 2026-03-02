@@ -57,6 +57,7 @@ export default function App(): JSX.Element {
       try {
         const savedSettings = await window.api.getSettings()
         setSettings(savedSettings)
+        if (!savedSettings.hfToken) setView('settings')
       } catch { }
       try {
         const existingFiles = await window.api.getFiles()
@@ -164,7 +165,7 @@ export default function App(): JSX.Element {
       const errorMessage: ChatMessage = {
         id: uuidv4(),
         role: 'assistant',
-        content: `Unable to get a response. ${err instanceof Error ? err.message : 'Check that Ollama is running and your models are pulled.'}`,
+        content: `Unable to get a response. ${err instanceof Error ? err.message : 'Check your HuggingFace token in Settings and that Ollama is running for embeddings.'}`,
         citations: [],
         notFound: true,
         timestamp: Date.now(),

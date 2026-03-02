@@ -11,8 +11,9 @@ import {
   AppSettings,
 } from '../../../../shared/src/types'
 import { OllamaService } from './ollama'
+import { askSaul } from './saul'
 
-const SYSTEM_PROMPT = `You are Justice AI, a secure legal research assistant designed for legal professionals. You run entirely on this device. No data is sent externally.
+const SYSTEM_PROMPT = `You are Justice AI, a secure legal research assistant designed for legal professionals.
 
 Your only job is to help the user find information within the documents they have loaded. You are NOT providing legal advice. You are a research and retrieval tool to support the legal professional using you.
 
@@ -25,9 +26,7 @@ Rules you must never break:
 6. Never provide legal advice or legal conclusions. If asked for a legal opinion, remind the user that Justice AI is a research tool and that legal conclusions are theirs to make.
 
 Context from loaded documents:
-{context}
-
-User question: {question}`
+{context}`
 
 interface ChunkMetadata extends DocumentChunk {
   itemId: string
@@ -204,11 +203,11 @@ export class RagPipeline {
         ? contextParts.join('\n\n---\n\n')
         : 'No relevant document excerpts were found.'
 
-    const prompt = SYSTEM_PROMPT.replace('{context}', context).replace('{question}', question)
+    const systemWithContext = SYSTEM_PROMPT.replace('{context}', context)
 
     let answer: string
     try {
-      answer = await this.ollamaService.generate(prompt, settings.llmModel, settings.ollamaBaseUrl)
+      answer = await askSaul(systemWithContext, question, settings.hfToken)
     } catch (err) {
       throw new Error(`Failed to generate answer: ${err}`)
     }

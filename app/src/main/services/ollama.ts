@@ -27,9 +27,6 @@ export class OllamaService {
       }))
 
       const normalize = (name: string) => name.toLowerCase().replace(/:latest$/, '')
-      const hasLlmModel = models.some(
-        (m) => normalize(m.name) === normalize(llmModel) || m.name.toLowerCase().startsWith(normalize(llmModel))
-      )
       const hasEmbedModel = models.some(
         (m) => normalize(m.name) === normalize(embedModel) || m.name.toLowerCase().startsWith(normalize(embedModel))
       )
@@ -37,7 +34,7 @@ export class OllamaService {
       return {
         running: true,
         models,
-        hasLlmModel,
+        hasLlmModel: true, // LLM is now via HuggingFace API
         hasEmbedModel,
         llmModelName: llmModel,
         embedModelName: embedModel,
@@ -74,23 +71,4 @@ export class OllamaService {
     return data.embedding
   }
 
-  async generate(prompt: string, model: string, baseUrl: string): Promise<string> {
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model, prompt, stream: false }),
-      signal: AbortSignal.timeout(120000),
-    })
-
-    if (!response.ok) {
-      const err = await response.text()
-      throw new Error(`Ollama generate error (${response.status}): ${err}`)
-    }
-
-    const data = (await response.json()) as { response: string }
-    if (typeof data.response !== 'string') {
-      throw new Error('Ollama returned no response text')
-    }
-    return data.response
-  }
 }

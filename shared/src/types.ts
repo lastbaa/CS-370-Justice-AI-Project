@@ -80,7 +80,7 @@ export interface OllamaStatus {
 // ─── Settings Types ────────────────────────────────────────────────────────────
 
 export interface AppSettings {
-  llmModel: string;
+  hfToken: string;
   embedModel: string;
   chunkSize: number;
   chunkOverlap: number;
@@ -89,7 +89,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  llmModel: 'saul-instruct',
+  hfToken: '',
   embedModel: 'nomic-embed-text',
   chunkSize: 500,
   chunkOverlap: 50,

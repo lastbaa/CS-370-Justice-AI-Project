@@ -130,6 +130,47 @@ function NumberInput({
   )
 }
 
+function HfTokenInput({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}): JSX.Element {
+  const [visible, setVisible] = useState(false)
+  return (
+    <div className="relative flex items-center">
+      <input
+        type={visible ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="hf_••••••••••••••••••••"
+        className="w-full rounded-lg px-3 py-2 pr-10 text-[12px] text-white placeholder-white/20 outline-none transition-colors font-mono"
+        style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.08)' }}
+        onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = 'rgba(201,168,76,0.4)' }}
+        onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute right-2.5 flex h-5 w-5 items-center justify-center"
+        style={{ color: 'rgba(255,255,255,0.3)' }}
+      >
+        {visible ? (
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M.143 2.31a.75.75 0 0 1 1.047-.167l14.5 10.5a.75.75 0 1 1-.88 1.214l-2.248-1.628C11.346 12.769 9.792 13 8 13c-3.73 0-6.849-2.07-8.123-5.062a.75.75 0 0 1 0-.876C.515 5.796 1.48 4.57 2.72 3.65L.31 2.007A.75.75 0 0 1 .143 2.31zm5.56 4.036a2.5 2.5 0 0 0 3.408 3.408l-3.408-3.408z" />
+            <path d="M12.034 9.512A2.5 2.5 0 0 0 8.488 5.966l-.68-.492A3.99 3.99 0 0 1 12 8c0 .553-.107 1.082-.304 1.566l.338.245-.001-.001z" />
+          </svg>
+        ) : (
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 2c3.73 0 6.849 2.07 8.123 5.062a.75.75 0 0 1 0 .876C14.849 11.93 11.73 14 8 14c-3.73 0-6.849-2.07-8.123-5.062a.75.75 0 0 1 0-.876C1.151 5.07 4.27 3 8 3zm0 1.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM8 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
+          </svg>
+        )}
+      </button>
+    </div>
+  )
+}
+
 function SectionHeader({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-4 pb-2 border-b" style={{ color: 'rgba(255,255,255,0.3)', borderColor: 'rgba(255,255,255,0.06)' }}>
@@ -156,42 +197,38 @@ export default function Settings({ settings, ollamaStatus, onSave, onClose, onCh
     onSave(local)
   }
 
+  const hasToken = local.hfToken.trim().length > 0
+
   // Derive status display
   const statusInfo = (() => {
+    if (!hasToken) return {
+      dot: '#f85149',
+      label: 'HuggingFace token missing',
+      detail: 'Add your token below to enable answer generation.',
+      ready: false,
+    }
     if (!ollamaStatus) return {
-      dot: '#3a3a3a',
-      label: 'Not checked',
-      detail: 'Click "Check Connection" to verify Ollama is running.',
+      dot: '#e3b341',
+      label: 'Ollama not checked',
+      detail: 'Click "Check Connection" to verify embeddings are available.',
       ready: false,
     }
     if (!ollamaStatus.running) return {
-      dot: '#f85149',
+      dot: '#e3b341',
       label: 'Ollama not running',
-      detail: 'Start Ollama with: ollama serve',
-      ready: false,
-    }
-    if (!ollamaStatus.hasLlmModel && !ollamaStatus.hasEmbedModel) return {
-      dot: '#e3b341',
-      label: 'Models not installed',
-      detail: `Pull both models using the commands below.`,
-      ready: false,
-    }
-    if (!ollamaStatus.hasLlmModel) return {
-      dot: '#e3b341',
-      label: `Missing LLM model`,
-      detail: `Pull ${local.llmModel} using the command below.`,
+      detail: 'Start Ollama with: ollama serve (needed for embeddings).',
       ready: false,
     }
     if (!ollamaStatus.hasEmbedModel) return {
       dot: '#e3b341',
-      label: `Missing embed model`,
+      label: 'Embedding model missing',
       detail: `Pull ${local.embedModel} using the command below.`,
       ready: false,
     }
     return {
       dot: '#3fb950',
       label: 'Ready',
-      detail: `${ollamaStatus.llmModelName} · ${ollamaStatus.embedModelName}`,
+      detail: `Saul-7B via HuggingFace · ${ollamaStatus.embedModelName} embeddings`,
       ready: true,
     }
   })()
@@ -286,21 +323,50 @@ export default function Settings({ settings, ollamaStatus, onSave, onClose, onCh
             </div>
           </div>
 
-          {/* ── Quick Setup ── */}
+          {/* ── HuggingFace Token ── */}
           <div>
-            <SectionHeader>Quick Setup</SectionHeader>
+            <SectionHeader>HuggingFace API</SectionHeader>
+            <div className="flex flex-col gap-3">
+              <div
+                className="rounded-xl px-4 py-3 flex items-start gap-3"
+                style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}
+              >
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="#c9a84c" className="shrink-0 mt-0.5">
+                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+                </svg>
+                <div>
+                  <p className="text-[11px] font-semibold mb-0.5" style={{ color: '#c9a84c' }}>
+                    Saul-7B-Instruct runs via HuggingFace
+                  </p>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                    Get a free token at{' '}
+                    <span style={{ color: 'rgba(201,168,76,0.7)' }}>huggingface.co/settings/tokens</span>
+                    {' '}(read access is enough).
+                  </p>
+                </div>
+              </div>
+              <Field
+                label="HuggingFace Token"
+                description="Used to call Saul-7B-Instruct for answer generation."
+              >
+                <HfTokenInput
+                  value={local.hfToken}
+                  onChange={(v) => update('hfToken', v)}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* ── Embedding Setup ── */}
+          <div>
+            <SectionHeader>Embedding Setup (Ollama)</SectionHeader>
             <div className="flex flex-col gap-2.5">
               <p className="text-[11px] mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                Run these commands in Terminal to get started:
+                Embeddings still run locally via Ollama:
               </p>
               <CommandRow label="1." command="brew install ollama" />
-              <CommandRow label="2." command={`ollama pull ${local.llmModel || 'saul-7b'}`} />
-              <CommandRow label="3." command={`ollama pull ${local.embedModel || 'nomic-embed-text'}`} />
-              <CommandRow label="4." command="ollama serve" />
-              <p className="text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                No Homebrew? Download from{' '}
-                <span style={{ color: 'rgba(201,168,76,0.6)' }}>ollama.ai</span>
-              </p>
+              <CommandRow label="2." command={`ollama pull ${local.embedModel || 'nomic-embed-text'}`} />
+              <CommandRow label="3." command="ollama serve" />
             </div>
           </div>
 
@@ -309,18 +375,8 @@ export default function Settings({ settings, ollamaStatus, onSave, onClose, onCh
             <SectionHeader>Model Configuration</SectionHeader>
             <div className="flex flex-col gap-4">
               <Field
-                label="LLM Model"
-                description="Language model for generating answers. Must be pulled in Ollama."
-              >
-                <TextInput
-                  value={local.llmModel}
-                  onChange={(v) => update('llmModel', v)}
-                  placeholder="saul-instruct"
-                />
-              </Field>
-              <Field
                 label="Embedding Model"
-                description="Model used to embed document chunks and queries for semantic search."
+                description="Model used to embed document chunks and queries for semantic search (runs locally via Ollama)."
               >
                 <TextInput
                   value={local.embedModel}
@@ -330,7 +386,7 @@ export default function Settings({ settings, ollamaStatus, onSave, onClose, onCh
               </Field>
               <Field
                 label="Ollama Base URL"
-                description="URL where Ollama is running."
+                description="URL where Ollama is running (for embeddings)."
               >
                 <TextInput
                   value={local.ollamaBaseUrl}
