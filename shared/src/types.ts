@@ -89,7 +89,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  llmModel: 'saul-7b',
+  llmModel: 'saul-instruct',
   embedModel: 'nomic-embed-text',
   chunkSize: 500,
   chunkOverlap: 50,

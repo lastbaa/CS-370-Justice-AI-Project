@@ -1,4 +1,4 @@
-import { LocalIndex } from 'vectra'
+import { LocalIndex, MetadataTypes } from 'vectra'
 import { join } from 'path'
 import { app } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
@@ -60,7 +60,7 @@ export class RagPipeline {
       const docMap = new Map<string, { meta: ChunkMetadata; count: number }>()
 
       for (const item of allItems) {
-        const meta = item.metadata as ChunkMetadata
+        const meta = item.metadata as unknown as ChunkMetadata
         if (meta && meta.itemId && meta.documentId) {
           this.chunkRegistry.set(meta.itemId, meta)
           const existing = this.docChunkIds.get(meta.documentId) || []
@@ -94,7 +94,7 @@ export class RagPipeline {
 
       // Second pass: fix totalPages to be the max pageNumber per doc
       for (const item of allItems) {
-        const meta = item.metadata as ChunkMetadata
+        const meta = item.metadata as unknown as ChunkMetadata
         if (meta && meta.documentId && this.fileRegistry.has(meta.documentId)) {
           const fi = this.fileRegistry.get(meta.documentId)!
           if (meta.pageNumber > fi.totalPages) {
@@ -124,7 +124,7 @@ export class RagPipeline {
         )
         const itemId = uuidv4()
         const meta: ChunkMetadata = { ...chunk, itemId }
-        await this.index.insertItem({ id: itemId, vector: embedding, metadata: meta as unknown as Record<string, unknown> })
+        await this.index.insertItem({ id: itemId, vector: embedding, metadata: meta as unknown as Record<string, MetadataTypes> })
         this.chunkRegistry.set(itemId, meta)
         itemIds.push(itemId)
       } catch (err) {
@@ -183,15 +183,15 @@ export class RagPipeline {
       throw new Error(`Failed to embed query: ${err}`)
     }
 
-    let results: Array<{ item: { metadata: unknown }; score: number }> = []
+    let results: Array<{ item: { metadata: Record<string, MetadataTypes> }; score: number }> = []
     try {
-      results = await this.index.queryItems(queryEmbedding, settings.topK)
+      results = await this.index.queryItems(queryEmbedding, question, settings.topK)
     } catch {
       results = []
     }
 
     const retrievedChunks = results.map((r) => {
-      const meta = r.item.metadata as ChunkMetadata
+      const meta = r.item.metadata as unknown as ChunkMetadata
       return { ...meta, score: r.score }
     })
 

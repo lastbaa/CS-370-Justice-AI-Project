@@ -111,7 +111,7 @@ function PdfViewer({ citation }: { citation: Citation }): JSX.Element {
         const ctx = canvas.getContext('2d')!
 
         // Render the PDF page
-        await page.render({ canvasContext: ctx, viewport }).promise
+        await page.render({ canvasContext: ctx, viewport, canvas }).promise
         if (cancelled) return
 
         // Overlay highlights

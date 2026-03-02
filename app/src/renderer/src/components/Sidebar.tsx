@@ -16,9 +16,9 @@ interface Props {
 function GavelIcon({ size = 16 }: { size?: number }): JSX.Element {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
-      <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
-      <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
-      <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
+      <rect x="1" y="3" width="11" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 6.5 5)" />
+      <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="#c9a84c" strokeWidth="2.5" strokeLinecap="round" />
+      <rect x="0.5" y="16.5" width="8.5" height="2.5" rx="0.75" fill="#c9a84c" opacity="0.38" />
     </svg>
   )
 }

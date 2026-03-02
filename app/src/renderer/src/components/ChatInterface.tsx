@@ -67,9 +67,9 @@ function TypingIndicator(): JSX.Element {
         }}
       >
         <svg width="12" height="12" viewBox="0 0 20 20" fill="none">
-          <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
-          <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
-          <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
+          <rect x="1" y="3" width="11" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 6.5 5)" />
+          <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="#c9a84c" strokeWidth="2.5" strokeLinecap="round" />
+          <rect x="0.5" y="16.5" width="8.5" height="2.5" rx="0.75" fill="#c9a84c" opacity="0.38" />
         </svg>
       </div>
 
@@ -158,7 +158,6 @@ export default function ChatInterface({
   onQuery,
   onAddFiles,
   onAddFolder,
-  onRemoveFile,
   onLoadPaths,
   onViewCitation,
 }: Props): JSX.Element {
@@ -245,9 +244,9 @@ export default function ChatInterface({
               }}
             >
               <svg width="30" height="30" viewBox="0 0 20 20" fill="none">
-                <rect x="1" y="3" width="8" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 5 5)" />
-                <line x1="10" y1="10" x2="18" y2="18" stroke="#c9a84c" strokeWidth="3" strokeLinecap="round" />
-                <rect x="1" y="17" width="8" height="2" rx="1" fill="#c9a84c" opacity="0.45" />
+                <rect x="1" y="3" width="11" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 6.5 5)" />
+                <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="#c9a84c" strokeWidth="2.5" strokeLinecap="round" />
+                <rect x="0.5" y="16.5" width="8.5" height="2.5" rx="0.75" fill="#c9a84c" opacity="0.38" />
               </svg>
             </div>
           </div>
@@ -417,8 +416,8 @@ export default function ChatInterface({
       >
         <div className="no-drag flex items-center gap-2">
           <svg width="11" height="11" viewBox="0 0 20 20" fill="none">
-            <rect x="1" y="3" width="8" height="4" rx="1.25" fill="rgba(201,168,76,0.5)" transform="rotate(45 5 5)" />
-            <line x1="10" y1="10" x2="18" y2="18" stroke="rgba(201,168,76,0.5)" strokeWidth="3" strokeLinecap="round" />
+            <rect x="1" y="3" width="11" height="4" rx="1.25" fill="rgba(201,168,76,0.5)" transform="rotate(45 6.5 5)" />
+            <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="rgba(201,168,76,0.5)" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
           {isEmpty ? (
             <span className="text-[12.5px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -548,8 +547,8 @@ export default function ChatInterface({
           </div>
           <div className="mt-2 flex items-center justify-center gap-1.5">
             <svg width="9" height="9" viewBox="0 0 20 20" fill="none">
-              <rect x="1" y="3" width="8" height="4" rx="1.25" fill="rgba(201,168,76,0.3)" transform="rotate(45 5 5)" />
-              <line x1="10" y1="10" x2="18" y2="18" stroke="rgba(201,168,76,0.3)" strokeWidth="3" strokeLinecap="round" />
+              <rect x="1" y="3" width="11" height="4" rx="1.25" fill="rgba(201,168,76,0.3)" transform="rotate(45 6.5 5)" />
+              <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="rgba(201,168,76,0.3)" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
             <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.13)' }}>
               Justice AI · Enter to send · Answers grounded in your documents
