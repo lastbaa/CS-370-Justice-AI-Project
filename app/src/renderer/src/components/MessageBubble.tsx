@@ -1,8 +1,9 @@
-import { ChatMessage } from '../../../../../shared/src/types'
+import { ChatMessage, Citation } from '../../../../../shared/src/types'
 import SourceCard from './SourceCard'
 
 interface Props {
   message: ChatMessage
+  onViewCitation?: (citation: Citation) => void
 }
 
 function formatTime(ts: number): string {
@@ -24,7 +25,7 @@ function GavelAvatar(): JSX.Element {
   )
 }
 
-export default function MessageBubble({ message }: Props): JSX.Element {
+export default function MessageBubble({ message, onViewCitation }: Props): JSX.Element {
   const isUser = message.role === 'user'
 
   if (isUser) {
@@ -108,7 +109,7 @@ export default function MessageBubble({ message }: Props): JSX.Element {
             </p>
             <div className="flex flex-col gap-2">
               {message.citations.map((citation, idx) => (
-                <SourceCard key={idx} citation={citation} />
+                <SourceCard key={idx} citation={citation} onView={onViewCitation} />
               ))}
             </div>
           </div>

@@ -29,4 +29,8 @@ contextBridge.exposeInMainWorld('api', {
   saveSession: (session: ChatSession) => ipcRenderer.invoke(IPC.SAVE_SESSION, session),
   getSessions: () => ipcRenderer.invoke(IPC.GET_SESSIONS),
   deleteSession: (sessionId: string) => ipcRenderer.invoke(IPC.DELETE_SESSION, sessionId),
+
+  // Document viewer
+  getFileData: (filePath: string) => ipcRenderer.invoke(IPC.GET_FILE_DATA, filePath),
+  getPageText: (filePath: string, pageNumber: number) => ipcRenderer.invoke(IPC.GET_PAGE_TEXT, filePath, pageNumber),
 })

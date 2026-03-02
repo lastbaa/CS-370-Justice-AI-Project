@@ -8,6 +8,7 @@ interface Props {
   isLoading: boolean
   onAddFiles: () => void
   onRemoveFile: (id: string) => void
+  onViewCitation: (citation: Citation) => void
 }
 
 function RelevanceBar({ score }: { score: number }): JSX.Element {
@@ -32,19 +33,31 @@ function RelevanceBar({ score }: { score: number }): JSX.Element {
   )
 }
 
-function CitationRow({ citation, index }: { citation: Citation; index: number }): JSX.Element {
+function CitationRow({
+  citation,
+  index,
+  onView,
+}: {
+  citation: Citation
+  index: number
+  onView: (c: Citation) => void
+}): JSX.Element {
   const [expanded, setExpanded] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const short = citation.excerpt.slice(0, 120)
   const hasMore = citation.excerpt.length > 120
 
   return (
     <div
-      className="rounded-xl px-3.5 py-3 flex flex-col gap-2 transition-all"
+      className="rounded-xl px-3.5 py-3 flex flex-col gap-2 transition-all cursor-pointer"
       style={{
-        background: '#0d0d0d',
+        background: hovered ? '#111' : '#0d0d0d',
         border: '1px solid rgba(201,168,76,0.14)',
         borderLeft: '2px solid rgba(201,168,76,0.45)',
+        transition: 'background 0.15s ease',
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* Row header */}
       <div className="flex items-center justify-between gap-2">
@@ -63,9 +76,27 @@ function CitationRow({ citation, index }: { citation: Citation; index: number })
             {citation.fileName}
           </span>
         </div>
-        <span className="shrink-0 text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          p.{citation.pageNumber}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            p.{citation.pageNumber}
+          </span>
+          {hovered && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onView(citation) }}
+              className="flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-md transition-all"
+              style={{
+                background: 'rgba(201,168,76,0.12)',
+                border: '1px solid rgba(201,168,76,0.25)',
+                color: '#c9a84c',
+              }}
+            >
+              <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />
+              </svg>
+              View
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Relevance bar */}
@@ -80,7 +111,7 @@ function CitationRow({ citation, index }: { citation: Citation; index: number })
         {!expanded && hasMore && '…'}"
         {hasMore && (
           <button
-            onClick={() => setExpanded((v) => !v)}
+            onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v) }}
             className="ml-1.5 text-[10px] not-italic"
             style={{ color: 'rgba(201,168,76,0.55)' }}
           >
@@ -148,6 +179,7 @@ export default function ContextPanel({
   isLoading,
   onAddFiles,
   onRemoveFile,
+  onViewCitation,
 }: Props): JSX.Element {
   const hasCitations = citations.length > 0
 
@@ -232,7 +264,7 @@ export default function ContextPanel({
             ) : (
               <div className="flex flex-col gap-2">
                 {citations.map((c, i) => (
-                  <CitationRow key={i} citation={c} index={i} />
+                  <CitationRow key={i} citation={c} index={i} onView={onViewCitation} />
                 ))}
               </div>
             )}

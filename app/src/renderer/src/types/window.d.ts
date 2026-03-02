@@ -17,6 +17,8 @@ declare global {
       saveSession: (session: ChatSession) => Promise<boolean>
       getSessions: () => Promise<ChatSession[]>
       deleteSession: (sessionId: string) => Promise<boolean>
+      getFileData: (filePath: string) => Promise<string>
+      getPageText: (filePath: string, pageNumber: number) => Promise<string>
     }
   }
 }

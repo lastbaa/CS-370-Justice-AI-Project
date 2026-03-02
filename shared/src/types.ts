@@ -115,6 +115,9 @@ export const IPC = {
   SAVE_SESSION: 'save-session',
   GET_SESSIONS: 'get-sessions',
   DELETE_SESSION: 'delete-session',
+  // Document viewer
+  GET_FILE_DATA: 'get-file-data',
+  GET_PAGE_TEXT: 'get-page-text',
 } as const
 
 // ─── Chat Session Types ────────────────────────────────────────────────────────

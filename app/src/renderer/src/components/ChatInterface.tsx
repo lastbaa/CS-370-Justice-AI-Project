@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, KeyboardEvent } from 'react'
-import { ChatMessage, FileInfo } from '../../../../../shared/src/types'
+import { ChatMessage, Citation, FileInfo } from '../../../../../shared/src/types'
 import MessageBubble from './MessageBubble'
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   onAddFolder: () => void
   onRemoveFile: (id: string) => void
   onLoadPaths: (paths: string[]) => void
+  onViewCitation: (citation: Citation) => void
 }
 
 // ── Thinking animation ────────────────────────────────────────────────────────
@@ -159,6 +160,7 @@ export default function ChatInterface({
   onAddFolder,
   onRemoveFile,
   onLoadPaths,
+  onViewCitation,
 }: Props): JSX.Element {
   const [input, setInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -486,7 +488,7 @@ export default function ChatInterface({
         ) : (
           <div className="flex flex-col gap-7 max-w-3xl mx-auto w-full px-6 py-8">
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
+              <MessageBubble key={msg.id} message={msg} onViewCitation={onViewCitation} />
             ))}
             {isQuerying && <TypingIndicator />}
             <div ref={messagesEndRef} />

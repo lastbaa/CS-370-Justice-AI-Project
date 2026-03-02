@@ -233,6 +233,16 @@ export class RagPipeline {
     return Array.from(this.fileRegistry.values())
   }
 
+  getPageText(filePath: string, pageNumber: number): string {
+    const texts: string[] = []
+    for (const chunk of this.chunkRegistry.values()) {
+      if (chunk.filePath === filePath && chunk.pageNumber === pageNumber) {
+        texts.push(chunk.text)
+      }
+    }
+    return texts.join(' ')
+  }
+
   private chunkDocument(
     doc: ParsedDocument,
     chunkSize: number,

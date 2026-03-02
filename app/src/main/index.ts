@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import { join } from 'path'
+import { readFileSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from 'electron-store'
 import { readdirSync } from 'fs'
@@ -259,6 +260,18 @@ ipcMain.handle(IPC.GET_SESSIONS, async () => {
     console.error('GET_SESSIONS error:', err)
     return []
   }
+})
+
+// Return a file's raw bytes as base64 (for PDF viewer in renderer)
+ipcMain.handle(IPC.GET_FILE_DATA, (_event, filePath: string) => {
+  const buf = readFileSync(filePath)
+  return buf.toString('base64')
+})
+
+// Return the extracted text for a specific page (used by DOCX viewer)
+ipcMain.handle(IPC.GET_PAGE_TEXT, async (_event, filePath: string, pageNumber: number) => {
+  await ensureInitialized()
+  return ragPipeline.getPageText(filePath, pageNumber)
 })
 
 // Delete a session by id

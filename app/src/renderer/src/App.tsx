@@ -12,6 +12,7 @@ import Sidebar from './components/Sidebar'
 import ContextPanel from './components/ContextPanel'
 import ChatInterface from './components/ChatInterface'
 import Settings from './components/Settings'
+import DocumentViewer from './components/DocumentViewer'
 
 type View = 'main' | 'settings'
 
@@ -35,6 +36,7 @@ export default function App(): JSX.Element {
   const [isQuerying, setIsQuerying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [lastCitations, setLastCitations] = useState<import('../../../../shared/src/types').Citation[]>([])
+  const [viewerCitation, setViewerCitation] = useState<import('../../../../shared/src/types').Citation | null>(null)
 
   const messagesRef = useRef(messages)
   const sessionIdRef = useRef(currentSessionId)
@@ -187,6 +189,7 @@ export default function App(): JSX.Element {
     setCurrentSessionId(uuidv4())
     setChatMode(true)
     setLastCitations([])
+    setViewerCitation(null)
     setView('main')
   }
 
@@ -237,6 +240,7 @@ export default function App(): JSX.Element {
         isLoading={isLoading}
         onAddFiles={handleAddFiles}
         onRemoveFile={handleRemoveFile}
+        onViewCitation={setViewerCitation}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -253,8 +257,14 @@ export default function App(): JSX.Element {
           onAddFolder={handleAddFolder}
           onRemoveFile={handleRemoveFile}
           onLoadPaths={handleLoadPaths}
+          onViewCitation={setViewerCitation}
         />
       </div>
+
+      <DocumentViewer
+        citation={viewerCitation}
+        onClose={() => setViewerCitation(null)}
+      />
 
       {view === 'settings' && (
         <Settings

@@ -1,20 +1,27 @@
+import { useState } from 'react'
 import { Citation } from '../../../../../shared/src/types'
 
 interface Props {
   citation: Citation
+  onView?: (citation: Citation) => void
 }
 
-export default function SourceCard({ citation }: Props): JSX.Element {
+export default function SourceCard({ citation, onView }: Props): JSX.Element {
   const score = Math.round(citation.score * 100)
+  const [hovered, setHovered] = useState(false)
 
   return (
     <div
-      className="rounded-xl px-4 py-3 flex flex-col gap-2.5"
+      className="rounded-xl px-4 py-3 flex flex-col gap-2.5 transition-colors cursor-pointer"
       style={{
-        background: '#0c0c0c',
+        background: hovered ? '#111' : '#0c0c0c',
         border: '1px solid rgba(255,255,255,0.07)',
         borderLeft: '2px solid rgba(201,168,76,0.4)',
+        transition: 'background 0.15s ease',
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onView?.(citation)}
     >
       {/* Header row */}
       <div className="flex items-center justify-between gap-3">
@@ -30,7 +37,7 @@ export default function SourceCard({ citation }: Props): JSX.Element {
             {citation.fileName}
           </span>
         </div>
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
             p.&nbsp;
             <span className="font-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
@@ -47,6 +54,18 @@ export default function SourceCard({ citation }: Props): JSX.Element {
           >
             {score}%
           </span>
+          {hovered && onView && (
+            <span
+              className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+              style={{
+                background: 'rgba(201,168,76,0.1)',
+                border: '1px solid rgba(201,168,76,0.22)',
+                color: '#c9a84c',
+              }}
+            >
+              View →
+            </span>
+          )}
         </div>
       </div>
 
