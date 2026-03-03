@@ -9,10 +9,10 @@ const features = [
     body: 'The moment you paste a document into ChatGPT or any cloud tool, you may have waived privilege. Justice AI never transmits your files — they never leave your hard drive.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-        <path d="M16 3L5 7.5v8c0 6.08 4.67 11.77 11 13 6.33-1.23 11-6.92 11-13v-8L16 3z" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-        <rect x="11.5" y="14" width="9" height="7" rx="1.5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6" fill="none" />
-        <path d="M13 14v-2.5a3 3 0 016 0V14" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-        <circle cx="16" cy="17.5" r="1.2" fill="rgba(255,255,255,0.55)" />
+        <path d="M16 3L5 7.5v8c0 6.08 4.67 11.77 11 13 6.33-1.23 11-6.92 11-13v-8L16 3z" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+        <rect x="11.5" y="14" width="9" height="7" rx="1.5" stroke="rgba(201,168,76,0.75)" strokeWidth="1.6" fill="none" />
+        <path d="M13 14v-2.5a3 3 0 016 0V14" stroke="rgba(201,168,76,0.75)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+        <circle cx="16" cy="17.5" r="1.2" fill="rgba(201,168,76,0.75)" />
       </svg>
     ),
   },
@@ -21,8 +21,8 @@ const features = [
     body: "Justice AI cannot hallucinate. Every response is anchored to text in your documents. If the answer isn't there, it says so — no fabrications, no assumptions, no guesswork.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-        <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" fill="none" />
-        <path d="M10 16.5l4 4 8-8" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="16" cy="16" r="12" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" fill="none" />
+        <path d="M10 16.5l4 4 8-8" stroke="rgba(201,168,76,0.75)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -31,8 +31,8 @@ const features = [
     body: 'A junior associate might spend half a day searching a 500-page deposition. Justice AI returns a cited excerpt in under ten seconds — letting your team focus on analysis, not retrieval.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-        <circle cx="16" cy="16" r="12" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" fill="none" />
-        <path d="M16 10v6l4 2" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="16" cy="16" r="12" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" fill="none" />
+        <path d="M16 10v6l4 2" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -41,10 +41,10 @@ const features = [
     body: 'There is no shared model memory, no fine-tuning required. Load the files relevant to a matter and Justice AI instantly knows only what those documents contain.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-        <path d="M8 4h11l5 5v19H8V4z" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
-        <path d="M19 4v5h5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" strokeLinejoin="round" />
-        <line x1="12" y1="20" x2="20" y2="20" stroke="rgba(255,255,255,0.55)" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="12" y1="23" x2="17" y2="23" stroke="rgba(255,255,255,0.55)" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M8 4h11l5 5v19H8V4z" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" strokeLinejoin="round" fill="none" />
+        <path d="M19 4v5h5" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" strokeLinejoin="round" />
+        <line x1="12" y1="20" x2="20" y2="20" stroke="rgba(201,168,76,0.75)" strokeWidth="1.4" strokeLinecap="round" />
+        <line x1="12" y1="23" x2="17" y2="23" stroke="rgba(201,168,76,0.75)" strokeWidth="1.4" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -53,9 +53,9 @@ const features = [
     body: "Running a compact local model uses a fraction of the compute of a cloud API call. Justice AI isn't just better for your clients — it's a more responsible choice for the environment.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
-        <path d="M16 4C9.37 4 4 9.37 4 16s5.37 12 12 12 12-5.37 12-12S22.63 4 16 4z" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" fill="none" />
-        <path d="M16 4c0 6-4 10-4 10s4 2 4 8" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
-        <path d="M28 16c-6 0-10-4-10-4s-2 4-8 4" stroke="rgba(255,255,255,0.55)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+        <path d="M16 4C9.37 4 4 9.37 4 16s5.37 12 12 12 12-5.37 12-12S22.63 4 16 4z" stroke="rgba(201,168,76,0.75)" strokeWidth="1.8" fill="none" />
+        <path d="M16 4c0 6-4 10-4 10s4 2 4 8" stroke="rgba(201,168,76,0.75)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+        <path d="M28 16c-6 0-10-4-10-4s-2 4-8 4" stroke="rgba(201,168,76,0.75)" strokeWidth="1.6" strokeLinecap="round" fill="none" />
       </svg>
     ),
   },
@@ -83,7 +83,7 @@ export default function ValueProps() {
         </div>
 
         <Reveal className="text-center mb-20">
-          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Not a generic AI chatbot. A research tool engineered around the specific constraints of legal practice.
           </p>
         </Reveal>
@@ -118,7 +118,7 @@ function FeatureCard({ feature }: { feature: typeof features[0] }) {
     >
       <div
         className="w-9 h-9 flex items-center justify-center rounded-lg"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
+        style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
       >
         {feature.icon}
       </div>
@@ -126,7 +126,7 @@ function FeatureCard({ feature }: { feature: typeof features[0] }) {
         <h3 className="text-sm font-semibold text-white mb-2 leading-snug" style={{ letterSpacing: '-0.01em' }}>
           {feature.title}
         </h3>
-        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
+        <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
           {feature.body}
         </p>
       </div>

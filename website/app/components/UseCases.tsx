@@ -10,8 +10,8 @@ const cases = [
     body: 'Load a batch of contracts. Justice AI surfaces non-standard terms, missing clauses, and unusual provisions — across hundreds of documents at once.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M9 12h6M9 16h4" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 12h6M9 16h4" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -21,8 +21,8 @@ const cases = [
     body: 'Surface key allegations, admissions, and precedents buried across thousands of pages of discovery, pleadings, and case law — in seconds.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M3 6l9-3 9 3v6c0 5.25-3.75 9-9 10.5C6.75 21 3 17.25 3 12V6z" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
-        <path d="M9 12l2 2 4-4" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 6l9-3 9 3v6c0 5.25-3.75 9-9 10.5C6.75 21 3 17.25 3 12V6z" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+        <path d="M9 12l2 2 4-4" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -32,8 +32,8 @@ const cases = [
     body: 'Cross-reference applications, country condition reports, and USCIS policy memos without exposing any client data to external AI services.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" fill="none" />
-        <path d="M12 3c0 4-3 7-3 9s3 5 3 9M3 12h18" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="12" cy="12" r="9" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" fill="none" />
+        <path d="M12 3c0 4-3 7-3 9s3 5 3 9M3 12h18" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -43,8 +43,8 @@ const cases = [
     body: 'Run due diligence across an entire data room locally. No files leave your machine, no vendor agreements required, no billable hours on search.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M2 9h20M2 15h20M12 3v18" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" fill="none" />
+        <path d="M2 9h20M2 15h20M12 3v18" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" />
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" fill="none" />
       </svg>
     ),
   },
@@ -54,8 +54,8 @@ const cases = [
     body: 'Extract key dates, conditions, and obligations from complex lease agreements, title documents, and purchase contracts without manual page-turning.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M3 9l9-7 9 7v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-        <path d="M9 22V12h6v10" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M3 9l9-7 9 7v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+        <path d="M9 22V12h6v10" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -65,9 +65,9 @@ const cases = [
     body: 'Map internal policies against regulatory requirements, flag gaps, and document your compliance reasoning — without sending sensitive policy documents to the cloud.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <rect x="9" y="3" width="6" height="4" rx="1" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" fill="none" />
-        <path d="M9 12l2 2 4-4" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <rect x="9" y="3" width="6" height="4" rx="1" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" fill="none" />
+        <path d="M9 12l2 2 4-4" stroke="rgba(201,168,76,0.7)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -98,7 +98,7 @@ export default function UseCases() {
         </div>
 
         <Reveal className="text-center mb-20">
-          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Your documents define your knowledge base. Justice AI adapts to any practice area the moment you load your files.
           </p>
         </Reveal>
@@ -113,21 +113,21 @@ export default function UseCases() {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
                   >
                     {c.icon}
                   </div>
-                  <span className="text-xs font-semibold text-white tracking-tight">{c.area}</span>
+                  <span className="text-xs font-semibold tracking-tight" style={{ color: 'rgba(201,168,76,0.85)' }}>{c.area}</span>
                 </div>
 
                 <p
                   className="text-xs leading-relaxed rounded-lg px-3 py-2.5 italic"
-                  style={{ color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+                  style={{ color: 'rgba(201,168,76,0.65)', background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.12)' }}
                 >
                   {c.query}
                 </p>
 
-                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
                   {c.body}
                 </p>
               </div>

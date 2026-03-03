@@ -21,9 +21,17 @@ export default function Navbar() {
         <a
           href="#download"
           className="text-sm font-medium tracking-wider uppercase px-5 py-2 rounded-md transition-all duration-200"
-          style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#ffffff' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.4)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.15)' }}
+          style={{ border: '1px solid rgba(201,168,76,0.45)', color: '#c9a84c', background: 'rgba(201,168,76,0.06)' }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(201,168,76,0.12)'
+            ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(201,168,76,0.7)'
+            ;(e.currentTarget as HTMLAnchorElement).style.color = '#e8c97e'
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(201,168,76,0.06)'
+            ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(201,168,76,0.45)'
+            ;(e.currentTarget as HTMLAnchorElement).style.color = '#c9a84c'
+          }}
         >
           Download
         </a>

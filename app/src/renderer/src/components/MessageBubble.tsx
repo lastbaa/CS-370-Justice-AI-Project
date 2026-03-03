@@ -45,8 +45,8 @@ function renderMarkdown(text: string): JSX.Element {
         i++
       }
       elements.push(
-        <pre key={i} style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', margin: '6px 0' }}>
-          <code style={{ fontFamily: "'SF Mono','Fira Mono',monospace", fontSize: '0.82em', color: 'rgba(255,255,255,0.8)' }} data-lang={lang}>
+        <pre key={i} style={{ background: '#080808', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 16px', overflowX: 'auto', margin: '8px 0' }}>
+          <code style={{ fontFamily: "'SF Mono','Fira Mono',monospace", fontSize: '0.82em', color: 'rgba(255,255,255,0.82)', lineHeight: 1.65 }} data-lang={lang}>
             {codeLines.join('\n')}
           </code>
         </pre>
@@ -158,15 +158,16 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           <div
             className="rounded-2xl rounded-tr-sm px-4 py-3"
             style={{
-              background: '#141414',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: '#161616',
+              border: '1px solid rgba(255,255,255,0.09)',
+              boxShadow: '0 1px 8px rgba(0,0,0,0.25)',
             }}
           >
-            <p className="text-[13px] text-white leading-relaxed whitespace-pre-wrap">
+            <p className="text-[13.5px] text-white leading-relaxed whitespace-pre-wrap">
               {message.content}
             </p>
           </div>
-          <p className="mt-1.5 text-right text-[10px]" style={{ color: 'rgba(255,255,255,0.14)' }}>
+          <p className="mt-1.5 text-right text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
             {formatTime(message.timestamp)}
           </p>
         </div>
@@ -182,8 +183,8 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
 
       <div className="flex-1 min-w-0">
         <p
-          className="mb-2.5 text-[10px] font-bold tracking-[0.12em] uppercase"
-          style={{ color: 'rgba(201,168,76,0.55)' }}
+          className="mb-2.5 text-[10px] font-bold tracking-[0.14em] uppercase"
+          style={{ color: 'rgba(201,168,76,0.6)' }}
         >
           Justice AI
         </p>
@@ -192,16 +193,22 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           <div
             className="rounded-xl px-4 py-3.5"
             style={{
-              background: 'rgba(248,81,73,0.05)',
-              border: '1px solid rgba(248,81,73,0.14)',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderLeft: '2px solid rgba(255,255,255,0.15)',
             }}
           >
-            <p
-              className="text-[13px] leading-relaxed whitespace-pre-wrap"
-              style={{ color: 'rgba(255,160,160,0.75)' }}
-            >
-              {message.content}
-            </p>
+            <div className="flex items-start gap-2.5">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
+                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 4.5zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" fill="rgba(255,255,255,0.25)" />
+              </svg>
+              <p
+                className="text-[13px] leading-relaxed whitespace-pre-wrap"
+                style={{ color: 'rgba(255,255,255,0.45)' }}
+              >
+                {message.content}
+              </p>
+            </div>
           </div>
         ) : (
           <div
@@ -218,18 +225,22 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           </div>
         )}
 
-        <p className="mt-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.14)' }}>
+        <p className="mt-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
           {formatTime(message.timestamp)}
         </p>
 
         {!isNotFound && message.citations && message.citations.length > 0 && (
-          <div className="mt-3">
-            <p
-              className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em]"
-              style={{ color: 'rgba(255,255,255,0.18)' }}
-            >
-              Sources · {message.citations.length}
-            </p>
+          <div className="mt-4">
+            <div className="flex items-center gap-2 mb-2.5">
+              <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.05)' }} />
+              <p
+                className="text-[10px] font-semibold uppercase tracking-[0.14em] shrink-0"
+                style={{ color: 'rgba(255,255,255,0.22)' }}
+              >
+                Sources · {message.citations.length}
+              </p>
+              <div className="h-px flex-1" style={{ background: 'rgba(255,255,255,0.05)' }} />
+            </div>
             <div className="flex flex-col gap-2">
               {message.citations.map((citation, idx) => (
                 <SourceCard key={idx} citation={citation} onView={onViewCitation} />

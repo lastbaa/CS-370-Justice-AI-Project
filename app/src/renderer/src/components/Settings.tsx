@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AppSettings } from '../../../../../shared/src/types'
 
 interface Props {
@@ -73,6 +73,14 @@ function SectionHeader({ children }: { children: React.ReactNode }): JSX.Element
 export default function Settings({ settings, onSave, onClose }: Props): JSX.Element {
   const [local, setLocal] = useState<AppSettings>({ ...settings })
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]): void {
     setLocal((prev) => ({ ...prev, [key]: value }))
   }
@@ -133,16 +141,27 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
           <div>
             <SectionHeader>AI Model</SectionHeader>
             <div
-              className="rounded-xl p-4 flex items-center gap-3"
+              className="rounded-xl p-4 flex items-center justify-between gap-3"
               style={{ background: '#060606', border: '1px solid rgba(255,255,255,0.06)' }}
             >
-              <div className="w-2 h-2 rounded-full shrink-0" style={{ background: '#3fb950' }} />
-              <div>
-                <p className="text-[13px] font-semibold text-white">Saul-7B running locally</p>
-                <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                  all-MiniLM-L6-v2 embeddings · Saul-7B-Instruct · fully on-device
-                </p>
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ background: '#3fb950', boxShadow: '0 0 6px rgba(63,185,80,0.5)' }}
+                />
+                <div>
+                  <p className="text-[13px] font-semibold text-white">Saul-7B-Instruct</p>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    all-MiniLM-L6-v2 embeddings · 7 billion parameters · running on-device
+                  </p>
+                </div>
               </div>
+              <span
+                className="shrink-0 text-[10px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md"
+                style={{ background: 'rgba(63,185,80,0.08)', color: 'rgba(63,185,80,0.7)', border: '1px solid rgba(63,185,80,0.15)' }}
+              >
+                On-Device
+              </span>
             </div>
           </div>
 
@@ -150,7 +169,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
           <div>
             <SectionHeader>Search Configuration</SectionHeader>
             <div className="grid grid-cols-3 gap-4">
-              <Field label="Chunk Size" description="Characters per chunk (100–2000)">
+              <Field label="Chunk Size" description="Characters per chunk (100–2000). Larger = more context per result, less precision.">
                 <NumberInput
                   value={local.chunkSize}
                   onChange={(v) => update('chunkSize', Math.max(100, Math.min(2000, v)))}
@@ -158,7 +177,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
                   max={2000}
                 />
               </Field>
-              <Field label="Chunk Overlap" description="Overlap between chunks (0–200)">
+              <Field label="Chunk Overlap" description="Characters shared between adjacent chunks (0–200). Higher overlap reduces missed context at boundaries.">
                 <NumberInput
                   value={local.chunkOverlap}
                   onChange={(v) => update('chunkOverlap', Math.max(0, Math.min(200, v)))}
@@ -166,7 +185,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
                   max={200}
                 />
               </Field>
-              <Field label="Top-K Results" description="Chunks retrieved per query (1–20)">
+              <Field label="Top-K Results" description="Chunks retrieved per query (1–20). Higher values cite more sources but may dilute relevance.">
                 <NumberInput
                   value={local.topK}
                   onChange={(v) => update('topK', Math.max(1, Math.min(20, v)))}
@@ -212,8 +231,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
                 className="text-[11px] leading-relaxed"
                 style={{ color: 'rgba(255,255,255,0.32)' }}
               >
-                Documents and queries never leave your machine. All AI processing runs locally —
-                no accounts, no API keys, no network traffic.
+                Your documents and queries never leave this machine. Parsing, search, and AI inference all run locally — no accounts, no API keys, zero network traffic.
               </p>
             </div>
           </div>
@@ -252,7 +270,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
               ;(e.currentTarget as HTMLButtonElement).style.background = '#c9a84c'
             }}
           >
-            Save Settings
+            Save
           </button>
         </div>
       </div>

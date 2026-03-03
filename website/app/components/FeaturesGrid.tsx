@@ -40,8 +40,8 @@ const GridItem = ({ area, icon, title, description }: GridItemProps) => {
             <div
               className="w-fit rounded-lg p-2.5"
               style={{
-                background: 'rgba(201,168,76,0.08)',
-                border: '1px solid rgba(201,168,76,0.18)',
+                background: 'rgba(201,168,76,0.1)',
+                border: '1px solid rgba(201,168,76,0.25)',
               }}
             >
               {icon}
@@ -53,7 +53,7 @@ const GridItem = ({ area, icon, title, description }: GridItemProps) => {
               >
                 {title}
               </h3>
-              <p className="text-sm leading-relaxed md:text-base" style={{ color: 'rgba(255,255,255,0.38)' }}>
+              <p className="text-sm leading-relaxed md:text-base" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 {description}
               </p>
             </div>
@@ -86,7 +86,7 @@ export default function FeaturesGrid() {
         </div>
 
         <Reveal className="text-center mb-16">
-          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Not a generic AI chatbot. A research tool engineered around the specific constraints of legal practice.
           </p>
         </Reveal>

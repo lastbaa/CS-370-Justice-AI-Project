@@ -101,7 +101,7 @@ export default function ProductDemo() {
 
         <div className="text-center mb-5">
           <WordReveal
-            text="See Justice AI In Action"
+            text="Legal Research That Cites Its Work"
             as="h2"
             stagger={85}
             className="text-3xl sm:text-4xl font-bold text-white"
@@ -111,7 +111,7 @@ export default function ProductDemo() {
 
         <Reveal className="text-center mb-16">
           <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.38)' }}>
-            Load your documents, ask a question in plain English, get a cited answer — all without leaving your machine.
+            Drop in your case files, contracts, or briefs. Ask any legal question in plain English. Get an answer with the exact filename, page number, and quoted passage — running entirely on your machine.
           </p>
         </Reveal>
 
@@ -311,9 +311,18 @@ export default function ProductDemo() {
         {/* Callout below demo */}
         <Reveal delay={200} className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Every answer is cited', body: 'Filename, page number, and direct quote. Nothing fabricated.' },
-            { label: 'Strictly document-grounded', body: "If the answer isn't in your files, Justice AI says so explicitly." },
-            { label: 'Documents stay local', body: 'Your files never leave your machine. Parsing and search run on-device. AI answers via HuggingFace.' },
+            {
+              label: 'Every answer is cited',
+              body: 'Exact filename, page number, and quoted passage. Nothing inferred, nothing fabricated.',
+            },
+            {
+              label: 'Grounded in your documents',
+              body: "Justice AI only answers from what's in your files. If the answer isn't there, it tells you so.",
+            },
+            {
+              label: 'Your files never leave',
+              body: 'Parsing, vector search, and retrieval all run on-device. No documents, queries, or answers are ever transmitted.',
+            },
           ].map((item, i) => (
             <div
               key={i}
@@ -324,6 +333,34 @@ export default function ProductDemo() {
               <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>{item.body}</p>
             </div>
           ))}
+        </Reveal>
+
+        {/* CTA bridge to download */}
+        <Reveal delay={300} className="mt-10 flex justify-center">
+          <a
+            href="#download"
+            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200"
+            style={{
+              background: 'rgba(201,168,76,0.1)',
+              border: '1px solid rgba(201,168,76,0.25)',
+              color: '#c9a84c',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.background = 'rgba(201,168,76,0.16)'
+              el.style.borderColor = 'rgba(201,168,76,0.4)'
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.background = 'rgba(201,168,76,0.1)'
+              el.style.borderColor = 'rgba(201,168,76,0.25)'
+            }}
+          >
+            Download for macOS — free
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2v9M4.5 7.5L8 11l3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </a>
         </Reveal>
       </div>
     </section>

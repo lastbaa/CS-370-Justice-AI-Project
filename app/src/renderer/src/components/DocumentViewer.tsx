@@ -345,7 +345,7 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
 
           {/* Excerpt strip — shows exactly what text is highlighted */}
           <div
-            className="shrink-0 px-4 py-2.5"
+            className="shrink-0 px-4 py-3"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#070707' }}
           >
             <div className="flex items-center gap-1.5 mb-1">

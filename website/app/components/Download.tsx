@@ -11,19 +11,21 @@ const platforms: {
   label: string
   sub: string
   file: string
+  available: boolean
   installSteps: string[]
   icon: React.ReactNode
 }[] = [
   {
     key: 'mac',
     label: 'macOS',
-    sub: 'Universal · macOS 12+',
+    sub: 'Apple Silicon & Intel · macOS 12+',
     file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/Justice.AI_1.0.0_aarch64.dmg',
+    available: true,
     installSteps: [
-      'Open the .dmg and drag Justice AI to Applications',
-      'Right-click → Open on first launch (macOS security prompt)',
-      'The app automatically downloads the Saul AI model on first launch (~4.5 GB, one time only)',
-      'Load your documents and start searching — no accounts or API keys needed',
+      'Open the .dmg and drag Justice AI to your Applications folder',
+      'Right-click the app icon → Open on first launch to pass the macOS security prompt',
+      'Justice AI downloads the Saul legal AI model once (~4.5 GB). Grab a coffee — it only happens this one time, then the app runs fully offline forever.',
+      'Drag in your PDFs or Word docs, ask any legal question, and get cited answers grounded in your own files.',
     ],
     icon: (
       <svg width="17" height="21" viewBox="0 0 18 22" fill="currentColor">
@@ -34,13 +36,13 @@ const platforms: {
   {
     key: 'windows',
     label: 'Windows',
-    sub: 'Windows 10/11 · x64',
+    sub: 'Coming soon',
     file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/latest',
+    available: false,
     installSteps: [
-      'Run JusticeAI-Setup.exe and follow the installer',
-      'Launch Justice AI from Start Menu',
-      'The app automatically downloads the Saul AI model on first launch (~4.5 GB, one time only)',
-      'Load your documents and start searching — no accounts or API keys needed',
+      'Windows builds are not yet available.',
+      'macOS is fully supported today — download above.',
+      'Watch the GitHub releases page for Windows support.',
     ],
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -51,13 +53,13 @@ const platforms: {
   {
     key: 'linux',
     label: 'Linux',
-    sub: 'AppImage · x86_64',
+    sub: 'Coming soon',
     file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/latest',
+    available: false,
     installSteps: [
-      'chmod +x JusticeAI.AppImage then run it',
-      'Launch Justice AI',
-      'The app automatically downloads the Saul AI model on first launch (~4.5 GB, one time only)',
-      'Load your documents and start searching — no accounts or API keys needed',
+      'Linux builds are not yet available.',
+      'macOS is fully supported today — download above.',
+      'Watch the GitHub releases page for Linux support.',
     ],
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
@@ -68,29 +70,29 @@ const platforms: {
 ]
 
 const requirements = [
-  { label: 'macOS', value: 'macOS 12 Monterey+ · Apple Silicon or Intel' },
-  { label: 'Windows', value: 'Windows 10 / 11 · 64-bit' },
-  { label: 'Linux', value: 'Any modern distro · x86_64 AppImage' },
-  { label: 'RAM', value: '8 GB minimum · 16 GB recommended' },
-  { label: 'Storage', value: '~5 GB total (app + Saul model, one-time download)' },
-  { label: 'Network', value: 'Only on first launch to download model · All AI runs offline after that' },
+  { label: 'macOS', value: 'macOS 12 Monterey+ · Apple Silicon or Intel', highlight: false },
+  { label: 'Windows / Linux', value: 'Coming soon — macOS available now', highlight: false },
+  { label: 'RAM', value: '8 GB minimum · 16 GB recommended for best performance', highlight: false },
+  { label: 'Storage', value: '~5 GB total (app + Saul model, downloaded once)', highlight: false },
+  { label: 'Network', value: 'Only on first launch to download the model — all AI runs fully offline after that', highlight: true },
+  { label: 'Accounts', value: 'None required — no sign-up, no API keys, no subscriptions', highlight: false },
 ]
 
 const setupSteps = [
   {
     number: '01',
     title: 'Download & Install',
-    body: 'Open the DMG and drag Justice AI to Applications. No dependencies, no command line, no external installs.',
+    body: 'Open the DMG, drag to Applications, done. No terminal, no dependencies, no configuration. It just works.',
   },
   {
     number: '02',
-    title: 'First Launch Setup',
-    body: 'On first open, Justice AI automatically downloads Saul — the legal AI model (~4.5 GB). No accounts or API keys required.',
+    title: 'One-Time Model Download',
+    body: 'First launch downloads Saul-7B — the legal AI model (~4.5 GB). This happens once. After that, Justice AI runs fully offline, forever, with no internet required.',
   },
   {
     number: '03',
-    title: 'Load & Search',
-    body: 'Drag in PDFs or Word documents. Ask any legal question. Get cited answers grounded in your files — all running on your device.',
+    title: 'Cited Answers From Your Documents',
+    body: 'Drag in your PDFs and Word files. Ask any legal question in plain English. Get answers grounded in your own documents — with exact filename and page citations.',
   },
 ]
 
@@ -107,7 +109,9 @@ export default function Download() {
 
   function handleDownload(platform: typeof platforms[0]) {
     setActivePlatform(platform.key)
-    window.open(platform.file, '_blank', 'noopener')
+    if (platform.available) {
+      window.open(platform.file, '_blank', 'noopener')
+    }
   }
 
   const shownSteps = activePlatform
@@ -192,40 +196,48 @@ export default function Download() {
                 {platforms.map((p) => {
                   const isDetected = p.key === detected
                   const isActive = p.key === activePlatform
+                  const isMac = p.key === 'mac'
+                  const isUnavailable = !p.available
 
                   return (
                     <button
                       key={p.key}
                       onClick={() => handleDownload(p)}
-                      className="group flex-1 relative overflow-hidden rounded-2xl text-left transition-all duration-200"
+                      disabled={isUnavailable}
+                      className={`group relative overflow-hidden rounded-2xl text-left transition-all duration-200 ${isMac ? 'flex-[2]' : 'flex-1'} ${isUnavailable ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                       style={{
-                        background: isActive
+                        background: isUnavailable
+                          ? 'rgba(255,255,255,0.01)'
+                          : isActive
                           ? 'rgba(201,168,76,0.07)'
-                          : isDetected
+                          : isMac
                           ? 'rgba(255,255,255,0.05)'
                           : 'rgba(255,255,255,0.025)',
                         border: `1px solid ${
                           isActive
                             ? 'rgba(201,168,76,0.3)'
-                            : isDetected
+                            : isMac && !isUnavailable
                             ? 'rgba(255,255,255,0.16)'
-                            : 'rgba(255,255,255,0.07)'
+                            : 'rgba(255,255,255,0.06)'
                         }`,
+                        opacity: isUnavailable ? 0.45 : 1,
                       }}
                       onMouseEnter={(e) => {
+                        if (isUnavailable) return
                         const el = e.currentTarget as HTMLButtonElement
                         el.style.transform = 'translateY(-2px)'
                         el.style.boxShadow = '0 12px 40px rgba(0,0,0,0.5)'
-                        if (!isActive && !isDetected) {
+                        if (!isActive && !isMac) {
                           el.style.background = 'rgba(255,255,255,0.05)'
                           el.style.borderColor = 'rgba(255,255,255,0.14)'
                         }
                       }}
                       onMouseLeave={(e) => {
+                        if (isUnavailable) return
                         const el = e.currentTarget as HTMLButtonElement
                         el.style.transform = 'translateY(0)'
                         el.style.boxShadow = 'none'
-                        if (!isActive && !isDetected) {
+                        if (!isActive && !isMac) {
                           el.style.background = 'rgba(255,255,255,0.025)'
                           el.style.borderColor = 'rgba(255,255,255,0.07)'
                         }
@@ -238,9 +250,11 @@ export default function Download() {
                             style={{
                               background: isActive
                                 ? 'rgba(201,168,76,0.12)'
-                                : 'rgba(255,255,255,0.06)',
-                              border: `1px solid ${isActive ? 'rgba(201,168,76,0.25)' : 'rgba(255,255,255,0.08)'}`,
-                              color: isActive ? '#c9a84c' : 'rgba(255,255,255,0.7)',
+                                : isMac && !isUnavailable
+                                ? 'rgba(201,168,76,0.07)'
+                                : 'rgba(255,255,255,0.04)',
+                              border: `1px solid ${isActive ? 'rgba(201,168,76,0.25)' : isMac && !isUnavailable ? 'rgba(201,168,76,0.18)' : 'rgba(255,255,255,0.07)'}`,
+                              color: isActive || (isMac && !isUnavailable) ? '#c9a84c' : 'rgba(255,255,255,0.4)',
                             }}
                           >
                             {isActive ? (
@@ -251,22 +265,32 @@ export default function Download() {
                               p.icon
                             )}
                           </div>
-                          <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
-                          >
-                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                              <path d="M8 2v9M4.5 7.5L8 11l3.5-3.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
+                          {!isUnavailable && (
+                            <div
+                              className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+                            >
+                              <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 2v9M4.5 7.5L8 11l3.5-3.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
 
-                        <p className="text-sm font-semibold text-white mb-0.5">
-                          {isActive ? 'Download started' : `Download for ${p.label}`}
+                        <p className="text-sm font-semibold mb-0.5" style={{ color: isUnavailable ? 'rgba(255,255,255,0.35)' : 'white' }}>
+                          {isActive ? 'Downloading…' : isUnavailable ? `${p.label} — Coming Soon` : `Download for ${p.label}`}
                         </p>
                         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                          {isDetected && !isActive ? '✦ Recommended for your device' : p.sub}
+                          {isActive ? 'Check your Downloads folder' : isMac && !isUnavailable && isDetected ? '✦ Recommended for your device' : p.sub}
                         </p>
+                        {isMac && !isActive && (
+                          <span
+                            className="inline-block mt-2 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded"
+                            style={{ background: 'rgba(201,168,76,0.1)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.2)' }}
+                          >
+                            Available Now
+                          </span>
+                        )}
                       </div>
                     </button>
                   )
@@ -311,16 +335,19 @@ export default function Download() {
                   <div
                     key={req.label}
                     className="flex items-start gap-3 rounded-lg px-4 py-3"
-                    style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}
+                    style={{
+                      background: req.highlight ? 'rgba(63,185,80,0.04)' : 'rgba(255,255,255,0.025)',
+                      border: `1px solid ${req.highlight ? 'rgba(63,185,80,0.15)' : 'rgba(255,255,255,0.05)'}`,
+                    }}
                   >
                     <div>
                       <span
                         className="block text-xs uppercase tracking-wider mb-0.5 font-medium"
-                        style={{ color: 'rgba(255,255,255,0.25)' }}
+                        style={{ color: req.highlight ? 'rgba(63,185,80,0.6)' : 'rgba(255,255,255,0.25)' }}
                       >
                         {req.label}
                       </span>
-                      <span className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      <span className="text-sm" style={{ color: req.highlight ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.6)' }}>
                         {req.value}
                       </span>
                     </div>
@@ -331,8 +358,8 @@ export default function Download() {
               <div className="border-t mt-8 mb-5" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
 
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                <span className="text-white font-medium">Small and fast.</span>{' '}
-                The app is under 200 MB. On first launch it downloads the Saul legal model (~4.5 GB, one time). After that, document parsing, embeddings, and AI answers all run entirely on your device — completely offline, no API keys, no data ever sent to the cloud.
+                <span className="text-white font-medium">Everything runs on your machine.</span>{' '}
+                The app installer is under 20 MB. First launch downloads Saul-7B once (~4.5 GB) — after that, document parsing, vector search, and AI answers run entirely offline. No accounts, no API keys, no data ever touches the cloud.
               </p>
             </div>
           </div>

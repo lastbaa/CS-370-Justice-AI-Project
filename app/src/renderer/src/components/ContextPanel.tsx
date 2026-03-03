@@ -51,7 +51,7 @@ function CitationRow({
 
   return (
     <div
-      className="rounded-xl px-3.5 py-3 flex flex-col gap-2 transition-all cursor-pointer"
+      className="rounded-xl px-4 py-3 flex flex-col gap-2 transition-all cursor-pointer"
       style={{
         background: hovered ? '#111' : '#0d0d0d',
         border: '1px solid rgba(201,168,76,0.14)',
@@ -137,7 +137,7 @@ function FileRow({
 
   return (
     <div
-      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-colors"
+      className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg transition-colors"
       style={{ background: hovered ? 'rgba(255,255,255,0.03)' : 'transparent' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -236,7 +236,7 @@ export default function ContextPanel({
 
         {/* ── Retrieved chunks section ── */}
         {(hasCitations || isQuerying) && (
-          <div className="px-3 pt-4 pb-2">
+          <div className="px-4 pt-4 pb-2">
             <div className="flex items-center gap-2 mb-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
                 Retrieved Context
@@ -292,8 +292,8 @@ export default function ContextPanel({
 
         {/* ── Loaded documents section ── */}
         {files.length > 0 ? (
-          <div className="px-3 pt-4 pb-4">
-            <div className="mb-2 px-3 flex items-center justify-between">
+          <div className="px-4 pt-4 pb-4">
+            <div className="mb-2 flex items-center justify-between">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
                 Given Documents
               </p>
@@ -357,11 +357,11 @@ export default function ContextPanel({
       </div>
 
       {/* Bottom add button */}
-      <div className="shrink-0 px-3 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="shrink-0 px-4 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <button
           onClick={onAddFiles}
           disabled={isLoading}
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[11.5px] font-medium transition-all disabled:opacity-40"
+          className="flex w-full items-center gap-2.5 rounded-lg px-4 py-2.5 text-[11.5px] font-medium transition-all disabled:opacity-40"
           style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.14)', color: 'rgba(201,168,76,0.7)' }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLButtonElement

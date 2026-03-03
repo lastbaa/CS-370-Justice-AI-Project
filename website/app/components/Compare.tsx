@@ -64,7 +64,7 @@ export default function Compare() {
         </div>
 
         <Reveal className="text-center mb-14">
-          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Cloud AI tools were built for convenience, not legal practice. The difference in
             how they handle your data isn't a detail — it's everything.
           </p>
@@ -87,7 +87,7 @@ export default function Compare() {
               <div className="px-6 py-4">
                 <span
                   className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: 'rgba(255,255,255,0.2)' }}
+                  style={{ color: 'rgba(255,255,255,0.35)' }}
                 >
                   Feature
                 </span>
@@ -109,8 +109,8 @@ export default function Compare() {
               <div
                 className="px-6 py-4 border-l"
                 style={{
-                  borderColor: 'rgba(255,255,255,0.06)',
-                  background: 'rgba(201,168,76,0.03)',
+                  borderColor: 'rgba(201,168,76,0.15)',
+                  background: 'rgba(201,168,76,0.06)',
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function Compare() {
                 <div className="px-6 py-4 flex items-center">
                   <span
                     className="text-xs font-medium"
-                    style={{ color: 'rgba(255,255,255,0.4)' }}
+                    style={{ color: 'rgba(255,255,255,0.55)' }}
                   >
                     {row.feature}
                   </span>
@@ -173,7 +173,7 @@ export default function Compare() {
                   </svg>
                   <span
                     className="text-xs leading-relaxed"
-                    style={{ color: 'rgba(255,255,255,0.33)' }}
+                    style={{ color: 'rgba(255,255,255,0.38)' }}
                   >
                     {row.cloud}
                   </span>
@@ -182,8 +182,8 @@ export default function Compare() {
                 <div
                   className="px-6 py-4 border-l flex items-start gap-2.5"
                   style={{
-                    borderColor: 'rgba(255,255,255,0.04)',
-                    background: 'rgba(201,168,76,0.02)',
+                    borderColor: 'rgba(201,168,76,0.08)',
+                    background: 'rgba(201,168,76,0.03)',
                   }}
                 >
                   <svg
@@ -233,7 +233,7 @@ export default function Compare() {
                   strokeLinejoin="round"
                 />
               </svg>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 <span style={{ color: 'rgba(201,168,76,0.7)' }}>
                   Justice AI is the only choice
                 </span>{' '}

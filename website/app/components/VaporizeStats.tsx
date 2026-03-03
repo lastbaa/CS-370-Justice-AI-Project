@@ -7,10 +7,11 @@ import { Reveal } from "./Reveal";
 const STATS_PHRASES = [
   "100% On-Device",
   "Zero Cloud Calls",
-  "No Hallucinations",
-  "Instant Citations",
-  "Air-Gapped Safe",
+  "Cited Sources Only",
   "No Subscriptions",
+  "Air-Gapped Safe",
+  "No Hallucinations",
+  "Your Data Stays Yours",
 ];
 
 export default function VaporizeStats() {
@@ -36,7 +37,7 @@ export default function VaporizeStats() {
             className="text-xs font-semibold tracking-[0.22em] uppercase"
             style={{ color: 'rgba(201,168,76,0.45)' }}
           >
-            The numbers speak for themselves
+            Privacy by design
           </span>
         </Reveal>
 
@@ -67,28 +68,27 @@ export default function VaporizeStats() {
         <Reveal className="flex justify-center mt-6">
           <p
             className="text-sm sm:text-base text-center leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.28)', maxWidth: 400 }}
+            style={{ color: 'rgba(255,255,255,0.28)', maxWidth: 440 }}
           >
-            Every query stays on your machine. No account. No API key.
-            No data ever leaves your device.
+            Legal research demands confidentiality. Justice AI processes everything on your machine — your documents, your queries, and your answers never leave your device.
           </p>
         </Reveal>
 
         {/* Stat pills */}
         <Reveal className="mt-10 flex flex-wrap justify-center gap-3">
           {[
-            { stat: '100%', label: 'Local Processing' },
-            { stat: '0 bytes', label: 'Sent Externally' },
-            { stat: '<10s', label: 'Search Time' },
-            { stat: '∞', label: 'Documents' },
-          ].map(({ stat, label }) => (
+            { stat: '100%', label: 'Local Processing', sub: 'No cloud compute' },
+            { stat: '0 bytes', label: 'Sent Externally', sub: 'Total network traffic' },
+            { stat: '<5s', label: 'Search Time', sub: 'Across loaded documents' },
+            { stat: '∞', label: 'Documents', sub: 'No per-file limits' },
+          ].map(({ stat, label, sub }) => (
             <div
               key={label}
               className="flex flex-col items-center px-6 py-4 rounded-2xl"
               style={{
                 background: '#0f0f0f',
                 border: '1px solid rgba(255,255,255,0.07)',
-                minWidth: 110,
+                minWidth: 120,
               }}
             >
               <span
@@ -98,10 +98,16 @@ export default function VaporizeStats() {
                 {stat}
               </span>
               <span
-                className="text-[11px] mt-1 font-medium text-center leading-snug"
-                style={{ color: 'rgba(255,255,255,0.3)' }}
+                className="text-[11px] mt-1 font-semibold text-center leading-snug"
+                style={{ color: 'rgba(255,255,255,0.5)' }}
               >
                 {label}
+              </span>
+              <span
+                className="text-[10px] mt-0.5 text-center leading-snug"
+                style={{ color: 'rgba(255,255,255,0.22)' }}
+              >
+                {sub}
               </span>
             </div>
           ))}

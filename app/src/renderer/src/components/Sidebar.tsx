@@ -115,7 +115,7 @@ export default function Sidebar({
       style={{ background: '#080808', borderRight: '1px solid rgba(255,255,255,0.05)' }}
     >
       {/* Drag region + logo */}
-      <div className="drag-region flex items-center gap-2.5 px-4 pt-5 pb-3">
+      <div className="drag-region flex items-center gap-2.5 px-4 pt-4 pb-4">
         <button
           onClick={onGoHome}
           className="no-drag flex items-center gap-2 hover:opacity-75 transition-opacity"
@@ -128,7 +128,7 @@ export default function Sidebar({
       </div>
 
       {/* New Chat button */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pt-0 pb-3">
         <button
           onClick={onNewChat}
           className="no-drag flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[12px] font-medium transition-all"
@@ -243,7 +243,7 @@ export default function Sidebar({
 
       {/* Bottom actions */}
       <div
-        className="px-3 py-3 flex flex-col gap-0.5"
+        className="px-3 py-3 flex flex-col gap-1"
         style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
       >
         <button

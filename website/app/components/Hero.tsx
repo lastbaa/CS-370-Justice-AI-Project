@@ -127,7 +127,7 @@ export default function Hero() {
         <div className="hero-sub mb-5" style={{ minHeight: '2rem' }}>
           <p
             className="text-lg sm:text-xl font-light"
-            style={{ color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em' }}
+            style={{ color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.01em' }}
           >
             <Typewriter
               text="Search every document you own. In seconds. On your machine."
@@ -140,7 +140,7 @@ export default function Hero() {
         {/* Body */}
         <p
           className="hero-body text-base sm:text-lg leading-relaxed max-w-xl mb-6"
-          style={{ color: 'rgba(255,255,255,0.36)' }}
+          style={{ color: 'rgba(255,255,255,0.45)' }}
         >
           Attorney-client privilege demands that your case files never touch a cloud server.
           Justice AI keeps all your documents local — parsing and semantic search run on your
@@ -152,9 +152,9 @@ export default function Hero() {
         <p
           className="hero-disclaimer text-xs italic mb-10 px-5 py-2.5 rounded-lg"
           style={{
-            color: 'rgba(255,255,255,0.24)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            background: 'rgba(255,255,255,0.013)',
+            color: 'rgba(255,255,255,0.32)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(255,255,255,0.02)',
           }}
         >
           Not legal advice — a research tool for the attorneys who give it.
@@ -178,14 +178,14 @@ export default function Hero() {
           <a
             href="#product"
             className="inline-flex items-center gap-2 text-sm font-medium px-7 py-3.5 rounded-lg transition-all duration-200"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)' }}
+            style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)' }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.25)'
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(201,168,76,0.4)'
               ;(e.currentTarget as HTMLAnchorElement).style.color = '#fff'
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.1)'
-              ;(e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.5)'
+              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)'
+              ;(e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)'
             }}
           >
             See It In Action
@@ -201,11 +201,11 @@ export default function Hero() {
             <div key={i} className="flex flex-col items-center gap-1">
               <span
                 className="text-2xl font-bold"
-                style={{ color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.02em' }}
+                style={{ color: '#ffffff', letterSpacing: '-0.02em' }}
               >
                 {s.value}
               </span>
-              <span className="text-xs tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              <span className="text-xs tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 {s.label}
               </span>
             </div>
