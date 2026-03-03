@@ -152,6 +152,27 @@ export default function App(): JSX.Element {
     } catch { }
   }
 
+  async function handleClearFiles(): Promise<void> {
+    if (files.length === 0) return
+    try {
+      await Promise.all(files.map((f) => window.api.removeFile(f.id)))
+      setFiles([])
+      setLastCitations([])
+    } catch (err) {
+      console.error('Failed to clear files:', err)
+    }
+  }
+
+  async function handleClearSessions(): Promise<void> {
+    try {
+      await Promise.all(sessions.map((s) => window.api.deleteSession(s.id)))
+      setSessions([])
+      handleNewChat()
+    } catch (err) {
+      console.error('Failed to clear sessions:', err)
+    }
+  }
+
   async function handleRemoveFile(id: string): Promise<void> {
     try {
       await window.api.removeFile(id)
@@ -262,6 +283,7 @@ export default function App(): JSX.Element {
         onNewChat={handleNewChat}
         onLoadSession={handleLoadSession}
         onDeleteSession={handleDeleteSession}
+        onClearSessions={handleClearSessions}
         onAddFiles={handleAddFiles}
         onOpenSettings={() => setView('settings')}
       />
@@ -274,6 +296,7 @@ export default function App(): JSX.Element {
         collapsed={viewerCitation !== null}
         onAddFiles={handleAddFiles}
         onRemoveFile={handleRemoveFile}
+        onClearFiles={handleClearFiles}
         onViewCitation={setViewerCitation}
       />
 

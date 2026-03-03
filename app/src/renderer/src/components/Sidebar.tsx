@@ -9,6 +9,7 @@ interface Props {
   onNewChat: () => void
   onLoadSession: (session: ChatSession) => void
   onDeleteSession: (sessionId: string) => void
+  onClearSessions: () => void
   onAddFiles: () => void
   onOpenSettings: () => void
 }
@@ -102,6 +103,7 @@ export default function Sidebar({
   onNewChat,
   onLoadSession,
   onDeleteSession,
+  onClearSessions,
   onAddFiles,
   onOpenSettings,
 }: Props): JSX.Element {
@@ -157,6 +159,40 @@ export default function Sidebar({
 
       {/* Divider */}
       <div className="mx-3 mb-2 h-px" style={{ background: 'rgba(255,255,255,0.04)' }} />
+
+      {/* Sessions header */}
+      {sessions.length > 0 && (
+        <div className="flex items-center justify-between px-5 mb-1">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+            Chats
+          </span>
+          <button
+            onClick={onClearSessions}
+            title="Clear all conversations"
+            className="flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-md transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.25)',
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLButtonElement
+              el.style.color = '#f85149'
+              el.style.borderColor = 'rgba(248,81,73,0.3)'
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLButtonElement
+              el.style.color = 'rgba(255,255,255,0.25)'
+              el.style.borderColor = 'rgba(255,255,255,0.08)'
+            }}
+          >
+            <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15z" />
+            </svg>
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Sessions list */}
       <div className="flex-1 overflow-y-auto px-2 py-1">

@@ -9,6 +9,7 @@ interface Props {
   collapsed: boolean
   onAddFiles: () => void
   onRemoveFile: (id: string) => void
+  onClearFiles: () => void
   onViewCitation: (citation: Citation) => void
 }
 
@@ -181,6 +182,7 @@ export default function ContextPanel({
   collapsed,
   onAddFiles,
   onRemoveFile,
+  onClearFiles,
   onViewCitation,
 }: Props): JSX.Element {
   const hasCitations = citations.length > 0
@@ -291,9 +293,37 @@ export default function ContextPanel({
         {/* ── Loaded documents section ── */}
         {files.length > 0 ? (
           <div className="px-3 pt-4 pb-4">
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-              Loaded Documents
-            </p>
+            <div className="mb-2 px-3 flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                Loaded Documents
+              </p>
+              <button
+                onClick={onClearFiles}
+                disabled={isLoading}
+                title="Clear all documents"
+                className="flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-md transition-all disabled:opacity-40"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  color: 'rgba(255,255,255,0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLButtonElement
+                  el.style.color = '#f85149'
+                  el.style.borderColor = 'rgba(248,81,73,0.3)'
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLButtonElement
+                  el.style.color = 'rgba(255,255,255,0.3)'
+                  el.style.borderColor = 'rgba(255,255,255,0.08)'
+                }}
+              >
+                <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15z" />
+                </svg>
+                Clear
+              </button>
+            </div>
             <div className="flex flex-col gap-0.5">
               {files.map((file) => (
                 <FileRow
