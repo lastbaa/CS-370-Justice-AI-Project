@@ -124,12 +124,15 @@ function TypingIndicator(): JSX.Element {
         </div>
 
         {/* Elapsed hint */}
-        {elapsed >= 8 && (
+        {elapsed >= 5 && (
           <p
             className="text-[10px]"
             style={{ color: 'rgba(255,255,255,0.18)', animation: 'fadeUp 0.4s ease both' }}
           >
-            {elapsed}s · complex queries can take up to 30s
+            {elapsed < 60
+              ? `${elapsed}s`
+              : `${Math.floor(elapsed / 60)}m ${String(elapsed % 60).padStart(2, '0')}s`}{' '}
+            · running locally — first query may take a minute or two
           </p>
         )}
       </div>

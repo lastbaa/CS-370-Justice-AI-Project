@@ -3,9 +3,11 @@ use crate::state::{
     ModelStatus, QueryResult, RagState,
 };
 use base64::Engine;
-use std::path::PathBuf;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use llama_cpp_2::llama_backend::LlamaBackend;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex, OnceLock};
+use tauri::Emitter;
+use tokio::sync::Mutex as AsyncMutex;
 use uuid::Uuid;
 
 const SCORE_THRESHOLD: f32 = 0.35;
@@ -29,11 +31,22 @@ Rules you must never break:
 Context from loaded documents:
 {context}"#;
 
+// ── Llama backend singleton ───────────────────────────────────────────────────
+// Initialized once per process; LlamaBackend::init() must only be called once.
+
+static LLAMA_BACKEND: OnceLock<LlamaBackend> = OnceLock::new();
+
+fn get_llama_backend() -> &'static LlamaBackend {
+    LLAMA_BACKEND.get_or_init(|| {
+        LlamaBackend::init().expect("Failed to initialize llama.cpp backend")
+    })
+}
+
 // ── Model Management ─────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub async fn check_models(
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<ModelStatus, String> {
     let gguf_path = {
         let s = state.lock().await;
@@ -50,7 +63,7 @@ pub async fn check_models(
 #[tauri::command]
 pub async fn download_models(
     window: tauri::Window,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<(), String> {
     let model_dir = {
         let s = state.lock().await;
@@ -99,9 +112,7 @@ pub async fn download_models(
         return Err(format!("Download failed: HTTP {status}"));
     }
 
-    // Determine total file size
     let total_bytes: u64 = if already_downloaded > 0 && status.as_u16() == 206 {
-        // Content-Range: bytes 1234-5678/TOTAL
         response
             .headers()
             .get("content-range")
@@ -176,7 +187,7 @@ pub async fn download_models(
 
 // ── Local Embedding via fastembed ─────────────────────────────────────────────
 
-pub async fn embed_text(text: &str, model_dir: &std::path::Path) -> Result<Vec<f32>, String> {
+pub async fn embed_text(text: &str, model_dir: &Path) -> Result<Vec<f32>, String> {
     use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 
     let cache_dir = model_dir.join("fastembed");
@@ -204,17 +215,20 @@ pub async fn embed_text(text: &str, model_dir: &std::path::Path) -> Result<Vec<f
 }
 
 // ── Local LLM via llama-cpp-2 ─────────────────────────────────────────────────
+//
+// The model (4.5 GB) is loaded once and cached in `model_cache`.
+// A fresh LlamaContext is created per query (lightweight — just KV cache alloc).
 
 async fn ask_saul(
     system_prompt: &str,
     user_question: &str,
-    model_dir: &std::path::Path,
+    model_dir: &Path,
+    model_cache: Arc<Mutex<Option<llama_cpp_2::model::LlamaModel>>>,
 ) -> Result<String, String> {
     use llama_cpp_2::{
         context::params::LlamaContextParams,
-        llama_backend::LlamaBackend,
         llama_batch::LlamaBatch,
-        model::{params::LlamaModelParams, AddBos, LlamaModel, Special},
+        model::{params::LlamaModelParams, AddBos, LlamaModel},
         sampling::LlamaSampler,
     };
     use std::num::NonZeroU32;
@@ -223,53 +237,81 @@ async fn ask_saul(
     let prompt = format!("[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n{user_question} [/INST]");
 
     tokio::task::spawn_blocking(move || {
-        let backend = LlamaBackend::init().map_err(|e| e.to_string())?;
-        let model_params = LlamaModelParams::default();
-        let model = LlamaModel::load_from_file(&backend, &gguf_path, &model_params)
-            .map_err(|e| e.to_string())?;
+        // Get (or lazily initialize) the global llama.cpp backend
+        let backend = get_llama_backend();
 
+        // Lock model cache; load from disk on first call only
+        let mut model_guard = model_cache
+            .lock()
+            .map_err(|e| format!("Model mutex poisoned: {e}"))?;
+
+        if model_guard.is_none() {
+            log::info!("Loading Saul model from disk (first query)…");
+            let model_params = LlamaModelParams::default();
+            let model = LlamaModel::load_from_file(backend, &gguf_path, &model_params)
+                .map_err(|e| format!("Failed to load Saul model: {e}"))?;
+            *model_guard = Some(model);
+            log::info!("Saul model loaded and cached.");
+        }
+
+        let model = model_guard.as_ref().unwrap();
+
+        // Create a fresh context per query (allocates KV cache, ~seconds not minutes)
         let ctx_params = LlamaContextParams::default()
             .with_n_ctx(NonZeroU32::new(4096));
         let mut ctx = model
-            .new_context(&backend, ctx_params)
-            .map_err(|e| e.to_string())?;
+            .new_context(backend, ctx_params)
+            .map_err(|e| format!("Failed to create context: {e}"))?;
 
+        // Tokenize prompt
         let tokens = model
             .str_to_token(&prompt, AddBos::Always)
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| format!("Tokenize error: {e}"))?;
 
         let n_tokens = tokens.len();
-        let max_new_tokens = 1024usize;
-
-        let mut batch = LlamaBatch::new(n_tokens + max_new_tokens, 1);
-
-        for (pos, token) in tokens.iter().enumerate() {
-            let is_last = pos == n_tokens - 1;
-            batch.add(*token, pos as i32, &[0], is_last).map_err(|e| e.to_string())?;
+        if n_tokens == 0 {
+            return Err("Empty token sequence".to_string());
         }
 
-        ctx.decode(&mut batch).map_err(|e| e.to_string())?;
+        // Decode the prompt as a batch (only the last token needs logits)
+        let mut batch = LlamaBatch::new(n_tokens, 1);
+        for (pos, token) in tokens.iter().enumerate() {
+            let is_last = pos == n_tokens - 1;
+            batch
+                .add(*token, pos as i32, &[0], is_last)
+                .map_err(|e| format!("Batch add error: {e}"))?;
+        }
+        ctx.decode(&mut batch)
+            .map_err(|e| format!("Prompt decode error: {e}"))?;
 
+        // Autoregressive generation
         let mut sampler = LlamaSampler::chain_simple([LlamaSampler::greedy()]);
         let mut response = String::new();
         let mut pos = n_tokens;
+        let max_new_tokens = 1024usize;
 
         for _ in 0..max_new_tokens {
-            let token = sampler.sample(&ctx, batch.n_tokens() - 1);
+            // idx = -1 samples from the last computed logit position
+            let token = sampler.sample(&ctx, -1);
             sampler.accept(token);
 
             if model.is_eog_token(token) {
                 break;
             }
 
+            // Convert token to UTF-8 bytes; lossy-decode (handles BPE fragments)
             let output_bytes = model
-                .token_to_bytes(token, Special::Tokenize)
-                .map_err(|e| e.to_string())?;
+                .token_to_piece_bytes(token, 128, false, None)
+                .map_err(|e| format!("Token decode error: {e}"))?;
             response.push_str(&String::from_utf8_lossy(&output_bytes));
 
+            // Feed the generated token back for next-step prediction
             batch.clear();
-            batch.add(token, pos as i32, &[0], true).map_err(|e| e.to_string())?;
-            ctx.decode(&mut batch).map_err(|e| e.to_string())?;
+            batch
+                .add(token, pos as i32, &[0], true)
+                .map_err(|e| format!("Gen batch add error: {e}"))?;
+            ctx.decode(&mut batch)
+                .map_err(|e| format!("Gen decode error: {e}"))?;
             pos += 1;
         }
 
@@ -284,14 +326,14 @@ async fn ask_saul(
 #[tauri::command]
 pub async fn load_files(
     file_paths: Vec<String>,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<Vec<FileInfo>, String> {
     let (settings, model_dir) = {
         let s = state.lock().await;
         (s.settings.clone(), s.model_dir.clone())
     };
 
-    // Expand directories to files
+    // Expand directories to individual files
     let mut expanded: Vec<String> = Vec::new();
     for fp in &file_paths {
         if let Ok(entries) = std::fs::read_dir(fp) {
@@ -308,7 +350,6 @@ pub async fn load_files(
     }
 
     let mut results: Vec<FileInfo> = Vec::new();
-
     for file_path in expanded {
         match process_file(&file_path, &settings, &model_dir, &state).await {
             Ok(info) => results.push(info),
@@ -323,7 +364,7 @@ async fn process_file(
     file_path: &str,
     settings: &AppSettings,
     model_dir: &PathBuf,
-    state: &tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: &tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<FileInfo, String> {
     use super::doc_parser;
 
@@ -353,8 +394,7 @@ async fn process_file(
         .unwrap_or_default()
         .as_millis() as u64;
 
-    // Chunk document
-    let chunks = chunk_document("", "", "", &pages, settings);
+    let chunks = chunk_document(&pages, settings);
     let mut item_ids: Vec<String> = Vec::new();
 
     for chunk in &chunks {
@@ -404,6 +444,8 @@ async fn process_file(
     Ok(file_info)
 }
 
+// ── Chunking ──────────────────────────────────────────────────────────────────
+
 struct TempChunk {
     id: String,
     page_number: u32,
@@ -412,13 +454,7 @@ struct TempChunk {
     token_count: usize,
 }
 
-fn chunk_document(
-    _doc_id: &str,
-    _file_name: &str,
-    _file_path: &str,
-    pages: &[DocumentPage],
-    settings: &AppSettings,
-) -> Vec<TempChunk> {
+fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChunk> {
     let mut chunks = Vec::new();
     let mut global_idx = 0usize;
 
@@ -428,12 +464,14 @@ fn chunk_document(
             continue;
         }
 
-        // Split into sentences (rough sentence boundary)
-        let sentences: Vec<&str> = split_sentences(text);
+        let sentences = split_sentences(text);
         let mut current = String::new();
         let mut sentence_buf: Vec<&str> = Vec::new();
 
-        let flush = |current: &str, global_idx: &mut usize, chunks: &mut Vec<TempChunk>, page_num: u32| {
+        let flush = |current: &str,
+                     global_idx: &mut usize,
+                     chunks: &mut Vec<TempChunk>,
+                     page_num: u32| {
             let trimmed = current.trim();
             if !trimmed.is_empty() {
                 chunks.push(TempChunk {
@@ -451,7 +489,6 @@ fn chunk_document(
             if !current.is_empty() && current.len() + sentence.len() + 1 > settings.chunk_size {
                 flush(&current, &mut global_idx, &mut chunks, page.page_number);
 
-                // Overlap: carry last N chars of sentences into next chunk
                 let mut overlap_parts: Vec<&str> = Vec::new();
                 let mut overlap_len = 0usize;
                 for s in sentence_buf.iter().rev() {
@@ -482,14 +519,16 @@ fn chunk_document(
 fn split_sentences(text: &str) -> Vec<&str> {
     let mut sentences = Vec::new();
     let mut start = 0;
-
     let bytes = text.as_bytes();
     let len = bytes.len();
     let mut i = 0;
 
     while i < len {
         let b = bytes[i];
-        if (b == b'.' || b == b'!' || b == b'?') && i + 1 < len && bytes[i + 1].is_ascii_whitespace() {
+        if (b == b'.' || b == b'!' || b == b'?')
+            && i + 1 < len
+            && bytes[i + 1].is_ascii_whitespace()
+        {
             let s = text[start..=i].trim();
             if !s.is_empty() {
                 sentences.push(s);
@@ -518,17 +557,19 @@ fn split_sentences(text: &str) -> Vec<&str> {
 #[tauri::command]
 pub async fn query(
     question: String,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<QueryResult, String> {
-    let (settings, model_dir) = {
+    let (settings, model_dir, model_cache) = {
         let s = state.lock().await;
-        (s.settings.clone(), s.model_dir.clone())
+        (
+            s.settings.clone(),
+            s.model_dir.clone(),
+            Arc::clone(&s.llama_model),
+        )
     };
 
-    // Embed the query
     let query_vec = embed_text(&question, &model_dir).await?;
 
-    // Search vector store
     let candidate_k = (settings.top_k * 3).min(30);
     let results = {
         let s = state.lock().await;
@@ -545,8 +586,8 @@ pub async fn query(
         scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
         scored.truncate(candidate_k);
 
-        // Diversity: cap chunks per (file_path, page_number)
-        let mut page_count: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+        let mut page_count: std::collections::HashMap<String, usize> =
+            std::collections::HashMap::new();
         scored
             .into_iter()
             .filter(|(_, meta)| {
@@ -570,7 +611,6 @@ pub async fn query(
         });
     }
 
-    // Build context
     let context_parts: Vec<String> = results
         .iter()
         .enumerate()
@@ -587,7 +627,7 @@ pub async fn query(
     let context = context_parts.join("\n\n---\n\n");
     let system_with_context = SYSTEM_PROMPT.replace("{context}", &context);
 
-    let answer = ask_saul(&system_with_context, &question, &model_dir).await?;
+    let answer = ask_saul(&system_with_context, &question, &model_dir, model_cache).await?;
 
     let not_found = answer.to_lowercase().contains("i could not find")
         || answer.to_lowercase().contains("no relevant");
@@ -614,7 +654,7 @@ pub async fn query(
 
 #[tauri::command]
 pub async fn get_files(
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<Vec<FileInfo>, String> {
     let s = state.lock().await;
     Ok(s.file_registry.values().cloned().collect())
@@ -623,11 +663,10 @@ pub async fn get_files(
 #[tauri::command]
 pub async fn remove_file(
     file_id: String,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<(), String> {
     let mut s = state.lock().await;
     let item_ids: Vec<String> = s.doc_chunk_ids.get(&file_id).cloned().unwrap_or_default();
-
     for id in &item_ids {
         s.chunk_registry.remove(id);
     }
@@ -635,7 +674,6 @@ pub async fn remove_file(
     s.doc_chunk_ids.remove(&file_id);
     s.file_registry.remove(&file_id);
     s.save_chunks().await;
-
     Ok(())
 }
 
@@ -653,7 +691,7 @@ pub async fn get_file_data(file_path: String) -> Result<String, String> {
 pub async fn get_page_text(
     file_path: String,
     page_number: u32,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<String, String> {
     let s = state.lock().await;
     Ok(s.get_page_text(&file_path, page_number))
@@ -663,7 +701,7 @@ pub async fn get_page_text(
 
 #[tauri::command]
 pub async fn get_settings(
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<AppSettings, String> {
     let s = state.lock().await;
     Ok(s.settings.clone())
@@ -672,7 +710,7 @@ pub async fn get_settings(
 #[tauri::command]
 pub async fn save_settings(
     settings: AppSettings,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<(), String> {
     let mut s = state.lock().await;
     s.settings = settings;
@@ -685,7 +723,7 @@ pub async fn save_settings(
 #[tauri::command]
 pub async fn save_session(
     session: ChatSession,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<bool, String> {
     let mut s = state.lock().await;
     let now = std::time::SystemTime::now()
@@ -699,14 +737,7 @@ pub async fn save_session(
             ..session
         };
     } else {
-        s.sessions.insert(
-            0,
-            ChatSession {
-                updated_at: now,
-                ..session
-            },
-        );
-        // Keep last 50 sessions
+        s.sessions.insert(0, ChatSession { updated_at: now, ..session });
         s.sessions.truncate(50);
     }
 
@@ -716,7 +747,7 @@ pub async fn save_session(
 
 #[tauri::command]
 pub async fn get_sessions(
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<Vec<ChatSession>, String> {
     let s = state.lock().await;
     Ok(s.sessions.clone())
@@ -725,7 +756,7 @@ pub async fn get_sessions(
 #[tauri::command]
 pub async fn delete_session(
     session_id: String,
-    state: tauri::State<'_, Arc<Mutex<RagState>>>,
+    state: tauri::State<'_, Arc<AsyncMutex<RagState>>>,
 ) -> Result<bool, String> {
     let mut s = state.lock().await;
     s.sessions.retain(|sess| sess.id != session_id);

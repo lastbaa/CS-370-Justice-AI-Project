@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 // ── Shared Types (mirror of shared/src/types.ts) ────────────────────────────
 
@@ -142,6 +143,8 @@ pub struct RagState {
     pub model_dir: PathBuf,
     pub settings: AppSettings,
     pub sessions: Vec<ChatSession>,
+    /// Cached llama model — loaded once on first query, reused thereafter.
+    pub llama_model: Arc<Mutex<Option<llama_cpp_2::model::LlamaModel>>>,
 }
 
 impl RagState {
@@ -156,6 +159,7 @@ impl RagState {
             data_dir,
             settings: AppSettings::default(),
             sessions: Vec::new(),
+            llama_model: Arc::new(Mutex::new(None)),
         }
     }
 
