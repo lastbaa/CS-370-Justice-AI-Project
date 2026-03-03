@@ -23,7 +23,7 @@ const platforms: {
       'Open the .dmg and drag Justice AI to Applications',
       'Right-click → Open on first launch (macOS security prompt)',
       'Open Settings and paste your HuggingFace token',
-      'Install Ollama + pull nomic-embed-text for document search',
+      'Load your documents and start searching',
     ],
     icon: (
       <svg width="17" height="21" viewBox="0 0 18 22" fill="currentColor">
@@ -35,12 +35,12 @@ const platforms: {
     key: 'windows',
     label: 'Windows',
     sub: 'Windows 10/11 · x64',
-    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/tag/v1.0.0',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/latest',
     installSteps: [
       'Run JusticeAI-Setup.exe and follow the installer',
       'Launch Justice AI from Start Menu',
       'Open Settings and paste your HuggingFace token',
-      'Install Ollama + pull nomic-embed-text for document search',
+      'Load your documents and start searching',
     ],
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -52,12 +52,12 @@ const platforms: {
     key: 'linux',
     label: 'Linux',
     sub: 'AppImage · x86_64',
-    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/tag/v1.0.0',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/latest',
     installSteps: [
       'chmod +x JusticeAI.AppImage then run it',
       'Launch Justice AI',
       'Open Settings and paste your HuggingFace token',
-      'Install Ollama + pull nomic-embed-text for document search',
+      'Load your documents and start searching',
     ],
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
@@ -73,7 +73,7 @@ const requirements = [
   { label: 'Linux', value: 'Any modern distro · x86_64 AppImage' },
   { label: 'RAM', value: '8 GB minimum · 16 GB recommended' },
   { label: 'Storage', value: '~500 MB for the app' },
-  { label: 'Network', value: 'Required only for AI answers (HuggingFace API)' },
+  { label: 'Network', value: 'Required for AI answers (HuggingFace API) · Documents stay local' },
 ]
 
 const setupSteps = [
@@ -89,8 +89,8 @@ const setupSteps = [
   },
   {
     number: '03',
-    title: 'Install Ollama for Embeddings',
-    body: 'Run: brew install ollama && ollama pull nomic-embed-text && ollama serve — then load your documents and start searching.',
+    title: 'Load & Search',
+    body: 'Drag in your PDFs or Word documents, then ask any question in plain English. Every answer includes the filename, page number, and exact quoted text.',
   },
 ]
 
@@ -332,7 +332,7 @@ export default function Download() {
 
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.3)' }}>
                 <span className="text-white font-medium">Small and fast.</span>{' '}
-                The app is under 200 MB. AI answers run through HuggingFace — document search and embeddings run completely locally via Ollama. Your documents never leave your machine.
+                The app is under 200 MB. Document parsing and semantic search run entirely on-device — your files never leave your machine. AI answers are generated via HuggingFace's secure API.
               </p>
             </div>
           </div>

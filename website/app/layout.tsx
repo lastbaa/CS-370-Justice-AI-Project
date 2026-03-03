@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.svg' },
   title: 'Justice AI — Secure Legal Research for Professionals',
   description:
-    'Justice AI runs entirely on your machine. No data sent externally. Citation-first answers grounded in your documents — built for legal professionals who cannot afford confidentiality risks.',
+    'Justice AI keeps your documents on your machine. Citation-first answers grounded in your files — built for legal professionals who cannot afford confidentiality risks.',
   keywords: [
     'legal AI',
     'attorney client privilege',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Justice AI — Secure Legal Research for Professionals',
     description:
-      'Runs entirely on your machine. No data sent externally. Citation-first answers grounded in your documents.',
+      'Your documents stay on your machine. Citation-first answers grounded in your files — private by design.',
     type: 'website',
   },
 }

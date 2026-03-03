@@ -39,7 +39,7 @@ export default function LampCTA() {
           style={{ color: 'rgba(255,255,255,0.38)', maxWidth: 440 }}
         >
           Download Justice AI and start researching in minutes.
-          No signup. No cloud. No compromise.
+          No signup. No subscription. No compromise.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 mt-2">

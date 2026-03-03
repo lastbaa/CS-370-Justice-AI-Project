@@ -313,7 +313,7 @@ export default function ProductDemo() {
           {[
             { label: 'Every answer is cited', body: 'Filename, page number, and direct quote. Nothing fabricated.' },
             { label: 'Strictly document-grounded', body: "If the answer isn't in your files, Justice AI says so explicitly." },
-            { label: 'Runs without internet', body: 'After setup, fully air-gapped. No server calls, ever.' },
+            { label: 'Documents stay local', body: 'Your files never leave your machine. Parsing and search run on-device. AI answers via HuggingFace.' },
           ].map((item, i) => (
             <div
               key={i}

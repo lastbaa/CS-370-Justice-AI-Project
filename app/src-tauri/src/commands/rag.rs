@@ -25,42 +25,6 @@ Rules you must never break:
 Context from loaded documents:
 {context}"#;
 
-// ── File Dialogs ─────────────────────────────────────────────────────────────
-
-#[tauri::command]
-pub async fn open_file_dialog(app: tauri::AppHandle) -> Result<Vec<String>, String> {
-    use tauri_plugin_dialog::{DialogExt, FilePath};
-
-    let result = app
-        .dialog()
-        .file()
-        .add_filter("Documents", &["pdf", "docx"])
-        .blocking_pick_files();
-
-    Ok(match result {
-        Some(files) => files
-            .into_iter()
-            .filter_map(|f| match f {
-                FilePath::Path(p) => Some(p.to_string_lossy().to_string()),
-                _ => None,
-            })
-            .collect(),
-        None => vec![],
-    })
-}
-
-#[tauri::command]
-pub async fn open_folder_dialog(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    use tauri_plugin_dialog::{DialogExt, FilePath};
-
-    let result = app.dialog().file().blocking_pick_folder();
-
-    Ok(match result {
-        Some(FilePath::Path(p)) => Some(p.to_string_lossy().to_string()),
-        _ => None,
-    })
-}
-
 // ── File Loading ─────────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -232,16 +196,18 @@ fn chunk_document(
             if !current.is_empty() && current.len() + sentence.len() + 1 > settings.chunk_size {
                 flush(&current, &mut global_idx, &mut chunks, page.page_number);
 
-                // Overlap: carry last N chars of sentences into next chunk
-                let mut overlap = String::new();
+                // Overlap: carry last N chars of sentences into next chunk (in forward order)
+                let mut overlap_parts: Vec<&str> = Vec::new();
+                let mut overlap_len = 0usize;
                 for s in sentence_buf.iter().rev() {
-                    let candidate = format!("{} {}", s, overlap);
-                    if candidate.len() > settings.chunk_overlap {
+                    if overlap_len + s.len() + 1 > settings.chunk_overlap {
                         break;
                     }
-                    overlap = candidate;
+                    overlap_parts.push(s);
+                    overlap_len += s.len() + 1;
                 }
-                current = overlap.trim().to_string();
+                overlap_parts.reverse();
+                current = overlap_parts.join(" ");
                 sentence_buf.clear();
             }
 
@@ -260,39 +226,33 @@ fn chunk_document(
 
 fn split_sentences(text: &str) -> Vec<&str> {
     let mut sentences = Vec::new();
-    let mut start = 0;
-    let chars: Vec<char> = text.chars().collect();
-    let len = chars.len();
+    let mut start = 0; // byte offset of current sentence start
+
+    let bytes = text.as_bytes();
+    let len = bytes.len();
     let mut i = 0;
 
     while i < len {
-        if (chars[i] == '.' || chars[i] == '!' || chars[i] == '?')
-            && i + 1 < len
-            && chars[i + 1].is_whitespace()
-        {
-            // Find byte position of end
-            let end = text
-                .char_indices()
-                .nth(i + 1)
-                .map(|(b, _)| b)
-                .unwrap_or(text.len());
-            let s = text[start..end].trim();
+        let b = bytes[i];
+        if (b == b'.' || b == b'!' || b == b'?') && i + 1 < len && bytes[i + 1].is_ascii_whitespace() {
+            // Sentence ends at i (inclusive). Slice up to and including the punctuation.
+            let s = text[start..=i].trim();
             if !s.is_empty() {
                 sentences.push(s);
             }
-            // Skip whitespace
-            let next_start = text
-                .char_indices()
-                .skip(i + 1)
-                .find(|(_, c)| !c.is_whitespace())
-                .map(|(b, _)| b)
-                .unwrap_or(text.len());
-            start = next_start;
+            // Skip whitespace to find next sentence start
+            let mut j = i + 1;
+            while j < len && bytes[j].is_ascii_whitespace() {
+                j += 1;
+            }
+            start = j;
+            i = j;
+        } else {
             i += 1;
         }
-        i += 1;
     }
 
+    // Remainder after last sentence boundary
     let remainder = text[start..].trim();
     if !remainder.is_empty() {
         sentences.push(remainder);

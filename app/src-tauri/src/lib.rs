@@ -17,22 +17,18 @@ pub fn run() {
                 .expect("Failed to get app data dir");
             std::fs::create_dir_all(&data_dir).ok();
 
-            let rag_state = Arc::new(Mutex::new(state::RagState::new(data_dir.clone())));
-
-            // Load persisted data on startup (non-blocking)
-            let rag_clone = rag_state.clone();
-            tauri::async_runtime::spawn(async move {
-                let mut s = rag_clone.lock().await;
-                s.load_from_disk().await;
+            // Load persisted data synchronously before the window opens so
+            // the first IPC calls from the renderer always see a fully loaded state.
+            let mut rag = state::RagState::new(data_dir.clone());
+            tauri::async_runtime::block_on(async {
+                rag.load_from_disk().await;
             });
 
-            app.manage(rag_state);
+            app.manage(Arc::new(Mutex::new(rag)));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             commands::ollama::check_ollama,
-            commands::rag::open_file_dialog,
-            commands::rag::open_folder_dialog,
             commands::rag::load_files,
             commands::rag::get_files,
             commands::rag::remove_file,

@@ -72,7 +72,7 @@ export default function HowItWorks() {
         </div>
         <Reveal className="text-center mb-24">
           <p className="text-lg max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.38)' }}>
-            Three steps from document to verified, cited answer — all on your machine.
+            Three steps from document to verified, cited answer backed by your own files.
           </p>
         </Reveal>
 
@@ -125,9 +125,9 @@ export default function HowItWorks() {
               </svg>
             </div>
             <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
-              <span className="text-white font-medium">Fully air-gapped operation.</span>{' '}
-              Once installed, Justice AI requires no internet connection. The AI model is included in the installer —
-              embedding, retrieval, and generation all run on your hardware from day one. Nothing ever leaves your machine.
+              <span className="text-white font-medium">Your documents never leave your machine.</span>{' '}
+              Document parsing and semantic search run entirely on-device. AI answers are generated via HuggingFace's
+              secure API — only your question is sent, never your files.
             </p>
           </div>
         </Reveal>

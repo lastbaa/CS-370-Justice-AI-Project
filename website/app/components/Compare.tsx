@@ -21,8 +21,8 @@ const rows = [
   },
   {
     feature: 'Connectivity',
-    cloud: 'Requires active internet connection',
-    local: 'Fully offline after initial setup',
+    cloud: 'Files transmitted to third-party AI servers',
+    local: 'Documents stored and searched locally',
   },
   {
     feature: 'Attorney-client privilege',
