@@ -18,7 +18,7 @@ const platforms: {
     key: 'mac',
     label: 'macOS',
     sub: 'Universal · macOS 12+',
-    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/Justice%20AI-1.0.0-arm64.dmg',
+    file: 'https://github.com/lastbaa/CS-370-Justice-AI-Project/releases/download/v1.0.0/Justice.AI_1.0.0_aarch64.dmg',
     installSteps: [
       'Open the .dmg and drag Justice AI to Applications',
       'Right-click → Open on first launch (macOS security prompt)',
