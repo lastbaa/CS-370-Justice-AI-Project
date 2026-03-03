@@ -49,21 +49,10 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
           className="w-14 h-14 rounded-2xl flex items-center justify-center mb-8"
           style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}
         >
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7L12 2z"
-              stroke="#c9a84c"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M9 12l2 2 4-4"
-              stroke="#c9a84c"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+            <rect x="1" y="3" width="11" height="4" rx="1.25" fill="#c9a84c" transform="rotate(45 6.5 5)" />
+            <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="#c9a84c" strokeWidth="2.5" strokeLinecap="round" />
+            <rect x="0.5" y="16.5" width="8.5" height="2.5" rx="0.75" fill="#c9a84c" opacity="0.38" />
           </svg>
         </div>
 

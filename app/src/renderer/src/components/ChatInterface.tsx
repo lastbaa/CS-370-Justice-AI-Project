@@ -412,7 +412,32 @@ export default function ChatInterface({
   const isEmpty = messages.length === 0
 
   return (
-    <div className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808]">
+    <div
+      className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808] relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Full-screen drag overlay */}
+      {isDragging && (
+        <div
+          className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
+          style={{
+            background: 'rgba(201,168,76,0.04)',
+            border: '2px dashed rgba(201,168,76,0.4)',
+            borderRadius: 0,
+          }}
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,0.7)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <p className="mt-3 text-[13px] font-semibold" style={{ color: 'rgba(201,168,76,0.75)' }}>
+            Release to add documents
+          </p>
+        </div>
+      )}
 
       {/* Header — matches sidebar's h-11 traffic zone + content row */}
       <div
@@ -450,38 +475,71 @@ export default function ChatInterface({
       <div className="flex-1 overflow-y-auto">
         {isEmpty ? (
           <div className="flex h-full flex-col items-center justify-center px-8 py-16 text-center">
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'rgba(201,168,76,0.5)' }}>
-              {hasFiles
-                ? `${files.length} ${files.length === 1 ? 'document' : 'documents'} ready`
-                : 'No documents loaded'}
-            </p>
-            <h3 className="mb-7 text-[22px] font-semibold tracking-[-0.02em] text-white">
-              What would you like to know?
-            </h3>
-            <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
-              {EXAMPLES.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => { setInput(q); textareaRef.current?.focus() }}
-                  className="rounded-xl px-4 py-3.5 text-left text-[12px] leading-relaxed transition-all"
-                  style={{ background: '#0c0c0c', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.38)' }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.background = '#111'
-                    el.style.borderColor = 'rgba(201,168,76,0.2)'
-                    el.style.color = 'rgba(255,255,255,0.72)'
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.background = '#0c0c0c'
-                    el.style.borderColor = 'rgba(255,255,255,0.06)'
-                    el.style.color = 'rgba(255,255,255,0.38)'
-                  }}
+            {!hasFiles ? (
+              /* No docs yet — prompt to add */
+              <>
+                <div
+                  className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl"
+                  style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.18)' }}
                 >
-                  {q}
+                  <svg width="18" height="18" viewBox="0 0 16 16" fill="rgba(201,168,76,0.75)">
+                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75zM8.75 9.25a.75.75 0 0 0-1.5 0v1.5H5.75a.75.75 0 0 0 0 1.5h1.5v1.5a.75.75 0 0 0 1.5 0v-1.5h1.5a.75.75 0 0 0 0-1.5H8.75v-1.5z" />
+                  </svg>
+                </div>
+                <h3 className="mb-2 text-[17px] font-semibold tracking-[-0.02em] text-white">
+                  Add documents to get started
+                </h3>
+                <p className="mb-6 text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.28)', maxWidth: 300 }}>
+                  Load PDFs or Word files in the Documents panel on the right, then ask any question.
+                </p>
+                <button
+                  onClick={onAddFiles}
+                  className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12.5px] font-semibold transition-all"
+                  style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.22)', color: '#c9a84c' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,168,76,0.16)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(201,168,76,0.1)' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2z" />
+                  </svg>
+                  Add Documents
                 </button>
-              ))}
-            </div>
+              </>
+            ) : (
+              /* Has docs — show example prompts */
+              <>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'rgba(201,168,76,0.5)' }}>
+                  {files.length} {files.length === 1 ? 'document' : 'documents'} ready
+                </p>
+                <h3 className="mb-7 text-[22px] font-semibold tracking-[-0.02em] text-white">
+                  What would you like to know?
+                </h3>
+                <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
+                  {EXAMPLES.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => { setInput(q); textareaRef.current?.focus() }}
+                      className="rounded-xl px-4 py-3.5 text-left text-[12px] leading-relaxed transition-all"
+                      style={{ background: '#0c0c0c', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.38)' }}
+                      onMouseEnter={(e) => {
+                        const el = e.currentTarget as HTMLButtonElement
+                        el.style.background = '#111'
+                        el.style.borderColor = 'rgba(201,168,76,0.2)'
+                        el.style.color = 'rgba(255,255,255,0.72)'
+                      }}
+                      onMouseLeave={(e) => {
+                        const el = e.currentTarget as HTMLButtonElement
+                        el.style.background = '#0c0c0c'
+                        el.style.borderColor = 'rgba(255,255,255,0.06)'
+                        el.style.color = 'rgba(255,255,255,0.38)'
+                      }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-7 max-w-3xl mx-auto w-full px-6 py-8">
@@ -493,21 +551,6 @@ export default function ChatInterface({
           </div>
         )}
       </div>
-
-      {/* No-docs warning */}
-      {!hasFiles && (
-        <div
-          className="shrink-0 mx-6 mb-0 mt-0 rounded-lg px-3 py-2 flex items-center gap-2"
-          style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.14)', marginBottom: -4 }}
-        >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="#c9a84c" opacity="0.7">
-            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm.25 4.75a.75.75 0 0 0-1.5 0v4.5a.75.75 0 0 0 1.5 0v-4.5zM8 11a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
-          </svg>
-          <p className="text-[11px]" style={{ color: 'rgba(201,168,76,0.7)' }}>
-            Add documents in the panel on the right before asking a question
-          </p>
-        </div>
-      )}
 
       {/* Input */}
       <div

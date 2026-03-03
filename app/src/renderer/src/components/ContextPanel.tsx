@@ -350,8 +350,8 @@ export default function ContextPanel({
                 />
               </svg>
             </div>
-            <p className="text-[11px] text-[#2e2e2e]">No documents loaded</p>
-            <p className="mt-0.5 text-[10px] text-[#222]">Add files to begin</p>
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.25)' }}>No documents loaded</p>
+            <p className="mt-0.5 text-[10px]" style={{ color: 'rgba(255,255,255,0.14)' }}>Add files to begin</p>
           </div>
         )}
       </div>
