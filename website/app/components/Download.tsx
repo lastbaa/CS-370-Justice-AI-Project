@@ -127,7 +127,7 @@ export default function Download() {
       <div className="max-w-3xl mx-auto">
         <Reveal className="flex justify-center mb-6">
           <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(201,168,76,0.55)' }}>
-            04 — Get Started
+            05 — Get Started
           </span>
         </Reveal>
 

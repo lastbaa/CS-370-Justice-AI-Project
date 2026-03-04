@@ -72,6 +72,7 @@ function SectionHeader({ children }: { children: React.ReactNode }): JSX.Element
 
 export default function Settings({ settings, onSave, onClose }: Props): JSX.Element {
   const [local, setLocal] = useState<AppSettings>({ ...settings })
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
@@ -86,6 +87,11 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
   }
 
   function handleSave(): void {
+    if (local.chunkOverlap >= local.chunkSize) {
+      setValidationError('Chunk overlap must be less than chunk size.')
+      return
+    }
+    setValidationError(null)
     onSave(local)
   }
 
@@ -239,9 +245,15 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
 
         {/* Footer */}
         <div
-          className="flex items-center justify-end gap-3 px-6 py-4"
+          className="flex items-center justify-between gap-3 px-6 py-4"
           style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
         >
+          {validationError ? (
+            <p className="text-[11px]" style={{ color: 'rgba(248,81,73,0.85)' }}>
+              {validationError}
+            </p>
+          ) : <span />}
+          <div className="flex items-center gap-3">
           <button
             onClick={onClose}
             className="rounded-lg px-4 py-2 text-[12px] font-medium transition-colors"
@@ -272,6 +284,7 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
           >
             Save
           </button>
+          </div>
         </div>
       </div>
     </div>

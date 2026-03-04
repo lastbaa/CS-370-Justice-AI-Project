@@ -393,28 +393,100 @@ export default function ChatInterface({
             </div>
           </div>
 
-          {/* Feature pills */}
-          <div className="flex items-center gap-2 mt-8 flex-wrap justify-center">
-            {[
-              { label: 'Cited answers', icon: '⊹' },
-              { label: 'Runs locally', icon: '⊹' },
-              { label: 'Source-grounded', icon: '⊹' },
-              { label: 'Privacy-first', icon: '⊹' },
-            ].map((f) => (
+          {/* Bento capability cards */}
+          <div className="grid grid-cols-2 gap-2 mt-8" style={{ maxWidth: 440, width: '100%' }}>
+            {([
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="#c9a84c">
+                    <path d="M8.533.133a1.75 1.75 0 0 0-1.066 0l-5.25 1.68A1.75 1.75 0 0 0 1 3.48V7c0 1.566.832 3.125 2.561 4.608C5.163 13.101 6.97 14 8 14s2.837-.899 4.439-2.392C14.168 10.125 15 8.566 15 7V3.48a1.75 1.75 0 0 0-1.217-1.667zM5.5 9l2 2 3.5-3.5" stroke="#3fb950" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                ),
+                title: 'Privacy-First',
+                desc: 'Nothing ever leaves your device',
+                accent: 'rgba(63,185,80,0.55)',
+                bg: 'rgba(63,185,80,0.04)',
+                border: 'rgba(63,185,80,0.12)',
+              },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75z" />
+                    <line x1="5.5" y1="9" x2="10.5" y2="9" />
+                    <line x1="5.5" y1="11.5" x2="8.5" y2="11.5" />
+                  </svg>
+                ),
+                title: 'Cited Answers',
+                desc: 'Filename + page for every claim',
+                accent: 'rgba(201,168,76,0.6)',
+                bg: 'rgba(201,168,76,0.04)',
+                border: 'rgba(201,168,76,0.12)',
+              },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="8" cy="8" r="6.5" />
+                    <path d="M8 4v4l2.5 2" />
+                  </svg>
+                ),
+                title: 'Seconds, Not Hours',
+                desc: 'Semantic search across all pages',
+                accent: 'rgba(201,168,76,0.6)',
+                bg: 'rgba(201,168,76,0.04)',
+                border: 'rgba(201,168,76,0.12)',
+              },
+              {
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c9a84c" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="12" height="12" rx="3" />
+                    <rect x="5" y="5" width="6" height="6" rx="1.5" />
+                    <line x1="2" y1="6" x2="0.5" y2="6" />
+                    <line x1="14" y1="6" x2="15.5" y2="6" />
+                    <line x1="2" y1="10" x2="0.5" y2="10" />
+                    <line x1="14" y1="10" x2="15.5" y2="10" />
+                  </svg>
+                ),
+                title: 'Runs On-Device',
+                desc: 'Saul-7B · no cloud, no API keys',
+                accent: 'rgba(201,168,76,0.6)',
+                bg: 'rgba(201,168,76,0.04)',
+                border: 'rgba(201,168,76,0.12)',
+              },
+            ] as { icon: JSX.Element; title: string; desc: string; accent: string; bg: string; border: string }[]).map((card) => (
               <div
-                key={f.label}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-medium tracking-wide"
+                key={card.title}
+                className="rounded-xl px-3.5 py-3 flex flex-col gap-2 group"
                 style={{
-                  background: 'rgba(201,168,76,0.05)',
-                  border: '1px solid rgba(201,168,76,0.14)',
-                  color: 'rgba(201,168,76,0.55)',
+                  background: card.bg,
+                  border: `1px solid ${card.border}`,
+                  transition: 'background 0.18s ease, border-color 0.18s ease, transform 0.18s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.background = card.bg.replace('0.04', '0.07')
+                  el.style.borderColor = card.border.replace('0.12', '0.22')
+                  el.style.transform = 'translateY(-2px)'
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLDivElement
+                  el.style.background = card.bg
+                  el.style.borderColor = card.border
+                  el.style.transform = 'translateY(0)'
                 }}
               >
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: 'rgba(201,168,76,0.7)', boxShadow: '0 0 4px rgba(201,168,76,0.4)' }}
-                />
-                {f.label}
+                <div
+                  className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  {card.icon}
+                </div>
+                <div>
+                  <p className="text-[11.5px] font-semibold text-white leading-tight">{card.title}</p>
+                  <p className="text-[10.5px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                    {card.desc}
+                  </p>
+                </div>
               </div>
             ))}
           </div>

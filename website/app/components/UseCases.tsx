@@ -83,7 +83,7 @@ export default function UseCases() {
       <div className="max-w-6xl mx-auto">
         <Reveal className="flex justify-center mb-6">
           <span className="text-xs font-medium tracking-[0.2em] uppercase" style={{ color: 'rgba(201,168,76,0.55)' }}>
-            02 — Practice Areas
+            03 — Practice Areas
           </span>
         </Reveal>
 

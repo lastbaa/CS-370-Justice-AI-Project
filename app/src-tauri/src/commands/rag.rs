@@ -158,7 +158,12 @@ pub async fn download_models(
 
     use tokio::io::AsyncWriteExt;
 
-    let mut file = if already_downloaded > 0 {
+    // Open the tmp file for writing.
+    // Only append to an existing partial download when the server actually honoured
+    // the Range request (HTTP 206). If it returned 200, the server is sending the
+    // full file from byte 0 — appending would corrupt it, so we truncate instead.
+    let resuming = already_downloaded > 0 && status.as_u16() == 206;
+    let mut file = if resuming {
         tokio::fs::OpenOptions::new()
             .append(true)
             .open(&tmp_path)
@@ -170,7 +175,8 @@ pub async fn download_models(
             .map_err(|e| e.to_string())?
     };
 
-    let mut downloaded = already_downloaded;
+    // Byte counter starts at whatever was already on disk (0 if not resuming).
+    let mut downloaded: u64 = if resuming { already_downloaded } else { 0 };
 
     while let Some(chunk) = response.chunk().await.map_err(|e| e.to_string())? {
         file.write_all(&chunk).await.map_err(|e| e.to_string())?;

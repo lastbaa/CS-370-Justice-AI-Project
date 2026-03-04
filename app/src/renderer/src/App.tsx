@@ -219,9 +219,17 @@ export default function App(): JSX.Element {
   }
 
   async function handleRemoveFile(id: string): Promise<void> {
+    const file = files.find((f) => f.id === id)
     try {
       await window.api.removeFile(id)
       setFiles((prev) => prev.filter((f) => f.id !== id))
+      if (file) {
+        // Clear any citations that came from this file so stale "View" links
+        // don't try to open a document that no longer exists in the app state.
+        setLastCitations((prev) => prev.filter((c) => c.filePath !== file.filePath))
+        // Close the document viewer if it's showing a page from the removed file.
+        setViewerCitation((prev) => (prev?.filePath === file.filePath ? null : prev))
+      }
     } catch (err) {
       console.error('Failed to remove file:', err)
     }

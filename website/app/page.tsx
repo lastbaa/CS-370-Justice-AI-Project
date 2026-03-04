@@ -4,6 +4,7 @@ import { Marquee } from './components/Marquee'
 import ProductDemo from './components/ProductDemo'
 import VaporizeStats from './components/VaporizeStats'
 import FeaturesGrid from './components/FeaturesGrid'
+import BentoCapabilities from './components/BentoCapabilities'
 import Compare from './components/Compare'
 import UseCases from './components/UseCases'
 import HowItWorks from './components/HowItWorks'
@@ -20,6 +21,7 @@ export default function Home() {
       <ProductDemo />
       <VaporizeStats />
       <FeaturesGrid />
+      <BentoCapabilities />
       <Compare />
       <UseCases />
       <HowItWorks />
