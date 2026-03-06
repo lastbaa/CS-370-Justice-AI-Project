@@ -11,7 +11,7 @@ use tokio::sync::Mutex as AsyncMutex;
 use uuid::Uuid;
 
 const SCORE_THRESHOLD: f32 = 0.10;
-const MAX_CHUNKS_PER_PAGE: usize = 4;
+const MAX_CHUNKS_PER_PAGE: usize = 6;
 const GGUF_MIN_SIZE: u64 = 4_000_000_000;
 
 const SAUL_GGUF_URL: &str = "https://huggingface.co/MaziyarPanahi/Saul-Instruct-v1-GGUF/resolve/main/Saul-Instruct-v1.Q4_K_M.gguf";
@@ -21,6 +21,8 @@ const SAUL_GGUF_URL: &str = "https://huggingface.co/MaziyarPanahi/Saul-Instruct-
 const RULES_PROMPT: &str = "You are Justice AI, a legal document research assistant. \
 Answer questions using ONLY the document excerpts provided in the user message. \
 Always cite the exact filename and page number for every claim. \
+When the answer contains numbers, dollar amounts, dates, or specific figures, \
+extract and state them EXACTLY as written in the source — do not paraphrase or round. \
 Include a direct quoted excerpt from the source. \
 If the answer is not in the provided excerpts, say exactly: \
 \"I could not find information about this in your loaded documents.\" \
@@ -410,7 +412,7 @@ Answer the question using ONLY these excerpts.\n\n\
             LlamaSampler::penalties(64, 1.25, 0.2, 0.2),
             LlamaSampler::top_k(40),
             LlamaSampler::top_p(0.9, 1),
-            LlamaSampler::temp(0.4),
+            LlamaSampler::temp(0.2),
             LlamaSampler::dist(42),
         ]);
         let mut response = String::new();
@@ -555,8 +557,10 @@ async fn process_file(
         .as_millis() as u64;
 
     let chunks = chunk_document(&pages, settings);
-    let mut item_ids: Vec<String> = Vec::new();
 
+    // Embed all chunks first without holding the state lock, then insert atomically.
+    // This prevents partial-write state if the process is interrupted mid-embedding.
+    let mut new_entries: Vec<(String, EmbeddedChunkEntry)> = Vec::new();
     for chunk in &chunks {
         match embed_text(&chunk.text, model_dir).await {
             Ok(vector) => {
@@ -575,15 +579,13 @@ async fn process_file(
                         token_count: chunk.token_count,
                     },
                 };
-                let mut s = state.lock().await;
-                s.chunk_registry.insert(item_id.clone(), entry.meta.clone());
-                s.embedded_chunks.push(entry);
-                item_ids.push(item_id);
+                new_entries.push((item_id, entry));
             }
             Err(e) => log::error!("Embed error for chunk {}: {}", chunk.chunk_index, e),
         }
     }
 
+    let item_ids: Vec<String> = new_entries.iter().map(|(id, _)| id.clone()).collect();
     let file_info = FileInfo {
         id: doc_id.clone(),
         file_name: file_name.clone(),
@@ -594,8 +596,13 @@ async fn process_file(
         chunk_count: item_ids.len(),
     };
 
+    // Single lock acquisition: insert all chunks + registry entries + save.
     {
         let mut s = state.lock().await;
+        for (item_id, entry) in new_entries {
+            s.chunk_registry.insert(item_id.clone(), entry.meta.clone());
+            s.embedded_chunks.push(entry);
+        }
         s.doc_chunk_ids.insert(doc_id.clone(), item_ids);
         s.file_registry.insert(doc_id.clone(), file_info.clone());
         s.save_chunks().await;
@@ -699,6 +706,21 @@ fn split_sentences(text: &str) -> Vec<&str> {
             }
             start = j;
             i = j;
+        } else if b == b'\n' {
+            // Treat newlines as line boundaries — critical for structured documents
+            // (job offers, contracts) where "Salary: $85,000\nStart Date: ..." must
+            // be split into separate indexable lines, not merged into one huge token run.
+            let s = text[start..i].trim();
+            if !s.is_empty() {
+                sentences.push(s);
+            }
+            // Skip consecutive newlines (blank lines between sections)
+            let mut j = i + 1;
+            while j < len && bytes[j] == b'\n' {
+                j += 1;
+            }
+            start = j;
+            i = j;
         } else {
             i += 1;
         }
@@ -713,6 +735,39 @@ fn split_sentences(text: &str) -> Vec<&str> {
 }
 
 // ── RAG Query ─────────────────────────────────────────────────────────────────
+
+/// Expand query keywords with common legal/employment synonyms so that
+/// "salary" matches chunks containing "compensation", "wages", etc.
+fn expand_keywords(keywords: &std::collections::HashSet<String>) -> std::collections::HashSet<String> {
+    const SYNONYMS: &[(&str, &[&str])] = &[
+        ("salary",       &["compensation", "remuneration", "pay", "wage", "wages", "earnings", "income"]),
+        ("compensation", &["salary", "pay", "remuneration", "wage", "wages", "earnings"]),
+        ("wage",         &["salary", "pay", "compensation", "earnings", "income"]),
+        ("pay",          &["salary", "compensation", "wage", "payment", "remuneration"]),
+        ("offer",        &["proposal", "agreement", "letter", "terms", "offeror"]),
+        ("job",          &["position", "role", "employment", "work", "post"]),
+        ("hire",         &["employ", "employment", "onboard", "recruit", "position"]),
+        ("employee",     &["candidate", "staff", "worker", "personnel", "applicant"]),
+        ("employer",     &["company", "organization", "firm", "corporation", "employer"]),
+        ("contract",     &["agreement", "terms", "letter", "document"]),
+        ("benefit",      &["benefits", "perk", "perks", "bonus", "allowance", "bonuses"]),
+        ("start",        &["commence", "begin", "effective", "commencement", "joining"]),
+        ("date",         &["effective", "commencement", "period", "term"]),
+        ("annual",       &["yearly", "per year", "per annum"]),
+    ];
+
+    let mut expanded = keywords.clone();
+    for kw in keywords.iter() {
+        for (key, syns) in SYNONYMS {
+            if kw == key {
+                for &syn in *syns {
+                    expanded.insert(syn.to_string());
+                }
+            }
+        }
+    }
+    expanded
+}
 
 #[tauri::command]
 pub async fn query(
@@ -743,12 +798,14 @@ pub async fn query(
         "please","provide","describe",
     ].iter().cloned().collect();
 
-    let query_keywords: std::collections::HashSet<String> = question
+    let base_keywords: std::collections::HashSet<String> = question
         .to_lowercase()
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3 && !stop_words.contains(*w))
         .map(|w| w.to_string())
         .collect();
+    // Expand with synonyms so "salary" also matches "compensation", etc.
+    let query_keywords = expand_keywords(&base_keywords);
 
     let candidate_k = (settings.top_k * 6).min(60);
     let results = {
@@ -781,7 +838,7 @@ pub async fn query(
                     kw_hits as f32 / query_keywords.len() as f32
                 };
 
-                let hybrid = 0.75 * cosine + 0.25 * kw_score;
+                let hybrid = 0.60 * cosine + 0.40 * kw_score;
                 (hybrid, entry.meta.clone())
             })
             .collect();

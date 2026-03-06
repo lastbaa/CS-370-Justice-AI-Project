@@ -24,18 +24,29 @@ pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
 }
 
 fn clean_pdf_text(text: &str) -> String {
-    // Replace multiple whitespace/newlines with single space, trim
+    // Preserve newlines (important for structured docs like job offers where
+    // "Salary: $85,000\nStart Date: ..." must stay on separate lines).
+    // Collapse runs of non-newline whitespace to a single space.
     let mut result = String::with_capacity(text.len());
-    let mut last_space = true;
+    let mut prev_was_space = false;
+    let mut prev_was_newline = false;
     for ch in text.chars() {
-        if ch.is_whitespace() {
-            if !last_space {
-                result.push(' ');
-                last_space = true;
+        if ch == '\n' || ch == '\r' {
+            if !prev_was_newline {
+                result.push('\n');
+                prev_was_newline = true;
+                prev_was_space = true;
             }
+        } else if ch.is_whitespace() {
+            if !prev_was_space {
+                result.push(' ');
+                prev_was_space = true;
+            }
+            prev_was_newline = false;
         } else {
             result.push(ch);
-            last_space = false;
+            prev_was_space = false;
+            prev_was_newline = false;
         }
     }
     result.trim().to_string()
