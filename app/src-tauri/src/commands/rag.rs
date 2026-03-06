@@ -462,6 +462,21 @@ Answer the question using ONLY these excerpts.\n\n\
             .trim()
             .to_string();
 
+        // Final sanity pass: remove any non-printable / private-use-area characters
+        // that could have leaked from a garbled document into the model's context and
+        // been echoed back. Users should never see "encrypted-looking" characters.
+        let answer: String = answer
+            .chars()
+            .filter(|&c| {
+                let code = c as u32;
+                c == '\n'
+                    || c == '\t'
+                    || (!c.is_control()
+                        && !(0xE000..=0xF8FF).contains(&code)
+                        && code < 0xFFF0)
+            })
+            .collect();
+
         Ok(answer)
     })
     .await
@@ -562,6 +577,28 @@ async fn process_file(
     // This prevents partial-write state if the process is interrupted mid-embedding.
     let mut new_entries: Vec<(String, EmbeddedChunkEntry)> = Vec::new();
     for chunk in &chunks {
+        // Quality gate: skip chunks where fewer than 40% of characters are
+        // alphanumeric/punctuation/space. This catches residual PDF font-encoding
+        // garbage (private-use-area chars, binary runs) that slipped through the
+        // parser's filter — embedding these produces meaningless vectors and the
+        // LLM echoes the garbage back to the user as "encrypted" text.
+        let total_chars = chunk.text.chars().count();
+        if total_chars > 0 {
+            let printable = chunk.text
+                .chars()
+                .filter(|c| c.is_alphanumeric() || c.is_ascii_punctuation() || *c == ' ' || *c == '\n')
+                .count();
+            let ratio = printable as f32 / total_chars as f32;
+            if ratio < 0.40 {
+                log::warn!(
+                    "Skipping chunk {} — only {:.0}% printable chars (likely PDF encoding garbage)",
+                    chunk.chunk_index,
+                    ratio * 100.0
+                );
+                continue;
+            }
+        }
+
         match embed_text(&chunk.text, model_dir).await {
             Ok(vector) => {
                 let item_id = Uuid::new_v4().to_string();

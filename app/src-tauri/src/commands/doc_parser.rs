@@ -23,10 +23,38 @@ pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
     Ok(pages)
 }
 
+/// Returns true if a character is safe to keep in extracted PDF text.
+///
+/// lopdf commonly returns Unicode Private Use Area codepoints (U+E000–U+F8FF)
+/// and raw control bytes for PDFs whose fonts lack a ToUnicode map. To users
+/// and the LLM these look like "encrypted" garbage. Strip them here at the
+/// source so they never reach the vector store or the model prompt.
+fn is_printable_pdf_char(ch: char) -> bool {
+    // Structural whitespace we explicitly preserve
+    if ch == '\n' || ch == '\t' {
+        return true;
+    }
+    // All other control characters (including \r, \x00 – \x1F, \x7F – \x9F)
+    if ch.is_control() {
+        return false;
+    }
+    let code = ch as u32;
+    // Unicode Private Use Area — the primary source of PDF font-encoding garbage
+    if (0xE000..=0xF8FF).contains(&code) {
+        return false;
+    }
+    // Specials block, surrogates, noncharacters
+    if code >= 0xFFF0 {
+        return false;
+    }
+    true
+}
+
 fn clean_pdf_text(text: &str) -> String {
     // Preserve newlines (important for structured docs like job offers where
     // "Salary: $85,000\nStart Date: ..." must stay on separate lines).
     // Collapse runs of non-newline whitespace to a single space.
+    // Strip non-printable / private-use-area characters (PDF font encoding garbage).
     let mut result = String::with_capacity(text.len());
     let mut prev_was_space = false;
     let mut prev_was_newline = false;
@@ -43,11 +71,12 @@ fn clean_pdf_text(text: &str) -> String {
                 prev_was_space = true;
             }
             prev_was_newline = false;
-        } else {
+        } else if is_printable_pdf_char(ch) {
             result.push(ch);
             prev_was_space = false;
             prev_was_newline = false;
         }
+        // Non-printable / private-use-area chars are silently dropped here.
     }
     result.trim().to_string()
 }
