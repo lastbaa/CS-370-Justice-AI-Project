@@ -11,7 +11,6 @@ use tokio::sync::Mutex as AsyncMutex;
 use uuid::Uuid;
 
 const SCORE_THRESHOLD: f32 = 0.10;
-const MAX_CHUNKS_PER_PAGE: usize = 6;
 const GGUF_MIN_SIZE: u64 = 4_000_000_000;
 
 const SAUL_GGUF_URL: &str = "https://huggingface.co/MaziyarPanahi/Saul-Instruct-v1-GGUF/resolve/main/Saul-Instruct-v1.Q4_K_M.gguf";
@@ -776,16 +775,48 @@ fn split_sentences(text: &str) -> Vec<&str> {
             && i + 1 < len
             && bytes[i + 1].is_ascii_whitespace()
         {
-            let s = text[start..=i].trim();
-            if !s.is_empty() {
-                sentences.push(s);
+            // For '.', skip known abbreviations and single-letter initials so that
+            // "Mr. Smith", "Dr. Jones", "U.S. Code", "Inc." etc. don't create a
+            // sentence break and produce tiny nonsensical chunks.
+            let is_boundary = if b == b'.' {
+                let mut word_start = i;
+                while word_start > start && !bytes[word_start - 1].is_ascii_whitespace() {
+                    word_start -= 1;
+                }
+                let word = &bytes[word_start..i];
+                if word.is_empty() || (word.len() == 1 && word[0].is_ascii_alphabetic()) {
+                    // Empty or single letter initial — not a boundary
+                    false
+                } else {
+                    const ABBREVS: &[&[u8]] = &[
+                        b"mr", b"mrs", b"ms", b"dr", b"prof", b"sr", b"jr",
+                        b"vs", b"etc", b"inc", b"corp", b"ltd", b"co",
+                        b"no", b"sec", b"art", b"fig", b"est", b"approx",
+                        b"jan", b"feb", b"mar", b"apr", b"jun", b"jul",
+                        b"aug", b"sep", b"oct", b"nov", b"dec",
+                    ];
+                    let word_lower: Vec<u8> =
+                        word.iter().map(|c| c.to_ascii_lowercase()).collect();
+                    !ABBREVS.iter().any(|abbr| *abbr == word_lower.as_slice())
+                }
+            } else {
+                true // '!' and '?' are always sentence boundaries
+            };
+
+            if is_boundary {
+                let s = text[start..=i].trim();
+                if !s.is_empty() {
+                    sentences.push(s);
+                }
+                let mut j = i + 1;
+                while j < len && bytes[j].is_ascii_whitespace() {
+                    j += 1;
+                }
+                start = j;
+                i = j;
+            } else {
+                i += 1;
             }
-            let mut j = i + 1;
-            while j < len && bytes[j].is_ascii_whitespace() {
-                j += 1;
-            }
-            start = j;
-            i = j;
         } else if b == b'\n' {
             // Treat newlines as line boundaries — critical for structured documents
             // (job offers, contracts) where "Salary: $85,000\nStart Date: ..." must
@@ -849,6 +880,67 @@ fn expand_keywords(keywords: &std::collections::HashSet<String>) -> std::collect
     expanded
 }
 
+/// Maximal Marginal Relevance — select `top_k` diverse, relevant chunks.
+///
+/// At each step picks the candidate that maximises:
+///   MMR(d) = λ · relevance(d) − (1−λ) · max_sim(d, already_selected)
+///
+/// λ = 1.0 → pure relevance (equivalent to top-k by score)
+/// λ = 0.0 → pure diversity
+/// λ = 0.7 → good RAG default: mostly relevant, penalises near-duplicate passages
+///
+/// This prevents the LLM receiving 6 nearly-identical excerpts from the same
+/// paragraph while relevant context from other sections is ignored.
+fn mmr_select(
+    mut candidates: Vec<(f32, ChunkMetadata, Vec<f32>)>,
+    top_k: usize,
+    lambda: f32,
+) -> Vec<(f32, ChunkMetadata)> {
+    let mut selected: Vec<(f32, ChunkMetadata, Vec<f32>)> = Vec::with_capacity(top_k);
+
+    for _ in 0..top_k {
+        if candidates.is_empty() {
+            break;
+        }
+        let best_idx = candidates
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| {
+                let mmr_a = if selected.is_empty() {
+                    a.0
+                } else {
+                    let max_sim = selected
+                        .iter()
+                        .map(|(_, _, v)| RagState::cosine_similarity(&a.2, v))
+                        .fold(0.0f32, f32::max);
+                    lambda * a.0 - (1.0 - lambda) * max_sim
+                };
+                let mmr_b = if selected.is_empty() {
+                    b.0
+                } else {
+                    let max_sim = selected
+                        .iter()
+                        .map(|(_, _, v)| RagState::cosine_similarity(&b.2, v))
+                        .fold(0.0f32, f32::max);
+                    lambda * b.0 - (1.0 - lambda) * max_sim
+                };
+                mmr_a
+                    .partial_cmp(&mmr_b)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .map(|(i, _)| i);
+
+        if let Some(idx) = best_idx {
+            selected.push(candidates.remove(idx));
+        }
+    }
+
+    selected
+        .into_iter()
+        .map(|(score, meta, _)| (score, meta))
+        .collect()
+}
+
 #[tauri::command]
 pub async fn query(
     question: String,
@@ -900,7 +992,8 @@ pub async fn query(
             });
         }
 
-        let mut scored: Vec<(f32, ChunkMetadata)> = s
+        // Include vectors so MMR can compute inter-chunk similarity.
+        let mut scored: Vec<(f32, ChunkMetadata, Vec<f32>)> = s
             .embedded_chunks
             .iter()
             .map(|entry| {
@@ -919,7 +1012,7 @@ pub async fn query(
                 };
 
                 let hybrid = 0.60 * cosine + 0.40 * kw_score;
-                (hybrid, entry.meta.clone())
+                (hybrid, entry.meta.clone(), entry.vector.clone())
             })
             .collect();
 
@@ -929,7 +1022,7 @@ pub async fn query(
         // the LLM always has some context (it will say "not found" if truly irrelevant).
         let above_threshold: Vec<_> = scored
             .iter()
-            .filter(|(score, _)| *score >= SCORE_THRESHOLD)
+            .filter(|(score, _, _)| *score >= SCORE_THRESHOLD)
             .cloned()
             .collect();
 
@@ -939,21 +1032,12 @@ pub async fn query(
             above_threshold.into_iter().take(candidate_k).collect::<Vec<_>>()
         };
 
-        let mut page_count: std::collections::HashMap<String, usize> =
-            std::collections::HashMap::new();
-        pool
-            .into_iter()
-            .filter(|(_, meta)| {
-                let key = format!("{}::{}", meta.file_path, meta.page_number);
-                let count = page_count.entry(key).or_insert(0);
-                if *count >= MAX_CHUNKS_PER_PAGE {
-                    return false;
-                }
-                *count += 1;
-                true
-            })
-            .take(settings.top_k)
-            .collect::<Vec<_>>()
+        // MMR: select top_k maximally diverse chunks from the candidate pool.
+        // lambda=0.7 → 70 % relevance / 30 % diversity.
+        // This replaces the old per-page cap + take: MMR naturally prevents the LLM
+        // from receiving multiple near-identical excerpts from the same paragraph
+        // while genuinely relevant passages from other sections are ignored.
+        mmr_select(pool, settings.top_k, 0.7)
     };
 
     let context_parts: Vec<String> = results
