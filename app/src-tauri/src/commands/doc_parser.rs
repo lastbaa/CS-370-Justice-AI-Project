@@ -12,7 +12,13 @@ pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
 
     let mut pages = Vec::new();
     for page_num in page_nums {
-        let text = doc.extract_text(&[page_num]).unwrap_or_default();
+        let raw = doc.extract_text(&[page_num]).unwrap_or_default();
+        // lopdf 0.32 cannot decode Identity-H fonts without an embedded ToUnicode
+        // CMap. It emits the literal string "?Identity-H Unimplemented?" in place
+        // of the actual glyphs. These look like encrypted garbage to users and the
+        // LLM echoes them back. Replace them with a space now, before any other
+        // processing, so they never reach the vector store or the prompt.
+        let text = raw.replace("?Identity-H Unimplemented?", " ");
         let cleaned = clean_pdf_text(&text);
         pages.push(DocumentPage {
             page_number: page_num,

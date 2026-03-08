@@ -308,17 +308,30 @@ impl RagState {
         result
     }
 
-    /// Extract best excerpt sentence from chunk text relevant to the query
+    /// Extract best excerpt sentence from chunk text relevant to the query.
+    /// Strips private-use-area codepoints and control chars so the UI never
+    /// displays "encrypted"-looking characters from badly-encoded PDFs.
     pub fn best_excerpt(text: &str, query: &str) -> String {
-        let sentences: Vec<&str> = text
+        // Sanitize first — PUA chars (U+E000–F8FF) and control chars from
+        // lopdf/Identity-H font encoding look like garbage in every UI component
+        // that renders the excerpt (SourceCard, ContextPanel, DocumentViewer).
+        let sanitized: String = text.chars().filter(|&c| {
+            let code = c as u32;
+            c == '\n' || c == '\t'
+                || (!c.is_control()
+                    && !(0xE000..=0xF8FF).contains(&code)
+                    && code < 0xFFF0)
+        }).collect();
+
+        let sentences: Vec<&str> = sanitized
             .split(|c: char| c == '.' || c == '!' || c == '?')
             .map(|s| s.trim())
             .filter(|s| s.len() > 20)
             .collect();
 
         if sentences.is_empty() {
-            let end = text.char_indices().nth(280).map(|(i, _)| i).unwrap_or(text.len());
-            return text[..end].to_string();
+            let end = sanitized.char_indices().nth(280).map(|(i, _)| i).unwrap_or(sanitized.len());
+            return sanitized[..end].to_string();
         }
 
         let query_words: std::collections::HashSet<String> = query

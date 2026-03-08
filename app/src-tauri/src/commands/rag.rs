@@ -406,13 +406,20 @@ Answer the question using ONLY these excerpts.\n\n\
         }
 
         // Autoregressive generation.
-        // penalties() prevents repetition loops. top_k narrows the candidate set before
-        // top_p, then dist(42) samples probabilistically — more natural than greedy argmax.
+        // penalties() prevents repetition loops. top_k + top_p narrow the candidate
+        // set, then dist(42) samples probabilistically.
+        //
+        // IMPORTANT: temp=0.2 combined with freq/presence penalties (0.2/0.2) caused
+        // logit collapse — the distribution became degenerate after penalties heavily
+        // suppressed tokens and then temperature sharpened further, leaving dist() with
+        // essentially no valid candidates → empty or garbage output.
+        // Fix: raise temp to 0.6 and drop freq/presence penalties (only repeat penalty
+        // is needed to prevent loops; temp handles diversity).
         let mut sampler = LlamaSampler::chain_simple([
-            LlamaSampler::penalties(64, 1.25, 0.2, 0.2),
+            LlamaSampler::penalties(64, 1.1, 0.0, 0.0),
             LlamaSampler::top_k(40),
             LlamaSampler::top_p(0.9, 1),
-            LlamaSampler::temp(0.2),
+            LlamaSampler::temp(0.6),
             LlamaSampler::dist(42),
         ]);
         let mut response = String::new();
@@ -476,6 +483,14 @@ Answer the question using ONLY these excerpts.\n\n\
                         && code < 0xFFF0)
             })
             .collect();
+
+        // Strip "Answer:" prefix if the model echoed the priming suffix back.
+        let answer = answer
+            .strip_prefix("Answer:")
+            .or_else(|| answer.strip_prefix("Answer: "))
+            .unwrap_or(&answer)
+            .trim()
+            .to_string();
 
         Ok(answer)
     })
@@ -577,21 +592,29 @@ async fn process_file(
     // This prevents partial-write state if the process is interrupted mid-embedding.
     let mut new_entries: Vec<(String, EmbeddedChunkEntry)> = Vec::new();
     for chunk in &chunks {
-        // Quality gate: skip chunks where fewer than 40% of characters are
-        // alphanumeric/punctuation/space. This catches residual PDF font-encoding
-        // garbage (private-use-area chars, binary runs) that slipped through the
-        // parser's filter — embedding these produces meaningless vectors and the
-        // LLM echoes the garbage back to the user as "encrypted" text.
+        // Quality gate: skip chunks that are mostly private-use-area or control
+        // characters — real encoding garbage from bad PDF fonts.
+        // IMPORTANT: use the same definition as is_printable_pdf_char() in the
+        // parser, NOT is_ascii_punctuation(). The ASCII-only variant incorrectly
+        // rejects em-dashes, smart quotes, §, ©, •, accented letters and other
+        // chars that are perfectly valid in real legal documents, causing the entire
+        // chunk to be silently dropped and leaving the LLM with no context.
         let total_chars = chunk.text.chars().count();
         if total_chars > 0 {
             let printable = chunk.text
                 .chars()
-                .filter(|c| c.is_alphanumeric() || c.is_ascii_punctuation() || *c == ' ' || *c == '\n')
+                .filter(|&c| {
+                    let code = c as u32;
+                    c == '\n' || c == '\t'
+                        || (!c.is_control()
+                            && !(0xE000..=0xF8FF).contains(&code)
+                            && code < 0xFFF0)
+                })
                 .count();
             let ratio = printable as f32 / total_chars as f32;
-            if ratio < 0.40 {
+            if ratio < 0.20 {
                 log::warn!(
-                    "Skipping chunk {} — only {:.0}% printable chars (likely PDF encoding garbage)",
+                    "Skipping chunk {} — only {:.0}% printable chars (PDF encoding garbage)",
                     chunk.chunk_index,
                     ratio * 100.0
                 );
@@ -690,28 +713,48 @@ fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChu
         };
 
         for sentence in &sentences {
-            if !current.is_empty() && current.len() + sentence.len() + 1 > settings.chunk_size {
-                flush(&current, &mut global_idx, &mut chunks, page.page_number);
+            // If a single sentence is larger than chunk_size (common when lopdf
+            // extracts a page as one long line with no sentence-ending punctuation
+            // or newlines), split it into fixed-size sub-spans so we don't create
+            // a single enormous chunk that breaks context window budgets.
+            let sub_sentences: Vec<&str> = if sentence.len() > settings.chunk_size {
+                sentence
+                    .as_bytes()
+                    .chunks(settings.chunk_size)
+                    .map(|b| {
+                        let s = std::str::from_utf8(b).unwrap_or("");
+                        s.trim()
+                    })
+                    .filter(|s| !s.is_empty())
+                    .collect()
+            } else {
+                vec![sentence]
+            };
 
-                let mut overlap_parts: Vec<&str> = Vec::new();
-                let mut overlap_len = 0usize;
-                for s in sentence_buf.iter().rev() {
-                    if overlap_len + s.len() + 1 > settings.chunk_overlap {
-                        break;
+            for sub in sub_sentences {
+                if !current.is_empty() && current.len() + sub.len() + 1 > settings.chunk_size {
+                    flush(&current, &mut global_idx, &mut chunks, page.page_number);
+
+                    let mut overlap_parts: Vec<&str> = Vec::new();
+                    let mut overlap_len = 0usize;
+                    for s in sentence_buf.iter().rev() {
+                        if overlap_len + s.len() + 1 > settings.chunk_overlap {
+                            break;
+                        }
+                        overlap_parts.push(s);
+                        overlap_len += s.len() + 1;
                     }
-                    overlap_parts.push(s);
-                    overlap_len += s.len() + 1;
+                    overlap_parts.reverse();
+                    current = overlap_parts.join(" ");
+                    sentence_buf.clear();
                 }
-                overlap_parts.reverse();
-                current = overlap_parts.join(" ");
-                sentence_buf.clear();
-            }
 
-            if !current.is_empty() {
-                current.push(' ');
+                if !current.is_empty() {
+                    current.push(' ');
+                }
+                current.push_str(sub);
+                sentence_buf.push(sub);
             }
-            current.push_str(sentence);
-            sentence_buf.push(sentence);
         }
 
         flush(&current, &mut global_idx, &mut chunks, page.page_number);
