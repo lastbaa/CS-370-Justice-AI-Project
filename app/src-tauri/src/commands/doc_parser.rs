@@ -1,32 +1,78 @@
 use crate::state::DocumentPage;
 use std::io::Read;
 
-/// Parse a PDF file into pages of text using lopdf
+/// Parse a PDF file into pages of text.
+///
+/// Tries pdf-extract first (handles ToUnicode CMaps and font encoding dictionaries
+/// correctly). Falls back to lopdf if pdf-extract fails or returns garbled output.
 pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
+    // --- Attempt 1: pdf-extract ---
+    // pdf-extract uses pdf-rs which resolves font encoding tables properly.
+    // Pages are separated by form-feed characters (\x0c) in the output.
+    if let Ok(raw) = pdf_extract::extract_text(path) {
+        let pages = pdf_extract_pages(&raw);
+        if !pages.is_empty() {
+            return Ok(pages);
+        }
+    }
+
+    // --- Fallback: lopdf ---
+    // lopdf cannot decode Identity-H fonts without an embedded ToUnicode CMap,
+    // and may also mis-apply StandardEncoding for custom font tables.
+    // We still clean up its output and filter obvious garbage.
     let doc = lopdf::Document::load(path).map_err(|e| format!("PDF load error: {e}"))?;
     let page_map = doc.get_pages();
-
-    // Sort pages by page number
     let mut page_nums: Vec<u32> = page_map.keys().cloned().collect();
     page_nums.sort();
 
     let mut pages = Vec::new();
     for page_num in page_nums {
         let raw = doc.extract_text(&[page_num]).unwrap_or_default();
-        // lopdf 0.32 cannot decode Identity-H fonts without an embedded ToUnicode
-        // CMap. It emits the literal string "?Identity-H Unimplemented?" in place
-        // of the actual glyphs. These look like encrypted garbage to users and the
-        // LLM echoes them back. Replace them with a space now, before any other
-        // processing, so they never reach the vector store or the prompt.
-        let text = raw.replace("?Identity-H Unimplemented?", " ");
-        let cleaned = clean_pdf_text(&text);
+        let cleaned = clean_pdf_text(&raw);
         pages.push(DocumentPage {
             page_number: page_num,
             text: cleaned,
         });
     }
-
     Ok(pages)
+}
+
+/// Split a pdf-extract full-document string (pages separated by \x0c) into
+/// DocumentPage entries. Returns an empty Vec if the text looks garbled (too
+/// few printable characters — typically means pdf-extract also failed to decode
+/// the font encoding and returned garbage).
+fn pdf_extract_pages(raw: &str) -> Vec<DocumentPage> {
+    let total_chars = raw.chars().count();
+    if total_chars == 0 {
+        return Vec::new();
+    }
+
+    // Quality gate: at least 60 % of characters must be printable
+    // (printable = not a control char and not in Unicode Private Use Area).
+    let printable = raw.chars().filter(|&c| {
+        let code = c as u32;
+        c == '\n' || c == '\t' || c == '\x0c'
+            || (!c.is_control()
+                && !(0xE000..=0xF8FF).contains(&code)
+                && code < 0xFFF0)
+    }).count();
+    let ratio = printable as f32 / total_chars as f32;
+    if ratio < 0.60 {
+        return Vec::new();
+    }
+
+    // Split on form-feed to get per-page text.
+    let mut pages = Vec::new();
+    for (i, page_text) in raw.split('\x0c').enumerate() {
+        let cleaned = clean_pdf_text(page_text);
+        if !cleaned.trim().is_empty() {
+            pages.push(DocumentPage {
+                page_number: (i + 1) as u32,
+                text: cleaned,
+            });
+        }
+    }
+    pages
 }
 
 /// Returns true if a character is safe to keep in extracted PDF text.
@@ -57,6 +103,9 @@ fn is_printable_pdf_char(ch: char) -> bool {
 }
 
 fn clean_pdf_text(text: &str) -> String {
+    // Strip lopdf's literal placeholder for Identity-H fonts before anything else.
+    let text = text.replace("?Identity-H Unimplemented?", " ");
+
     // Preserve newlines (important for structured docs like job offers where
     // "Salary: $85,000\nStart Date: ..." must stay on separate lines).
     // Collapse runs of non-newline whitespace to a single space.
@@ -174,4 +223,71 @@ pub fn parse_docx(path: &str) -> Result<Vec<DocumentPage>, String> {
     }
 
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_real_pdf() {
+        // Uses BIWS-Restructuring-1.pdf from the Desktop — a real financial/legal PDF.
+        let path = "/Users/liamneild/Desktop/BIWS-Restructuring-1.pdf";
+        if !std::path::Path::new(path).exists() {
+            eprintln!("Test PDF not found at {path}, skipping.");
+            return;
+        }
+        let pages = parse_pdf(path).expect("parse_pdf should not error");
+        assert!(!pages.is_empty(), "should produce at least one page");
+
+        let total_chars: usize = pages.iter().map(|p| p.text.len()).sum();
+        eprintln!("Pages: {}, total chars: {}", pages.len(), total_chars);
+
+        for page in pages.iter().take(3) {
+            eprintln!("\n--- PAGE {} ({} chars) ---", page.page_number, page.text.len());
+            eprintln!("{}", &page.text[..page.text.len().min(500)]);
+
+            // No private-use-area characters should survive
+            for ch in page.text.chars() {
+                let code = ch as u32;
+                assert!(
+                    !(0xE000..=0xF8FF).contains(&code),
+                    "PUA character U+{:04X} found on page {} — sanitization failed",
+                    code,
+                    page.page_number
+                );
+            }
+            // No control characters except newline/tab
+            for ch in page.text.chars() {
+                if ch == '\n' || ch == '\t' { continue; }
+                assert!(
+                    !ch.is_control(),
+                    "Control char U+{:04X} found on page {} — sanitization failed",
+                    ch as u32,
+                    page.page_number
+                );
+            }
+            // "?Identity-H Unimplemented?" must be gone
+            assert!(
+                !page.text.contains("?Identity-H Unimplemented?"),
+                "lopdf Identity-H placeholder found on page {} — not stripped",
+                page.page_number
+            );
+        }
+        eprintln!("\nAll assertions passed.");
+    }
+
+    #[test]
+    fn test_clean_pdf_text_strips_pua() {
+        // Simulate what lopdf returns for Identity-H fonts
+        let raw = "Salary: \u{E001}\u{E002}\u{E003} $85,000 ?Identity-H Unimplemented? per year";
+        let cleaned = clean_pdf_text(raw);
+        assert!(!cleaned.contains("?Identity-H Unimplemented?"), "Identity-H placeholder not stripped");
+        assert!(cleaned.contains("$85,000"), "real text should be preserved");
+        for ch in cleaned.chars() {
+            let code = ch as u32;
+            assert!(!(0xE000..=0xF8FF).contains(&code), "PUA char U+{:04X} not stripped", code);
+        }
+        eprintln!("Cleaned: {cleaned}");
+    }
 }
