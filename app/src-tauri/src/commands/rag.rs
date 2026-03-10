@@ -325,7 +325,9 @@ pub async fn migrate_embeddings(state: &mut crate::state::RagState) {
 /// Format prior conversation turns as labeled text for the model.
 fn format_history(history: &[(String, String)]) -> String {
     let mut s = String::from("[Prior conversation — for follow-up context only:]\n");
-    for (user, assistant) in history {
+    // Cap to the last 4 turns so long conversations don't exhaust the context window.
+    let recent = if history.len() > 4 { &history[history.len() - 4..] } else { history };
+    for (user, assistant) in recent {
         // Trim each side to avoid bloating the prompt with long prior answers
         let u = if user.len() > 400 { &user[..400] } else { user };
         let a = if assistant.len() > 600 { &assistant[..600] } else { assistant };
@@ -762,6 +764,30 @@ enum FragKind { Normal, ParagraphBreak }
 
 struct SentenceFrag<'a> { text: &'a str, kind: FragKind }
 
+/// Split `text` into sub-slices each at most `max_bytes` bytes long,
+/// always cutting at a valid UTF-8 char boundary so no character is mangled.
+fn split_at_char_boundaries(text: &str, max_bytes: usize) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    while start < text.len() {
+        let raw_end = (start + max_bytes).min(text.len());
+        let end = text.floor_char_boundary(raw_end);
+        // floor_char_boundary can return `start` when max_bytes < one char's width.
+        // In that case scan forward to the next boundary so we always make progress.
+        let end = if end <= start {
+            let mut e = start + 1;
+            while e < text.len() && !text.is_char_boundary(e) { e += 1; }
+            e
+        } else {
+            end
+        };
+        let s = text[start..end].trim();
+        if !s.is_empty() { parts.push(s); }
+        start = end;
+    }
+    parts
+}
+
 fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChunk> {
     let mut chunks = Vec::new();
     let mut global_idx = 0usize;
@@ -798,10 +824,10 @@ fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChu
             if frag.kind == FragKind::ParagraphBreak {
                 // Short line with no sentence-ending punctuation: treat as a
                 // section/clause header — park it so it prepends the next chunk.
-                let is_orphan = frag.text.len() < 80
-                    && !frag.text.ends_with('.')
-                    && !frag.text.ends_with('!')
-                    && !frag.text.ends_with('?');
+                // Only park as an orphan header when the structural pattern is
+                // explicitly recognised. is_section_header already encodes all
+                // the length and punctuation guards, so no separate checks needed.
+                let is_orphan = is_section_header(frag.text);
 
                 if is_orphan {
                     if !current.is_empty() {
@@ -809,7 +835,12 @@ fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChu
                         current.clear();
                         sentence_buf.clear();
                     }
-                    pending_header = Some(frag.text.to_string());
+                    // Accumulate consecutive headers (ARTICLE → SECTION → (a))
+                    // rather than overwriting so no structural context is dropped.
+                    pending_header = Some(match pending_header.take() {
+                        Some(existing) => format!("{existing}\n{}", frag.text),
+                        None => frag.text.to_string(),
+                    });
                     continue;
                 }
 
@@ -823,8 +854,23 @@ fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChu
                     current.push_str(&h);
                     current.push('\n');
                 }
-                current.push_str(frag.text);
-                sentence_buf.push(frag.text);
+                // Apply sub-span splitting in case the paragraph-break fragment
+                // itself exceeds chunk_size (same guard as the Normal path).
+                let pb_subs = if frag.text.len() > settings.chunk_size {
+                    split_at_char_boundaries(frag.text, settings.chunk_size)
+                } else {
+                    vec![frag.text]
+                };
+                for sub in pb_subs {
+                    if !current.is_empty() && current.len() + sub.len() + 1 > settings.chunk_size {
+                        flush(&current, &mut global_idx, &mut chunks, page.page_number);
+                        current.clear();
+                        sentence_buf.clear();
+                    }
+                    if !current.is_empty() { current.push(' '); }
+                    current.push_str(sub);
+                    sentence_buf.push(sub);
+                }
                 continue;
             }
 
@@ -839,17 +885,10 @@ fn chunk_document(pages: &[DocumentPage], settings: &AppSettings) -> Vec<TempChu
                 current.push('\n');
             }
 
-            // If a single fragment is larger than chunk_size, split into sub-spans.
+            // If a single fragment is larger than chunk_size, split into sub-spans
+            // at valid UTF-8 char boundaries (not raw bytes).
             let sub_sentences: Vec<&str> = if frag.text.len() > settings.chunk_size {
-                frag.text
-                    .as_bytes()
-                    .chunks(settings.chunk_size)
-                    .map(|b| {
-                        let s = std::str::from_utf8(b).unwrap_or("");
-                        s.trim()
-                    })
-                    .filter(|s| !s.is_empty())
-                    .collect()
+                split_at_char_boundaries(frag.text, settings.chunk_size)
             } else {
                 vec![frag.text]
             };
@@ -905,17 +944,33 @@ fn is_section_header(line: &str) -> bool {
         || u.starts_with("EXHIBIT") || u.starts_with("ANNEX") {
         return true;
     }
-    // Numbered clause: "1.", "3.1", "12." at start
+    // All-uppercase line (≤ 8 words, ≥ 6 chars, at least one letter):
+    // catches "DEFINITIONS", "GOVERNING LAW", "LIMITATION OF LIABILITY", etc.
+    if t.len() >= 6
+        && t.chars().any(|c| c.is_alphabetic())
+        && t.chars().all(|c| !c.is_alphabetic() || c.is_uppercase())
+        && t.split_whitespace().count() <= 8 {
+        return true;
+    }
+    // Numbered clause: "1.", "3.1 Definitions" — only treat as header when the
+    // label content after the number-dot prefix is short (≤ 40 chars).
+    // Prevents content sentences like "1. The Employee shall receive..." from
+    // being orphaned.
     if t.chars().next().map_or(false, |c| c.is_ascii_digit()) {
         if let Some(dot_pos) = t.find('.') {
-            if t[..dot_pos].chars().all(|c| c.is_ascii_digit()) { return true; }
+            if t[..dot_pos].chars().all(|c| c.is_ascii_digit()) {
+                let after = t[dot_pos + 1..].trim();
+                if after.len() <= 40 { return true; }
+            }
         }
     }
-    // Lettered sub-clause: "(a)", "(b)", "(aa)" etc.
+    // Lettered sub-clause: "(a)", "(b)", "(aa)" etc. — only if the label
+    // content after the letter-paren is short (≤ 40 chars).
     if t.starts_with('(')
         && t.chars().nth(1).map_or(false, |c| c.is_ascii_alphabetic())
         && t.chars().nth(2).map_or(false, |c| c == ')') {
-        return true;
+        let after = t.get(3..).unwrap_or("").trim();
+        if after.len() <= 40 { return true; }
     }
     false
 }
@@ -1262,7 +1317,6 @@ pub async fn query(
                 }
                 if let Some(nbr) = s.chunk_registry.values().find(|c| {
                     c.file_path == meta.file_path
-                        && c.page_number == meta.page_number
                         && c.chunk_index == nbr_idx as usize
                         && !selected_ids.contains(c.id.as_str())
                 }) {
