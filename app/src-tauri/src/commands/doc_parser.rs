@@ -103,13 +103,44 @@ fn is_printable_pdf_char(ch: char) -> bool {
 }
 
 fn clean_pdf_text(text: &str) -> String {
-    // Strip lopdf's literal placeholder for Identity-H fonts before anything else.
+    // ── Pass 1: string-level substitutions ───────────────────────────────────
+    // These run before the character loop so every subsequent step sees clean
+    // Unicode and plain ASCII where possible.
+
+    // Lopdf identity-H placeholder
     let text = text.replace("?Identity-H Unimplemented?", " ");
 
-    // Preserve newlines (important for structured docs like job offers where
-    // "Salary: $85,000\nStart Date: ..." must stay on separate lines).
-    // Collapse runs of non-newline whitespace to a single space.
-    // Strip non-printable / private-use-area characters (PDF font encoding garbage).
+    // OpenType / PDF ligatures — very common in professionally typeset legal
+    // documents. Without this, "first" may arrive as "ﬁrst" (U+FB01), which
+    // looks correct visually but doesn't match the plain-ASCII "fi" that the
+    // embedding model was trained on.
+    let text = text
+        .replace('\u{FB00}', "ff")   // ﬀ
+        .replace('\u{FB01}', "fi")   // ﬁ
+        .replace('\u{FB02}', "fl")   // ﬂ
+        .replace('\u{FB03}', "ffi")  // ﬃ
+        .replace('\u{FB04}', "ffl")  // ﬄ
+        .replace('\u{FB05}', "st")   // ﬅ
+        .replace('\u{FB06}', "st");  // ﬆ
+
+    // Typographic quotes → straight ASCII (keeps tokenisation consistent)
+    let text = text
+        .replace('\u{2018}', "'")    // ' left single
+        .replace('\u{2019}', "'")    // ' right single / apostrophe
+        .replace('\u{201C}', "\"")   // " left double
+        .replace('\u{201D}', "\"")   // " right double
+        .replace('\u{201A}', ",")    // ‚ single low-9 (misused as comma in some fonts)
+        .replace('\u{201E}', "\"");  // „ double low-9
+
+    // Dashes and special spaces
+    let text = text
+        .replace('\u{2013}', "-")    // – en dash → hyphen
+        .replace('\u{00A0}', " ")    // non-breaking space → regular space
+        .replace('\u{00AD}', "");    // soft hyphen (invisible) → remove
+
+    // ── Pass 2: character-level whitespace normalization + PUA stripping ─────
+    // Preserve newlines, collapse runs of other whitespace to a single space,
+    // and silently drop non-printable / Private-Use-Area characters.
     let mut result = String::with_capacity(text.len());
     let mut prev_was_space = false;
     let mut prev_was_newline = false;
@@ -131,9 +162,68 @@ fn clean_pdf_text(text: &str) -> String {
             prev_was_space = false;
             prev_was_newline = false;
         }
-        // Non-printable / private-use-area chars are silently dropped here.
+        // Non-printable / private-use-area chars are silently dropped.
     }
+
+    // ── Pass 3: post-normalization fixups ────────────────────────────────────
+
+    // Remove hyphenated line breaks: "agree-\nment" → "agreement".
+    // Legal PDFs routinely hyphenate long words at the right margin. Keeping
+    // the hyphen+newline would split the word across two chunks, poisoning
+    // embeddings for both.  We join only when the character immediately after
+    // the newline is a letter (avoids touching list items like "- \nItem").
+    let result = remove_hyphen_breaks(&result);
+
+    // Collapse runs of 3+ consecutive newlines down to 2.  Some PDFs emit a
+    // newline for every line of whitespace between sections; more than two
+    // consecutive newlines adds no structural information for the chunker and
+    // just inflates token counts.
+    let result = collapse_blank_lines(&result);
+
     result.trim().to_string()
+}
+
+/// Join hyphenated line breaks: `word-\nword` → `wordword` (the hyphen was
+/// a typographic line-break marker, not a real hyphen).
+fn remove_hyphen_breaks(text: &str) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let len = chars.len();
+    let mut result = String::with_capacity(text.len());
+    let mut i = 0;
+    while i < len {
+        // Pattern: '-' followed by '\n' followed by a letter → join without hyphen.
+        if i + 2 < len
+            && chars[i] == '-'
+            && chars[i + 1] == '\n'
+            && chars[i + 2].is_alphabetic()
+        {
+            // Drop the hyphen and newline; the next character follows normally.
+            i += 2;
+            continue;
+        }
+        result.push(chars[i]);
+        i += 1;
+    }
+    result
+}
+
+/// Collapse 3 or more consecutive newlines to exactly 2.
+fn collapse_blank_lines(text: &str) -> String {
+    let mut result = String::with_capacity(text.len());
+    let mut newline_run = 0usize;
+    for ch in text.chars() {
+        if ch == '\n' {
+            newline_run += 1;
+            if newline_run <= 2 {
+                result.push('\n');
+            }
+            // 3rd+ newline in a run: silently drop
+        } else {
+            newline_run = 0;
+            result.push(ch);
+        }
+    }
+    result
 }
 
 /// Parse a DOCX file into pages of text
@@ -279,15 +369,80 @@ mod tests {
 
     #[test]
     fn test_clean_pdf_text_strips_pua() {
-        // Simulate what lopdf returns for Identity-H fonts
         let raw = "Salary: \u{E001}\u{E002}\u{E003} $85,000 ?Identity-H Unimplemented? per year";
         let cleaned = clean_pdf_text(raw);
-        assert!(!cleaned.contains("?Identity-H Unimplemented?"), "Identity-H placeholder not stripped");
-        assert!(cleaned.contains("$85,000"), "real text should be preserved");
+        assert!(!cleaned.contains("?Identity-H Unimplemented?"));
+        assert!(cleaned.contains("$85,000"));
         for ch in cleaned.chars() {
             let code = ch as u32;
             assert!(!(0xE000..=0xF8FF).contains(&code), "PUA char U+{:04X} not stripped", code);
         }
-        eprintln!("Cleaned: {cleaned}");
+    }
+
+    #[test]
+    fn test_ligature_normalization() {
+        let raw = "The \u{FB01}rst party shall \u{FB02}y to the meeting. \u{FB03}nal settlement.";
+        let cleaned = clean_pdf_text(raw);
+        assert!(cleaned.contains("first"), "ﬁ ligature not expanded");
+        assert!(cleaned.contains("fly"), "ﬂ ligature not expanded");
+        assert!(cleaned.contains("ffinal"), "ﬃ ligature not expanded");
+        assert!(!cleaned.contains('\u{FB01}'));
+        assert!(!cleaned.contains('\u{FB02}'));
+        assert!(!cleaned.contains('\u{FB03}'));
+    }
+
+    #[test]
+    fn test_smart_quote_normalization() {
+        let raw = "\u{201C}Party A\u{201D} agrees and \u{2018}Party B\u{2019} consents.";
+        let cleaned = clean_pdf_text(raw);
+        assert!(cleaned.contains("\"Party A\""));
+        assert!(cleaned.contains("'Party B'"));
+    }
+
+    #[test]
+    fn test_hyphen_line_break_removal() {
+        let raw = "The agree-\nment shall terminate upon written notice.";
+        let cleaned = clean_pdf_text(raw);
+        assert!(cleaned.contains("agreement"), "hyphen line break not joined: got {cleaned:?}");
+        assert!(!cleaned.contains("-\n"));
+    }
+
+    #[test]
+    fn test_hyphen_break_not_removed_for_list_items() {
+        // A real hyphen at end of line NOT followed by a letter should stay
+        let raw = "Items:\n- First item\n- Second item";
+        let cleaned = clean_pdf_text(raw);
+        assert!(cleaned.contains("- First"), "list hyphen incorrectly removed");
+    }
+
+    #[test]
+    fn test_collapse_blank_lines() {
+        let raw = "Section 1\n\n\n\n\nSection 2";
+        let cleaned = clean_pdf_text(raw);
+        // Should have at most 2 consecutive newlines
+        assert!(!cleaned.contains("\n\n\n"), "3+ consecutive newlines not collapsed: got {cleaned:?}");
+        assert!(cleaned.contains("Section 1"));
+        assert!(cleaned.contains("Section 2"));
+    }
+
+    #[test]
+    fn test_nonbreaking_space_normalized() {
+        let raw = "Party\u{00A0}A agrees.";
+        let cleaned = clean_pdf_text(raw);
+        assert!(cleaned.contains("Party A"), "non-breaking space not normalized");
+    }
+
+    #[test]
+    fn test_soft_hyphen_removed() {
+        let raw = "agree\u{00AD}ment";
+        let cleaned = clean_pdf_text(raw);
+        assert_eq!(cleaned, "agreement", "soft hyphen not removed: got {cleaned:?}");
+    }
+
+    #[test]
+    fn test_en_dash_normalized() {
+        let raw = "pages 1\u{2013}5 of the agreement";
+        let cleaned = clean_pdf_text(raw);
+        assert!(cleaned.contains("pages 1-5"), "en dash not normalized: got {cleaned:?}");
     }
 }
