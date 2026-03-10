@@ -85,11 +85,10 @@ export default function SourceCard({ citation, onView }: Props): JSX.Element {
             ? citation.excerpt.slice(0, 140) + '…'
             : citation.excerpt}"
         </p>
-        {hovered && (
-          <div className="mt-1.5 flex items-center gap-3">
+        <div className="mt-1.5 flex items-center gap-3">
             {onView && (
-              <p className="text-[10px] font-semibold" style={{ color: 'rgba(201,168,76,0.6)' }}>
-                Click to view →
+              <p className="text-[10px] font-semibold" style={{ color: hovered ? 'rgba(201,168,76,0.75)' : 'rgba(201,168,76,0.35)' }}>
+                View in document →
               </p>
             )}
             <button
@@ -118,7 +117,6 @@ export default function SourceCard({ citation, onView }: Props): JSX.Element {
               )}
             </button>
           </div>
-        )}
       </div>
     </div>
   )

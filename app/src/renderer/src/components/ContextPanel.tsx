@@ -11,16 +11,19 @@ interface Props {
   onRemoveFile: (id: string) => void
   onClearFiles: () => void
   onViewCitation: (citation: Citation) => void
+  activeCitation?: Citation | null
   onExportCitations?: () => void
 }
 
 function CitationRow({
   citation,
   index,
+  isActive,
   onView,
 }: {
   citation: Citation
   index: number
+  isActive: boolean
   onView: (c: Citation) => void
 }): JSX.Element {
   const [expanded, setExpanded] = useState(false)
@@ -32,13 +35,14 @@ function CitationRow({
     <div
       className="rounded-xl px-4 py-3 flex flex-col gap-2 transition-all cursor-pointer"
       style={{
-        background: hovered ? '#111' : '#0d0d0d',
-        border: '1px solid rgba(201,168,76,0.14)',
-        borderLeft: '2px solid rgba(201,168,76,0.45)',
+        background: isActive ? 'rgba(201,168,76,0.07)' : hovered ? '#111' : '#0d0d0d',
+        border: `1px solid ${isActive ? 'rgba(201,168,76,0.3)' : 'rgba(201,168,76,0.14)'}`,
+        borderLeft: `2px solid ${isActive ? 'rgba(201,168,76,0.8)' : 'rgba(201,168,76,0.45)'}`,
         transition: 'background 0.15s ease',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => onView(citation)}
     >
       {/* Row header */}
       <div className="flex items-center justify-between gap-2">
@@ -156,6 +160,7 @@ export default function ContextPanel({
   isQuerying,
   isLoading,
   collapsed,
+  activeCitation,
   onAddFiles,
   onRemoveFile,
   onClearFiles,
@@ -281,7 +286,13 @@ export default function ContextPanel({
             ) : (
               <div className="flex flex-col gap-2">
                 {citations.map((c, i) => (
-                  <CitationRow key={i} citation={c} index={i} onView={onViewCitation} />
+                  <CitationRow
+                    key={i}
+                    citation={c}
+                    index={i}
+                    isActive={activeCitation?.filePath === c.filePath && activeCitation?.pageNumber === c.pageNumber && activeCitation?.excerpt === c.excerpt}
+                    onView={onViewCitation}
+                  />
                 ))}
               </div>
             )}

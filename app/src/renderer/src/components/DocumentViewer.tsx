@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Citation } from '../../../../../shared/src/types'
 
 interface Props {
@@ -7,15 +7,20 @@ interface Props {
 }
 
 // ── Native PDF viewer ─────────────────────────────────────────────────────────
-// Uses a local HTTP server (127.0.0.1:PORT) started at app launch.
-// WKWebView reliably renders PDFs in iframes from http://127.0.0.1 URLs —
-// this is the only origin type that triggers WKWebView's built-in PDF renderer.
 function PdfViewer({ citation }: { citation: Citation }): JSX.Element {
   const [port, setPort] = useState<number>(0)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     window.api.getFileServerPort().then(setPort).catch(() => setPort(0))
   }, [])
+
+  function copyExcerpt(): void {
+    navigator.clipboard.writeText(citation.excerpt).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {})
+  }
 
   if (!port) {
     return (
@@ -28,23 +33,63 @@ function PdfViewer({ citation }: { citation: Citation }): JSX.Element {
     )
   }
 
-  // encodeURI leaves path slashes intact but encodes spaces and special chars.
-  // The server strips the leading '/' to reconstruct the absolute macOS path.
   const src = `http://127.0.0.1:${port}${encodeURI(citation.filePath)}#page=${citation.pageNumber}`
 
   return (
-    <iframe
-      key={src}
-      src={src}
-      style={{ flex: 1, width: '100%', height: '100%', border: 'none', background: '#fff' }}
-      title={citation.fileName}
-    />
+    <div className="flex-1 flex flex-col" style={{ minHeight: 0 }}>
+      {/* Find-in-PDF helper strip */}
+      <div
+        className="shrink-0 px-4 py-2.5 flex items-center gap-3"
+        style={{ background: 'rgba(201,168,76,0.04)', borderBottom: '1px solid rgba(201,168,76,0.1)' }}
+      >
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" className="shrink-0">
+          <circle cx="6" cy="6" r="4.5" stroke="rgba(201,168,76,0.5)" strokeWidth="1.4" />
+          <path d="M10 10l4 4" stroke="rgba(201,168,76,0.5)" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+        <p className="flex-1 text-[11px] italic truncate" style={{ color: 'rgba(255,255,255,0.38)' }}>
+          "{citation.excerpt.slice(0, 100)}{citation.excerpt.length > 100 ? '…' : ''}"
+        </p>
+        <button
+          onClick={copyExcerpt}
+          title="Copy excerpt — then press ⌘F in the PDF"
+          className="shrink-0 flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-md transition-all"
+          style={{
+            background: copied ? 'rgba(63,185,80,0.1)' : 'rgba(201,168,76,0.08)',
+            border: `1px solid ${copied ? 'rgba(63,185,80,0.3)' : 'rgba(201,168,76,0.2)'}`,
+            color: copied ? '#3fb950' : 'rgba(201,168,76,0.7)',
+          }}
+        >
+          {copied ? (
+            <>
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 5l2 2 4-4" />
+              </svg>
+              Copied — press ⌘F
+            </>
+          ) : (
+            <>
+              <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25ZM5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+              </svg>
+              Copy · then ⌘F
+            </>
+          )}
+        </button>
+      </div>
+      <iframe
+        key={src}
+        src={src}
+        style={{ flex: 1, width: '100%', border: 'none', background: '#fff' }}
+        title={citation.fileName}
+      />
+    </div>
   )
 }
 
 // ── Text viewer (DOCX / plain text) ──────────────────────────────────────────
 function TextViewer({ citation }: { citation: Citation }): JSX.Element {
   const [text, setText] = useState<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     window.api
@@ -52,6 +97,18 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
       .then((t) => setText(t || '(No text available for this page)'))
       .catch(() => setText('(Failed to load page text)'))
   }, [citation.filePath, citation.pageNumber])
+
+  // Auto-scroll to the first highlighted match after text renders
+  useEffect(() => {
+    if (!text || !containerRef.current) return
+    const mark = containerRef.current.querySelector('mark')
+    if (mark) {
+      // Small delay so layout is stable before scrolling
+      requestAnimationFrame(() => {
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+    }
+  }, [text])
 
   if (text === null) {
     return (
@@ -71,7 +128,7 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
     : [text]
 
   return (
-    <div className="flex-1 overflow-auto" style={{ padding: '20px 24px' }}>
+    <div ref={containerRef} className="flex-1 overflow-auto" style={{ padding: '20px 24px' }}>
       <p
         className="text-[13px] leading-[1.9] whitespace-pre-wrap"
         style={{ color: 'rgba(255,255,255,0.6)' }}
@@ -81,10 +138,11 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
             <mark
               key={i}
               style={{
-                background: 'rgba(201,168,76,0.28)',
-                color: 'rgba(255,255,255,0.9)',
+                background: 'rgba(201,168,76,0.32)',
+                color: '#fff',
                 borderRadius: 3,
-                padding: '1px 0',
+                padding: '1px 2px',
+                boxShadow: '0 0 0 1px rgba(201,168,76,0.4)',
               }}
             >
               {part}
@@ -95,6 +153,20 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
         )}
       </p>
     </div>
+  )
+}
+
+// ── Relevance badge ────────────────────────────────────────────────────────────
+function ScoreBadge({ score }: { score: number }): JSX.Element {
+  const label = score >= 0.40 ? 'Strong' : score >= 0.22 ? 'Good' : 'Weak'
+  const color = score >= 0.40 ? '#3fb950' : score >= 0.22 ? '#c9a84c' : 'rgba(255,255,255,0.3)'
+  return (
+    <span
+      className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded"
+      style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}
+    >
+      {label}
+    </span>
   )
 }
 
@@ -142,6 +214,7 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
               >
                 · p.{citation.pageNumber}
               </span>
+              <ScoreBadge score={citation.score} />
             </div>
 
             <button
@@ -163,32 +236,7 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
             </button>
           </div>
 
-          {/* Excerpt strip */}
-          <div
-            className="shrink-0 px-4 py-3"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#070707' }}
-          >
-            <div className="flex items-center gap-1.5 mb-1">
-              <div
-                className="w-2 h-2 rounded-sm shrink-0"
-                style={{ background: 'rgba(201,168,76,0.45)' }}
-              />
-              <p
-                className="text-[10px] font-semibold uppercase tracking-[0.12em]"
-                style={{ color: 'rgba(201,168,76,0.55)' }}
-              >
-                Cited passage
-              </p>
-            </div>
-            <p
-              className="text-[11px] leading-relaxed italic"
-              style={{ color: 'rgba(255,255,255,0.35)' }}
-            >
-              "{citation.excerpt.slice(0, 180)}{citation.excerpt.length > 180 ? '…' : ''}"
-            </p>
-          </div>
-
-          {/* Document body */}
+          {/* Document body — PDF has its own excerpt strip; text has inline highlights */}
           {isPdf ? (
             <PdfViewer
               key={`${citation.filePath}-${citation.pageNumber}`}

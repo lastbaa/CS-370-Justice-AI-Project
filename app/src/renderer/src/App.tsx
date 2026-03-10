@@ -579,11 +579,12 @@ export default function App(): JSX.Element {
         citations={lastCitations}
         isQuerying={isQuerying}
         isLoading={isLoading}
-        collapsed={viewerCitation !== null}
+        collapsed={false}
         onAddFiles={handleAddFiles}
         onRemoveFile={handleRemoveFile}
         onClearFiles={handleClearFiles}
         onViewCitation={setViewerCitation}
+        activeCitation={viewerCitation}
         onExportCitations={lastCitations.length > 0 ? handleExportCitations : undefined}
       />
 
