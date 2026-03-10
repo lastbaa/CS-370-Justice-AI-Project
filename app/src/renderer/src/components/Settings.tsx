@@ -73,6 +73,11 @@ function SectionHeader({ children }: { children: React.ReactNode }): JSX.Element
 export default function Settings({ settings, onSave, onClose }: Props): JSX.Element {
   const [local, setLocal] = useState<AppSettings>({ ...settings })
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [buildInfo, setBuildInfo] = useState<string>('')
+
+  useEffect(() => {
+    window.api.getBuildInfo().then(setBuildInfo).catch(() => {})
+  }, [])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
@@ -251,6 +256,10 @@ export default function Settings({ settings, onSave, onClose }: Props): JSX.Elem
           {validationError ? (
             <p className="text-[11px]" style={{ color: 'rgba(248,81,73,0.85)' }}>
               {validationError}
+            </p>
+          ) : buildInfo ? (
+            <p className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>
+              Build: {buildInfo}
             </p>
           ) : <span />}
           <div className="flex items-center gap-3">

@@ -5,10 +5,15 @@ description = "Justice AI — Private Legal Research Desktop App"
 authors = ["Justice AI"]
 edition = "2021"
 rust-version = "1.77.2"
+default-run = "justice-ai"
 
 [lib]
 name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "harness"
+path = "src/bin/harness.rs"
 
 [build-dependencies]
 tauri-build = { version = "2.5.4", features = [] }
@@ -30,3 +35,7 @@ log = "0.4"
 tauri-plugin-log = "2"
 fastembed = "4"
 llama-cpp-2 = "0.1"
+
+[profile.release]
+codegen-units = 4   # reduce peak memory vs default lto=thin
+opt-level = 3

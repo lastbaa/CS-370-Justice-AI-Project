@@ -41,20 +41,24 @@ function TypingIndicator({ phase }: { phase?: string }): JSX.Element {
   const startRef = useRef(Date.now())
 
   useEffect(() => {
-    const phraseTimer = setInterval(() => {
-      setPhraseIdx((i) => (i + 1) % THINKING_PHRASES.length)
-      setPhraseKey((k) => k + 1)
-    }, 2800)
+    let phraseTimer: ReturnType<typeof setInterval> | undefined
+    if (!phase) {
+      phraseTimer = setInterval(() => {
+        setPhraseIdx((i) => (i + 1) % THINKING_PHRASES.length)
+        setPhraseKey((k) => k + 1)
+      }, 2800)
+    }
     const dotsTimer = setInterval(() => setDotTick((t) => t + 1), 500)
-    const elapsedTimer = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startRef.current) / 1000))
-    }, 1000)
+    const elapsedTimer = setInterval(
+      () => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)),
+      1000
+    )
     return () => {
-      clearInterval(phraseTimer)
+      if (phraseTimer) clearInterval(phraseTimer)
       clearInterval(dotsTimer)
       clearInterval(elapsedTimer)
     }
-  }, [])
+  }, [phase])
 
   const dots = ['·', '··', '···'][dotTick % 3]
   const displayPhrase = phase || THINKING_PHRASES[phraseIdx]
@@ -175,6 +179,8 @@ export default function ChatInterface({
 }: Props): JSX.Element {
   const [input, setInput] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [justLoaded, setJustLoaded] = useState(false)
+  const prevIsLoadingRef = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -190,6 +196,15 @@ export default function ChatInterface({
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 128) + 'px'
   }, [input])
+
+  useEffect(() => {
+    if (prevIsLoadingRef.current && !isLoading && hasFiles) {
+      setJustLoaded(true)
+      const t = setTimeout(() => setJustLoaded(false), 3000)
+      return () => clearTimeout(t)
+    }
+    prevIsLoadingRef.current = isLoading
+  }, [isLoading, hasFiles])
 
   function handleSend(): void {
     const trimmed = input.trim()
@@ -364,16 +379,16 @@ export default function ChatInterface({
                 <button
                   onClick={(e) => { e.stopPropagation(); onAddFolder() }}
                   className="text-[12px] transition-colors no-drag px-3 py-2 rounded-lg"
-                  style={{ color: 'rgba(255,255,255,0.3)', background: 'transparent' }}
+                  style={{ color: 'rgba(255,255,255,0.3)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}
                   onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.color = 'rgba(255,255,255,0.6)'
-                    el.style.background = 'rgba(255,255,255,0.04)'
+                    (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
+                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
+                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgba(255,255,255,0.18)'
                   }}
                   onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.color = 'rgba(255,255,255,0.3)'
-                    el.style.background = 'transparent'
+                    (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)'
+                    ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgba(255,255,255,0.10)'
                   }}
                 >
                   Load folder
@@ -388,6 +403,16 @@ export default function ChatInterface({
                   />
                   <p className="text-[12px]" style={{ color: '#c9a84c' }}>
                     Processing documents…
+                  </p>
+                </div>
+              )}
+              {justLoaded && !isLoading && (
+                <div className="flex items-center gap-2 mt-1" style={{ animation: 'fadeUp 0.3s ease both' }}>
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="#3fb950" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 5l2 2 4-4" />
+                  </svg>
+                  <p className="text-[12px]" style={{ color: '#3fb950' }}>
+                    {files.length} {files.length === 1 ? 'document' : 'documents'} loaded — ready to chat
                   </p>
                 </div>
               )}
@@ -597,7 +622,12 @@ export default function ChatInterface({
           {files.length > 0 && (
             <div
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px]"
-              style={{ border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.28)', background: 'rgba(255,255,255,0.02)' }}
+              style={{
+                border: justLoaded ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                color: justLoaded ? 'rgba(201,168,76,0.9)' : 'rgba(255,255,255,0.28)',
+                background: justLoaded ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.02)',
+                transition: 'all 0.4s ease',
+              }}
             >
               <svg width="9" height="9" viewBox="0 0 16 16" fill="rgba(201,168,76,0.5)">
                 <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25z" />

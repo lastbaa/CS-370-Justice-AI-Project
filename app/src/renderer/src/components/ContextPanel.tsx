@@ -222,7 +222,7 @@ export default function ContextPanel({
             <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  Retrieved Context
+                  Answer Sources
                 </p>
                 {isQuerying && (
                   <div
@@ -312,7 +312,7 @@ export default function ContextPanel({
           <div className="px-4 pt-4 pb-4">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                Given Documents
+                Your Documents
               </p>
               <button
                 onClick={onClearFiles}

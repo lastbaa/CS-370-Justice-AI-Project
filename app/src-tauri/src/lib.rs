@@ -1,4 +1,5 @@
-mod commands;
+pub mod commands;
+pub mod pipeline;
 pub mod state;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -104,11 +105,30 @@ fn get_file_server_port() -> u16 {
     *FILE_SERVER_PORT.get().unwrap_or(&0)
 }
 
+/// Return build fingerprint (git hash + timestamp) so the UI can show which build is running.
+#[tauri::command]
+fn get_build_info() -> String {
+    format!(
+        "{} ({})",
+        env!("BUILD_GIT_HASH"),
+        env!("BUILD_TIMESTAMP"),
+    )
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_log::Builder::default().build())
+        .plugin(
+            tauri_plugin_log::Builder::default()
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some("justice-ai".into()),
+                    },
+                ))
+                .level(log::LevelFilter::Debug)
+                .build(),
+        )
         .setup(|app| {
             // Gracefully fall back to temp dir if app data dir is unavailable
             // (sandboxed environments, permission issues) rather than panicking.
@@ -120,6 +140,8 @@ pub fn run() {
                     std::env::temp_dir().join("justice-ai")
                 });
             std::fs::create_dir_all(&data_dir).ok();
+
+            log::info!("Justice AI build: {} ({})", env!("BUILD_GIT_HASH"), env!("BUILD_TIMESTAMP"));
 
             // Load persisted data synchronously before the window opens so
             // the first IPC calls from the renderer always see a fully loaded state.
@@ -169,6 +191,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_file_server_port,
+            get_build_info,
             commands::ollama::check_ollama,
             commands::rag::check_models,
             commands::rag::download_models,

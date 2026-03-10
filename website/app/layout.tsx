@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  icons: { icon: '/favicon.svg' },
+  icons: { icon: '/favicon.ico' },
   title: 'Justice AI — Secure Legal Research for Professionals',
   description:
     'Justice AI keeps your documents on your machine. Citation-first answers grounded in your files — built for legal professionals who cannot afford confidentiality risks.',

@@ -182,7 +182,15 @@ export default function App(): JSX.Element {
     try {
       const loaded = await window.api.loadFiles(paths)
       if (loaded.length === 0) {
-        setLoadError('No supported files found. Try PDF or DOCX files.')
+        const hasSupportedExtensions = paths.some((p) => {
+          const lower = p.toLowerCase()
+          return lower.endsWith('.pdf') || lower.endsWith('.docx')
+        })
+        if (!hasSupportedExtensions) {
+          setLoadError('Unsupported format. Only PDF and DOCX files are supported.')
+        } else {
+          setLoadError('Could not read the file. It may be scanned, password-protected, or corrupted.')
+        }
         return
       }
       setFiles((prev) => {
@@ -190,7 +198,14 @@ export default function App(): JSX.Element {
         return [...prev, ...loaded.filter((f) => !existingIds.has(f.id))]
       })
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to load files.')
+      const msg = err instanceof Error ? err.message.toLowerCase() : ''
+      if (msg.includes('permission') || msg.includes('access denied')) {
+        setLoadError('Permission denied. Check that the app has access to this file.')
+      } else if (msg.includes('password') || msg.includes('encrypt')) {
+        setLoadError('This file is password-protected and cannot be opened.')
+      } else {
+        setLoadError(err instanceof Error ? err.message : 'Failed to load files. Please try again.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -265,6 +280,9 @@ export default function App(): JSX.Element {
   }
 
   // ── Chat ──────────────────────────────────────────────────────
+  // NOTE: Do NOT call setLastCitations([]) at query start.
+  // Preserve previous citations until new results arrive to avoid flashing the empty context panel.
+  // Citations are replaced when result lands, or preserved on error/cancel.
   async function handleQuery(question: string): Promise<void> {
     // Collect last 3 completed user→assistant pairs for conversation context
     const historyPairs: [string, string][] = []

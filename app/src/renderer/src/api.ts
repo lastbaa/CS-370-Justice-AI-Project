@@ -79,5 +79,7 @@ export const api = {
 
   saveFile: (filePath: string, content: string): Promise<void> =>
     invoke('save_file', { filePath, content }),
+
+  getBuildInfo: (): Promise<string> => invoke('get_build_info'),
 }
 
