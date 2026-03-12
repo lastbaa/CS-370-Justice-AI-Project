@@ -86,7 +86,7 @@ function TypingIndicator({ phase }: { phase?: string }): JSX.Element {
       <div
         className="rounded-2xl rounded-tl-sm px-5 py-4 flex flex-col gap-3 relative overflow-hidden"
         style={{
-          background: '#0f0f0f',
+          background: 'var(--bg-alt)',
           border: '1px solid rgba(201,168,76,0.14)',
           animation: 'pulseGlow 2.4s ease-in-out infinite',
           minWidth: 240,
@@ -107,7 +107,7 @@ function TypingIndicator({ phase }: { phase?: string }): JSX.Element {
             key={displayKey}
             className="text-[13px]"
             style={{
-              color: 'rgba(255,255,255,0.65)',
+              color: 'rgb(var(--ov) / 0.65)',
               animation: 'phraseIn 0.35s ease both',
             }}
           >
@@ -121,7 +121,7 @@ function TypingIndicator({ phase }: { phase?: string }): JSX.Element {
         {/* Scanning bar */}
         <div
           className="h-px w-full overflow-hidden rounded-full"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
+          style={{ background: 'rgb(var(--ov) / 0.05)' }}
         >
           <div
             style={{
@@ -137,7 +137,7 @@ function TypingIndicator({ phase }: { phase?: string }): JSX.Element {
         {elapsed >= 5 && (
           <p
             className="text-[10px]"
-            style={{ color: 'rgba(255,255,255,0.18)', animation: 'fadeUp 0.4s ease both' }}
+            style={{ color: 'rgb(var(--ov) / 0.18)', animation: 'fadeUp 0.4s ease both' }}
           >
             {elapsed < 60
               ? `${elapsed}s`
@@ -245,7 +245,8 @@ export default function ChatInterface({
   if (!hasFiles && !chatMode) {
     return (
       <div
-        className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808]"
+        className="flex flex-1 flex-col h-screen overflow-hidden"
+        style={{ background: 'var(--bg)' }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -279,12 +280,12 @@ export default function ChatInterface({
           </div>
 
           {/* Heading */}
-          <h1 className="mb-2 text-[28px] font-bold tracking-[-0.03em] text-white leading-tight text-center">
+          <h1 className="mb-2 text-[28px] font-bold tracking-[-0.03em] leading-tight text-center" style={{ color: 'var(--text)' }}>
             Justice <span style={{ color: '#c9a84c' }}>AI</span>
           </h1>
           <p
             className="mb-10 text-[13.5px] text-center leading-relaxed"
-            style={{ color: 'rgba(255,255,255,0.3)', maxWidth: 320 }}
+            style={{ color: 'rgb(var(--ov) / 0.3)', maxWidth: 320 }}
           >
             Ask anything about your case files.
             Every query runs locally — nothing leaves your device.
@@ -300,10 +301,10 @@ export default function ChatInterface({
             style={{
               maxWidth: 480,
               borderRadius: 20,
-              border: `1.5px dashed ${isDragging ? 'rgba(201,168,76,0.6)' : 'rgba(255,255,255,0.09)'}`,
+              border: `1.5px dashed ${isDragging ? 'rgba(201,168,76,0.6)' : 'rgb(var(--ov) / 0.09)'}`,
               background: isDragging
                 ? 'rgba(201,168,76,0.05)'
-                : 'rgba(255,255,255,0.01)',
+                : 'rgb(var(--ov) / 0.01)',
               padding: '40px 36px',
               transition: 'border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease',
               boxShadow: isDragging
@@ -320,8 +321,8 @@ export default function ChatInterface({
             onMouseLeave={(e) => {
               if (!isDragging) {
                 const el = e.currentTarget as HTMLDivElement
-                el.style.borderColor = 'rgba(255,255,255,0.09)'
-                el.style.background = 'rgba(255,255,255,0.01)'
+                el.style.borderColor = 'rgb(var(--ov) / 0.09)'
+                el.style.background = 'rgb(var(--ov) / 0.01)'
               }
             }}
           >
@@ -330,8 +331,8 @@ export default function ChatInterface({
               <div
                 className="flex h-16 w-16 items-center justify-center rounded-2xl"
                 style={{
-                  background: isDragging ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${isDragging ? 'rgba(201,168,76,0.35)' : 'rgba(255,255,255,0.07)'}`,
+                  background: isDragging ? 'rgba(201,168,76,0.12)' : 'rgb(var(--ov) / 0.03)',
+                  border: `1px solid ${isDragging ? 'rgba(201,168,76,0.35)' : 'rgb(var(--ov) / 0.07)'}`,
                   transition: 'all 0.2s ease',
                   boxShadow: isDragging ? '0 0 24px rgba(201,168,76,0.1)' : 'none',
                 }}
@@ -343,7 +344,7 @@ export default function ChatInterface({
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
                 ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--ov) / 0.28)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -352,10 +353,10 @@ export default function ChatInterface({
               </div>
 
               <div>
-                <p className="text-[15.5px] font-semibold tracking-[-0.01em] leading-snug" style={{ color: isDragging ? '#c9a84c' : '#fff' }}>
+                <p className="text-[15.5px] font-semibold tracking-[-0.01em] leading-snug" style={{ color: isDragging ? '#c9a84c' : 'var(--text)' }}>
                   {isDragging ? 'Release to load documents' : 'Drop your documents here'}
                 </p>
-                <p className="mt-1.5 text-[12.5px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                <p className="mt-1.5 text-[12.5px]" style={{ color: 'rgb(var(--ov) / 0.25)' }}>
                   PDF and DOCX supported · or click to browse
                 </p>
               </div>
@@ -379,16 +380,16 @@ export default function ChatInterface({
                 <button
                   onClick={(e) => { e.stopPropagation(); onAddFolder() }}
                   className="text-[12px] transition-colors no-drag px-3 py-2 rounded-lg"
-                  style={{ color: 'rgba(255,255,255,0.3)', background: 'transparent', border: '1px solid rgba(255,255,255,0.10)' }}
+                  style={{ color: 'rgb(var(--ov) / 0.3)', background: 'transparent', border: '1px solid rgb(var(--ov) / 0.10)' }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
-                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
-                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgba(255,255,255,0.18)'
+                    (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.55)'
+                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgb(var(--ov) / 0.04)'
+                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgb(var(--ov) / 0.18)'
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)'
+                    (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.3)'
                     ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgba(255,255,255,0.10)'
+                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgb(var(--ov) / 0.10)'
                   }}
                 >
                   Load folder
@@ -522,13 +523,13 @@ export default function ChatInterface({
               >
                 <div
                   className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  style={{ background: 'rgb(var(--ov) / 0.04)', border: '1px solid rgb(var(--ov) / 0.07)' }}
                 >
                   {card.icon}
                 </div>
                 <div>
-                  <p className="text-[11.5px] font-semibold text-white leading-tight">{card.title}</p>
-                  <p className="text-[10.5px] mt-0.5 leading-snug" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  <p className="text-[11.5px] font-semibold leading-tight" style={{ color: 'var(--text)' }}>{card.title}</p>
+                  <p className="text-[10.5px] mt-0.5 leading-snug" style={{ color: 'rgb(var(--ov) / 0.3)' }}>
                     {card.desc}
                   </p>
                 </div>
@@ -546,7 +547,8 @@ export default function ChatInterface({
 
   return (
     <div
-      className="flex flex-1 flex-col h-screen overflow-hidden bg-[#080808] relative"
+      className="flex flex-1 flex-col h-screen overflow-hidden relative"
+      style={{ background: 'var(--bg)' }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -556,7 +558,7 @@ export default function ChatInterface({
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
           style={{
-            background: 'rgba(8,8,8,0.7)',
+            background: 'var(--backdrop)',
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
             animation: 'fadeUp 0.15s ease both',
@@ -602,7 +604,7 @@ export default function ChatInterface({
       {/* Header — matches sidebar's h-11 traffic zone + content row */}
       <div
         className="drag-region flex h-11 items-center justify-between shrink-0 px-5"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ borderBottom: '1px solid rgb(var(--ov) / 0.05)' }}
       >
         <div className="no-drag flex items-center gap-2 min-w-0">
           <svg width="11" height="11" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
@@ -611,7 +613,7 @@ export default function ChatInterface({
           </svg>
           <span
             className="text-[12.5px] font-medium truncate"
-            style={{ color: isEmpty ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)', maxWidth: 400, letterSpacing: '-0.01em' }}
+            style={{ color: isEmpty ? 'rgb(var(--ov) / 0.2)' : 'rgb(var(--ov) / 0.6)', maxWidth: 400, letterSpacing: '-0.01em' }}
           >
             {isEmpty ? 'New Chat' : sessionName}
           </span>
@@ -623,9 +625,9 @@ export default function ChatInterface({
             <div
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px]"
               style={{
-                border: justLoaded ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgba(255,255,255,0.06)',
-                color: justLoaded ? 'rgba(201,168,76,0.9)' : 'rgba(255,255,255,0.28)',
-                background: justLoaded ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.02)',
+                border: justLoaded ? '1px solid rgba(201,168,76,0.4)' : '1px solid rgb(var(--ov) / 0.06)',
+                color: justLoaded ? 'rgba(201,168,76,0.9)' : 'rgb(var(--ov) / 0.28)',
+                background: justLoaded ? 'rgba(201,168,76,0.08)' : 'rgb(var(--ov) / 0.02)',
                 transition: 'all 0.4s ease',
               }}
             >
@@ -641,7 +643,7 @@ export default function ChatInterface({
               onClick={onExportChat}
               title="Export conversation"
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] transition-all"
-              style={{ border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.28)', background: 'rgba(255,255,255,0.02)' }}
+              style={{ border: '1px solid rgb(var(--ov) / 0.06)', color: 'rgb(var(--ov) / 0.28)', background: 'rgb(var(--ov) / 0.02)' }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLButtonElement
                 el.style.color = 'rgba(201,168,76,0.75)'
@@ -649,8 +651,8 @@ export default function ChatInterface({
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLButtonElement
-                el.style.color = 'rgba(255,255,255,0.28)'
-                el.style.borderColor = 'rgba(255,255,255,0.06)'
+                el.style.color = 'rgb(var(--ov) / 0.28)'
+                el.style.borderColor = 'rgb(var(--ov) / 0.06)'
               }}
             >
               <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
@@ -681,10 +683,10 @@ export default function ChatInterface({
                     <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25V1.75zM8.75 9.25a.75.75 0 0 0-1.5 0v1.5H5.75a.75.75 0 0 0 0 1.5h1.5v1.5a.75.75 0 0 0 1.5 0v-1.5h1.5a.75.75 0 0 0 0-1.5H8.75v-1.5z" />
                   </svg>
                 </div>
-                <h3 className="mb-2 text-[18px] font-semibold tracking-[-0.02em] text-white">
+                <h3 className="mb-2 text-[18px] font-semibold tracking-[-0.02em]" style={{ color: 'var(--text)' }}>
                   Add documents to get started
                 </h3>
-                <p className="mb-7 text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.28)', maxWidth: 280 }}>
+                <p className="mb-7 text-[12.5px] leading-relaxed" style={{ color: 'rgb(var(--ov) / 0.28)', maxWidth: 280 }}>
                   Load PDFs or Word files, then ask any question about your case.
                 </p>
                 <button
@@ -692,8 +694,8 @@ export default function ChatInterface({
                   className="flex items-center gap-2 rounded-xl px-6 py-3 text-[13px] font-semibold transition-all"
                   style={{
                     background: '#c9a84c',
-                    color: '#080808',
-                    boxShadow: '0 4px 16px rgba(201,168,76,0.22)',
+                    color: 'var(--text-on-gold)',
+                    boxShadow: 'var(--shadow)',
                   }}
                   onMouseEnter={(e) => {
                     const el = e.currentTarget as HTMLButtonElement
@@ -703,7 +705,7 @@ export default function ChatInterface({
                   onMouseLeave={(e) => {
                     const el = e.currentTarget as HTMLButtonElement
                     el.style.background = '#c9a84c'
-                    el.style.boxShadow = '0 4px 16px rgba(201,168,76,0.22)'
+                    el.style.boxShadow = 'var(--shadow)'
                   }}
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
@@ -718,7 +720,7 @@ export default function ChatInterface({
                 <p className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.2em]" style={{ color: 'rgba(201,168,76,0.5)' }}>
                   {files.length} {files.length === 1 ? 'document' : 'documents'} ready
                 </p>
-                <h3 className="mb-7 text-[22px] font-semibold tracking-[-0.02em] text-white">
+                <h3 className="mb-7 text-[22px] font-semibold tracking-[-0.02em]" style={{ color: 'var(--text)' }}>
                   What would you like to know?
                 </h3>
                 <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
@@ -728,22 +730,22 @@ export default function ChatInterface({
                       onClick={() => { setInput(q); textareaRef.current?.focus() }}
                       className="rounded-xl px-4 py-3.5 text-left text-[12px] leading-relaxed"
                       style={{
-                        background: '#0c0c0c',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        color: 'rgba(255,255,255,0.38)',
+                        background: 'var(--surface)',
+                        border: '1px solid rgb(var(--ov) / 0.06)',
+                        color: 'rgb(var(--ov) / 0.38)',
                         transition: 'background 0.12s ease, border-color 0.12s ease, color 0.12s ease',
                       }}
                       onMouseEnter={(e) => {
                         const el = e.currentTarget as HTMLButtonElement
-                        el.style.background = '#121212'
+                        el.style.background = 'var(--surface-hover)'
                         el.style.borderColor = 'rgba(201,168,76,0.22)'
-                        el.style.color = 'rgba(255,255,255,0.78)'
+                        el.style.color = 'rgb(var(--ov) / 0.78)'
                       }}
                       onMouseLeave={(e) => {
                         const el = e.currentTarget as HTMLButtonElement
-                        el.style.background = '#0c0c0c'
-                        el.style.borderColor = 'rgba(255,255,255,0.06)'
-                        el.style.color = 'rgba(255,255,255,0.38)'
+                        el.style.background = 'var(--surface)'
+                        el.style.borderColor = 'rgb(var(--ov) / 0.06)'
+                        el.style.color = 'rgb(var(--ov) / 0.38)'
                       }}
                     >
                       {q}
@@ -769,7 +771,7 @@ export default function ChatInterface({
       {/* Input */}
       <div
         className="shrink-0 px-6 py-4"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: '#080808' }}
+        style={{ borderTop: '1px solid rgb(var(--ov) / 0.05)', background: 'var(--bg)' }}
       >
         <div className="max-w-3xl mx-auto">
           {loadError && (
@@ -794,8 +796,8 @@ export default function ChatInterface({
           <div
             className="rounded-2xl"
             style={{
-              background: '#0d0d0d',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg-alt)',
+              border: '1px solid rgb(var(--ov) / 0.08)',
               transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
             }}
             onFocusCapture={(e) => {
@@ -805,7 +807,7 @@ export default function ChatInterface({
             }}
             onBlurCapture={(e) => {
               const el = e.currentTarget as HTMLDivElement
-              el.style.borderColor = 'rgba(255,255,255,0.08)'
+              el.style.borderColor = 'rgb(var(--ov) / 0.08)'
               el.style.boxShadow = 'none'
             }}
           >
@@ -818,8 +820,8 @@ export default function ChatInterface({
                 disabled={isQuerying}
                 placeholder="Ask a question about your documents…"
                 rows={1}
-                className="flex-1 bg-transparent text-[13.5px] text-white leading-6 outline-none placeholder-white/20 disabled:opacity-50"
-                style={{ maxHeight: 128, overflowY: 'auto' }}
+                className="flex-1 bg-transparent text-[13.5px] leading-6 outline-none placeholder-white/20 disabled:opacity-50"
+                style={{ maxHeight: 128, overflowY: 'auto', color: 'var(--text)' }}
               />
               <button
                 onClick={handleSend}
@@ -827,10 +829,10 @@ export default function ChatInterface({
                 title={!hasFiles ? 'Add documents first' : undefined}
                 className="flex shrink-0 h-8 w-8 items-center justify-center rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{
-                  background: input.trim() && !isQuerying ? '#c9a84c' : 'rgba(255,255,255,0.06)',
-                  color: input.trim() && !isQuerying ? '#080808' : 'rgba(255,255,255,0.3)',
+                  background: input.trim() && !isQuerying ? '#c9a84c' : 'rgb(var(--ov) / 0.06)',
+                  color: input.trim() && !isQuerying ? 'var(--text-on-gold)' : 'rgb(var(--ov) / 0.3)',
                   transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
-                  boxShadow: input.trim() && !isQuerying ? '0 2px 10px rgba(201,168,76,0.25)' : 'none',
+                  boxShadow: input.trim() && !isQuerying ? 'var(--shadow)' : 'none',
                 }}
               >
                 {isQuerying ? (
@@ -851,7 +853,7 @@ export default function ChatInterface({
               <rect x="1" y="3" width="11" height="4" rx="1.25" fill="rgba(201,168,76,0.25)" transform="rotate(45 6.5 5)" />
               <line x1="10.5" y1="10.5" x2="18.5" y2="18.5" stroke="rgba(201,168,76,0.25)" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
-            <p className="text-[10px] tracking-wide" style={{ color: 'rgba(255,255,255,0.15)' }}>
+            <p className="text-[10px] tracking-wide" style={{ color: 'rgb(var(--ov) / 0.15)' }}>
               Justice AI · Enter to send · Answers grounded in your documents
             </p>
           </div>

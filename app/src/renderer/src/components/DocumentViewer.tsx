@@ -46,7 +46,7 @@ function PdfViewer({ citation }: { citation: Citation }): JSX.Element {
           <circle cx="6" cy="6" r="4.5" stroke="rgba(201,168,76,0.5)" strokeWidth="1.4" />
           <path d="M10 10l4 4" stroke="rgba(201,168,76,0.5)" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
-        <p className="flex-1 text-[11px] italic truncate" style={{ color: 'rgba(255,255,255,0.38)' }}>
+        <p className="flex-1 text-[11px] italic truncate" style={{ color: 'rgb(var(--ov) / 0.38)' }}>
           "{citation.excerpt.slice(0, 100)}{citation.excerpt.length > 100 ? '…' : ''}"
         </p>
         <button
@@ -131,7 +131,7 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
     <div ref={containerRef} className="flex-1 overflow-auto" style={{ padding: '20px 24px' }}>
       <p
         className="text-[13px] leading-[1.9] whitespace-pre-wrap"
-        style={{ color: 'rgba(255,255,255,0.6)' }}
+        style={{ color: 'rgb(var(--ov) / 0.6)' }}
       >
         {parts.map((part, i) =>
           part.toLowerCase() === needle.toLowerCase() ? (
@@ -139,7 +139,7 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
               key={i}
               style={{
                 background: 'rgba(201,168,76,0.32)',
-                color: '#fff',
+                color: 'var(--text)',
                 borderRadius: 3,
                 padding: '1px 2px',
                 boxShadow: '0 0 0 1px rgba(201,168,76,0.4)',
@@ -159,7 +159,7 @@ function TextViewer({ citation }: { citation: Citation }): JSX.Element {
 // ── Relevance badge ────────────────────────────────────────────────────────────
 function ScoreBadge({ score }: { score: number }): JSX.Element {
   const label = score >= 0.40 ? 'Strong' : score >= 0.22 ? 'Good' : 'Weak'
-  const color = score >= 0.40 ? '#3fb950' : score >= 0.22 ? '#c9a84c' : 'rgba(255,255,255,0.3)'
+  const color = score >= 0.40 ? '#3fb950' : score >= 0.22 ? '#c9a84c' : 'rgb(var(--ov) / 0.3)'
   return (
     <span
       className="shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded"
@@ -181,8 +181,8 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
       style={{
         width: citation ? 520 : 0,
         minWidth: citation ? 520 : 0,
-        borderLeft: citation ? '1px solid rgba(255,255,255,0.06)' : 'none',
-        background: '#0a0a0a',
+        borderLeft: citation ? '1px solid rgb(var(--ov) / 0.06)' : 'none',
+        background: 'var(--modal-bg)',
         overflow: 'hidden',
         transition: 'width 0.25s ease, min-width 0.25s ease',
       }}
@@ -192,7 +192,7 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
           {/* Header */}
           <div
             className="drag-region flex h-11 shrink-0 items-center gap-3 px-4"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+            style={{ borderBottom: '1px solid rgb(var(--ov) / 0.05)' }}
           >
             <div className="no-drag flex-1 flex items-center gap-2 min-w-0">
               <span
@@ -203,14 +203,14 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
               </span>
               <span
                 className="text-[12px] font-medium truncate"
-                style={{ color: 'rgba(255,255,255,0.65)' }}
+                style={{ color: 'rgb(var(--ov) / 0.65)' }}
                 title={citation.fileName}
               >
                 {citation.fileName}
               </span>
               <span
                 className="shrink-0 text-[11px]"
-                style={{ color: 'rgba(255,255,255,0.25)' }}
+                style={{ color: 'rgb(var(--ov) / 0.25)' }}
               >
                 · p.{citation.pageNumber}
               </span>
@@ -220,13 +220,13 @@ export default function DocumentViewer({ citation, onClose }: Props): JSX.Elemen
             <button
               onClick={onClose}
               className="no-drag shrink-0 flex h-6 w-6 items-center justify-center rounded-md transition-colors"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
+              style={{ color: 'rgb(var(--ov) / 0.3)' }}
               onMouseEnter={(e) => {
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.8)'
-                ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'
+                ;(e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.8)'
+                ;(e.currentTarget as HTMLButtonElement).style.background = 'rgb(var(--ov) / 0.06)'
               }}
               onMouseLeave={(e) => {
-                ;(e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.3)'
+                ;(e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.3)'
                 ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
               }}
             >

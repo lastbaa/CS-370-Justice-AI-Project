@@ -54,7 +54,7 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-      style={{ background: '#080808' }}
+      style={{ background: 'var(--bg)' }}
     >
       <div
         className="w-full max-w-md px-8 flex flex-col items-center"
@@ -80,10 +80,10 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
         <h1 className="text-[26px] font-bold text-white mb-2.5 text-center tracking-[-0.03em] leading-tight">
           Setting up Justice AI
         </h1>
-        <p className="text-[13.5px] text-center mb-10 leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p className="text-[13.5px] text-center mb-10 leading-relaxed" style={{ color: 'rgb(var(--ov) / 0.35)' }}>
           Downloading the Saul legal AI model.
           <br />
-          <span style={{ color: 'rgba(255,255,255,0.22)' }}>This only happens once.</span>
+          <span style={{ color: 'rgb(var(--ov) / 0.22)' }}>This only happens once.</span>
         </p>
 
         {error ? (
@@ -109,7 +109,7 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
               className="rounded-xl px-8 py-3 text-[13.5px] font-semibold"
               style={{
                 background: '#c9a84c',
-                color: '#080808',
+                color: 'var(--text-on-gold)',
                 boxShadow: '0 4px 16px rgba(201,168,76,0.25)',
                 transition: 'background 0.15s ease, box-shadow 0.15s ease',
               }}
@@ -132,7 +132,7 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
             {/* Progress bar */}
             <div
               className="w-full rounded-full overflow-hidden relative"
-              style={{ height: '6px', background: 'rgba(255,255,255,0.06)' }}
+              style={{ height: '6px', background: 'rgb(var(--ov) / 0.06)' }}
             >
               <div
                 className="h-full rounded-full transition-all duration-500 relative overflow-hidden"
@@ -144,7 +144,7 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
                     style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)',
+                      background: 'linear-gradient(90deg, transparent 0%, rgb(var(--ov) / 0.35) 50%, transparent 100%)',
                       animation: 'shimmer 1.8s ease-in-out infinite',
                     }}
                   />
@@ -154,7 +154,7 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
 
             {/* Stats */}
             <div className="flex items-center justify-between">
-              <span className="text-[13px] font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span className="text-[13px] font-medium" style={{ color: 'rgb(var(--ov) / 0.45)' }}>
                 {isDownloading ? (
                   percent < 100 ? (
                     <>
@@ -199,7 +199,7 @@ export default function ModelSetup({ onComplete }: Props): JSX.Element {
                   strokeLinejoin="round"
                 />
               </svg>
-              <p className="text-[12.5px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.38)' }}>
+              <p className="text-[12.5px] leading-relaxed" style={{ color: 'rgb(var(--ov) / 0.38)' }}>
                 Saul runs entirely on your device. No accounts, no API keys, no data sent to the cloud.
               </p>
             </div>

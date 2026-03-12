@@ -9,7 +9,7 @@ interface Props {
 function relevanceLabel(score: number): { label: string; color: string } {
   if (score >= 0.40) return { label: 'Strong', color: '#3fb950' }
   if (score >= 0.22) return { label: 'Good',   color: '#c9a84c' }
-  return                    { label: 'Weak',   color: 'rgba(255,255,255,0.28)' }
+  return                    { label: 'Weak',   color: 'rgb(var(--ov) / 0.28)' }
 }
 
 export default function SourceCard({ citation, onView }: Props): JSX.Element {
@@ -30,8 +30,8 @@ export default function SourceCard({ citation, onView }: Props): JSX.Element {
     <div
       className="rounded-xl px-3.5 py-2.5 flex items-start gap-3 cursor-pointer transition-colors"
       style={{
-        background: hovered ? '#111' : '#0c0c0c',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: hovered ? 'var(--surface-hover)' : 'var(--surface)',
+        border: '1px solid rgb(var(--ov) / 0.07)',
         borderLeft: '2px solid rgba(201,168,76,0.35)',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -53,7 +53,7 @@ export default function SourceCard({ citation, onView }: Props): JSX.Element {
         <div className="flex items-center justify-between gap-2 mb-1">
           <span
             className="text-[12px] font-medium truncate"
-            style={{ color: 'rgba(255,255,255,0.75)' }}
+            style={{ color: 'rgb(var(--ov) / 0.75)' }}
             title={citation.fileName}
           >
             {citation.fileName}
@@ -72,14 +72,14 @@ export default function SourceCard({ citation, onView }: Props): JSX.Element {
             <span className="text-[10px]" style={{ color: rel.color, opacity: 0.85 }}>
               {rel.label}
             </span>
-            <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
+            <span className="text-[11px]" style={{ color: 'rgb(var(--ov) / 0.28)' }}>
               · p.{citation.pageNumber}
             </span>
           </div>
         </div>
         <p
           className="text-[11px] leading-relaxed italic"
-          style={{ color: 'rgba(255,255,255,0.35)' }}
+          style={{ color: 'rgb(var(--ov) / 0.35)' }}
         >
           "{citation.excerpt.length > 140
             ? citation.excerpt.slice(0, 140) + '…'
@@ -95,9 +95,9 @@ export default function SourceCard({ citation, onView }: Props): JSX.Element {
               onClick={handleCopyExcerpt}
               className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded transition-all"
               style={{
-                background: copied ? 'rgba(63,185,80,0.1)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${copied ? 'rgba(63,185,80,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                color: copied ? '#3fb950' : 'rgba(255,255,255,0.35)',
+                background: copied ? 'rgba(63,185,80,0.1)' : 'rgb(var(--ov) / 0.05)',
+                border: `1px solid ${copied ? 'rgba(63,185,80,0.3)' : 'rgb(var(--ov) / 0.1)'}`,
+                color: copied ? '#3fb950' : 'rgb(var(--ov) / 0.35)',
               }}
             >
               {copied ? (

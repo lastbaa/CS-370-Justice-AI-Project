@@ -54,6 +54,12 @@ pub struct AppSettings {
     pub chunk_size: usize,
     pub chunk_overlap: usize,
     pub top_k: usize,
+    #[serde(default = "default_theme")]
+    pub theme: String,
+}
+
+fn default_theme() -> String {
+    "dark".to_string()
 }
 
 impl Default for AppSettings {
@@ -62,6 +68,7 @@ impl Default for AppSettings {
             chunk_size: 1000,
             chunk_overlap: 300,
             top_k: 6,
+            theme: default_theme(),
         }
     }
 }

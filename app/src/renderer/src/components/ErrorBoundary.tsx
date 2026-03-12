@@ -38,8 +38,8 @@ export default class ErrorBoundary extends React.Component<Props, State> {
             alignItems: 'center',
             justifyContent: 'center',
             height: '100vh',
-            background: '#080808',
-            color: 'rgba(255,255,255,0.7)',
+            background: 'var(--bg)',
+            color: 'rgb(var(--ov) / 0.7)',
             gap: 12,
             padding: 32,
             textAlign: 'center',
@@ -51,10 +51,10 @@ export default class ErrorBoundary extends React.Component<Props, State> {
               fill="rgba(248,81,73,0.7)"
             />
           </svg>
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>
+          <p style={{ fontSize: 15, fontWeight: 600, color: 'rgb(var(--ov) / 0.85)' }}>
             Something went wrong
           </p>
-          <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.35)', maxWidth: 380 }}>
+          <p style={{ fontSize: 12.5, color: 'rgb(var(--ov) / 0.35)', maxWidth: 380 }}>
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </p>
           <button

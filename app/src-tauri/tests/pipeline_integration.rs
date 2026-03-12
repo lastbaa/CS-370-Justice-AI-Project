@@ -44,8 +44,62 @@
 //    when `cargo test` runs without --include-ignored.
 
 use app_lib::commands::doc_parser::parse_pdf;
-use app_lib::pipeline::chunk_document;
+use app_lib::pipeline::{self, chunk_document, RetrievalBackend, RetrievalConfig, RetrievalCorpus};
 use app_lib::state::AppSettings;
+
+// ── Retrieval test helpers ──────────────────────────────────────────────────
+
+/// Model directory for retrieval tests — uses the app's standard data dir.
+#[allow(dead_code)]
+fn retrieval_model_dir() -> std::path::PathBuf {
+    let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".to_string());
+    std::path::PathBuf::from(home)
+        .join("Library")
+        .join("Application Support")
+        .join("com.justiceai.app")
+        .join("models")
+}
+
+/// Embed a query and all chunks, return top-k using the default retrieval backend.
+#[allow(dead_code)]
+async fn retrieve_top_chunks(
+    chunks: &[pipeline::TempChunk],
+    query: &str,
+    model_dir: &std::path::Path,
+    top_k: usize,
+) -> Vec<(f32, pipeline::TempChunk)> {
+    let query_vec = pipeline::embed_text(query, true, model_dir).await
+        .expect("Failed to embed query");
+
+    let mut chunk_vecs: Vec<Vec<f32>> = Vec::new();
+    for chunk in chunks {
+        chunk_vecs.push(
+            pipeline::embed_text(&chunk.text, false, model_dir).await
+                .expect("Failed to embed chunk"),
+        );
+    }
+
+    let corpus = RetrievalCorpus {
+        texts: chunks.iter().map(|c| c.text.as_str()).collect(),
+        vectors: chunk_vecs.iter().map(|v| v.as_slice()).collect(),
+    };
+    let config = RetrievalConfig {
+        top_k,
+        candidate_pool_k: 0,   // no MMR in tests
+        score_threshold: 0.0,   // no threshold
+        expand_keywords: true,
+        ..Default::default()
+    };
+
+    let backend = pipeline::default_backend();
+    let mut ranked = backend.retrieve(query, &query_vec, &corpus, &config);
+    pipeline::ensure_form_data_included(&mut ranked, &corpus, 2);
+
+    ranked
+        .into_iter()
+        .map(|r| (r.score, chunks[r.chunk_index].clone()))
+        .collect()
+}
 
 // ── PDF path resolution ───────────────────────────────────────────────────────
 
@@ -714,21 +768,24 @@ fn chunking_count_within_reasonable_range() {
 #[test]
 #[ignore = "retrieval: requires fastembed model download (~33 MB)"]
 fn retrieval_event_date_chunk_found() {
-    // TODO: implement once app_lib::pipeline::chunk_document and
-    //       app_lib::commands::rag::embed_text are pub.
-    //
-    // Pseudocode:
-    //   let pages = parse_pdf(&path)?;
-    //   let settings = AppSettings::default();
-    //   let chunks = chunk_document(&pages, &settings);
-    //   let model_dir = std::env::temp_dir().join("justice_ai_test_models");
-    //   let query_vec = embed_text("what is the event date", true, &model_dir).await?;
-    //   let chunk_vecs = join_all(chunks.iter().map(|c| embed_text(&c.text, false, &model_dir))).await;
-    //   let scores: Vec<f32> = chunk_vecs.iter().map(|v| cosine_similarity(&query_vec, v)).collect();
-    //   let top_chunk = &chunks[scores.iter().argmax()];
-    //   assert!(top_chunk.text contains event date variants);
-    //   assert!(top_chunk.text does not contain "2/25" without "2/28");
-    eprintln!("[retrieval_event_date_chunk_found] TODO: implement after pipeline refactor");
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let path = bartending_pdf_path();
+        if skip_if_missing(&path) { return; }
+        let pages = parse_pdf(&path).unwrap();
+        let settings = AppSettings::default();
+        let chunks = chunk_document(&pages, &settings);
+        let model_dir = retrieval_model_dir();
+
+        let top = retrieve_top_chunks(&chunks, "what is the event date", &model_dir, 6).await;
+        let top_text: String = top.iter().map(|(_, c)| c.text.as_str()).collect::<Vec<_>>().join(" ");
+
+        // The event date (2.28.26 / 2/28/2026 / Sat) must appear in top-k
+        let has_date = ["2.28.26", "2/28/2026", "Sat"].iter().any(|d| top_text.contains(d));
+        assert!(has_date,
+            "Event date not found in top-6 retrieved chunks.\nTop chunk texts:\n{}",
+            top.iter().enumerate().map(|(i, (s, c))| format!("[#{} score={:.4}] {}", i+1, s, &c.text[..c.text.len().min(120)])).collect::<Vec<_>>().join("\n"));
+    });
 }
 
 /// Tier 3: given the query "cancellation policy", the top retrieved chunk must
@@ -736,8 +793,69 @@ fn retrieval_event_date_chunk_found() {
 #[test]
 #[ignore = "retrieval: requires fastembed model download (~33 MB)"]
 fn retrieval_cancellation_policy_chunk_found() {
-    // TODO: implement after pipeline refactor (see above for pseudocode pattern)
-    eprintln!("[retrieval_cancellation_policy_chunk_found] TODO: implement after pipeline refactor");
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let path = bartending_pdf_path();
+        if skip_if_missing(&path) { return; }
+        let pages = parse_pdf(&path).unwrap();
+        let settings = AppSettings::default();
+        let chunks = chunk_document(&pages, &settings);
+        let model_dir = retrieval_model_dir();
+
+        let top = retrieve_top_chunks(&chunks, "cancellation policy", &model_dir, 6).await;
+        let top_text: String = top.iter().map(|(_, c)| c.text.as_str()).collect::<Vec<_>>().join(" ");
+
+        let has_nonrefundable = top_text.to_lowercase().contains("nonrefundable")
+            || top_text.to_lowercase().contains("non-refundable");
+        assert!(has_nonrefundable,
+            "Cancellation policy not found in top-6 chunks.\nTop texts:\n{}",
+            top.iter().enumerate().map(|(i, (s, c))| format!("[#{} score={:.4}] {}", i+1, s, &c.text[..c.text.len().min(120)])).collect::<Vec<_>>().join("\n"));
+    });
+}
+
+/// Tier 3: filled W-9 — "what is the name" must retrieve the chunk with "Liam Neild".
+/// This is the key regression test for AcroForm extraction + retrieval.
+#[test]
+#[ignore = "retrieval: requires fastembed model download (~33 MB)"]
+fn retrieval_w9_filled_name_found() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let path = fixture_path("irs_w9_filled.pdf");
+        if !std::path::Path::new(&path).exists() { return; }
+        let pages = parse_pdf(&path).unwrap();
+        let settings = AppSettings::default();
+        let chunks = chunk_document(&pages, &settings);
+        let model_dir = retrieval_model_dir();
+
+        let top = retrieve_top_chunks(&chunks, "what is the name of the person on this W9", &model_dir, 6).await;
+        let top_text: String = top.iter().map(|(_, c)| c.text.as_str()).collect::<Vec<_>>().join(" ");
+
+        assert!(top_text.contains("Liam Neild"),
+            "\"Liam Neild\" not in top-6 chunks for name query.\nTop chunks:\n{}",
+            top.iter().enumerate().map(|(i, (s, c))| format!("[#{} score={:.4}] {}", i+1, s, &c.text[..c.text.len().min(120)])).collect::<Vec<_>>().join("\n"));
+    });
+}
+
+/// Tier 3: filled W-9 — "what is the address" must retrieve the chunk with "Eagle Row".
+#[test]
+#[ignore = "retrieval: requires fastembed model download (~33 MB)"]
+fn retrieval_w9_filled_address_found() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(async {
+        let path = fixture_path("irs_w9_filled.pdf");
+        if !std::path::Path::new(&path).exists() { return; }
+        let pages = parse_pdf(&path).unwrap();
+        let settings = AppSettings::default();
+        let chunks = chunk_document(&pages, &settings);
+        let model_dir = retrieval_model_dir();
+
+        let top = retrieve_top_chunks(&chunks, "what is the address on this form", &model_dir, 6).await;
+        let top_text: String = top.iter().map(|(_, c)| c.text.as_str()).collect::<Vec<_>>().join(" ");
+
+        assert!(top_text.contains("Eagle Row"),
+            "\"Eagle Row\" not in top-6 chunks for address query.\nTop chunks:\n{}",
+            top.iter().enumerate().map(|(i, (s, c))| format!("[#{} score={:.4}] {}", i+1, s, &c.text[..c.text.len().min(120)])).collect::<Vec<_>>().join("\n"));
+    });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -957,6 +1075,85 @@ mod unit {
                 seen.insert(tc.name),
                 "Duplicate test case name: {:?}",
                 tc.name
+            );
+        }
+    }
+}
+
+// ── Real-world document tests ────────────────────────────────────────────────
+//
+// IRS forms and Georgia court forms downloaded from official government sites.
+// These are unfilled templates — they test that the parser handles real-world
+// PDF structures (AcroForm fields, multi-column layouts, legal boilerplate)
+// without crashing or losing text.
+
+mod real_world {
+    use super::*;
+
+    #[test]
+    fn irs_w9_parses() {
+        let path = fixture_path("irs_w9.pdf");
+        if !std::path::Path::new(&path).exists() { return; }
+        let pages = parse_pdf(&path).expect("parse_pdf failed on W-9");
+        assert!(!pages.is_empty(), "W-9 should have at least 1 page");
+        let all_text: String = pages.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("\n");
+
+        // Key text that must be present in a W-9
+        for needle in &["Taxpayer Identification Number", "Request for Taxpayer"] {
+            assert!(
+                all_text.to_lowercase().contains(&needle.to_lowercase()),
+                "W-9 missing: {needle:?}\nFirst 500 chars:\n{}",
+                &all_text[..all_text.len().min(500)]
+            );
+        }
+    }
+
+    #[test]
+    fn irs_w4_parses() {
+        let path = fixture_path("irs_w4.pdf");
+        if !std::path::Path::new(&path).exists() { return; }
+        let pages = parse_pdf(&path).expect("parse_pdf failed on W-4");
+        assert!(!pages.is_empty(), "W-4 should have at least 1 page");
+        let all_text: String = pages.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("\n");
+
+        for needle in &["Withholding", "Employee"] {
+            assert!(
+                all_text.to_lowercase().contains(&needle.to_lowercase()),
+                "W-4 missing: {needle:?}\nFirst 500 chars:\n{}",
+                &all_text[..all_text.len().min(500)]
+            );
+        }
+    }
+
+    #[test]
+    fn irs_w9_filled_extracts_data() {
+        let path = fixture_path("irs_w9_filled.pdf");
+        if !std::path::Path::new(&path).exists() { return; }
+        let pages = parse_pdf(&path).expect("parse_pdf failed on filled W-9");
+        let all_text: String = pages.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("\n");
+
+        // Filled values should appear in extracted text
+        for needle in &["Liam Neild", "18 Eagle Row", "Atlanta"] {
+            assert!(
+                all_text.contains(needle),
+                "Filled W-9 missing: {needle:?}\nText:\n{all_text}"
+            );
+        }
+    }
+
+    #[test]
+    fn ga_statement_of_claim_parses() {
+        let path = fixture_path("ga_statement_of_claim.pdf");
+        if !std::path::Path::new(&path).exists() { return; }
+        let pages = parse_pdf(&path).expect("parse_pdf failed on GA claim form");
+        assert!(!pages.is_empty(), "GA claim form should have at least 1 page");
+        let all_text: String = pages.iter().map(|p| p.text.as_str()).collect::<Vec<_>>().join("\n");
+
+        for needle in &["Statement of Claim", "Magistrate"] {
+            assert!(
+                all_text.to_lowercase().contains(&needle.to_lowercase()),
+                "GA claim form missing: {needle:?}\nFirst 500 chars:\n{}",
+                &all_text[..all_text.len().min(500)]
             );
         }
     }

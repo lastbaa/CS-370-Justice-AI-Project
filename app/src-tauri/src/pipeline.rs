@@ -346,6 +346,7 @@ Answer the current question using ONLY these excerpts.\n\n\
 
 // ── Chunking ──────────────────────────────────────────────────────────────────
 
+#[derive(Clone)]
 pub struct TempChunk {
     pub id: String,
     pub page_number: u32,
@@ -662,6 +663,171 @@ pub fn split_sentences(text: &str) -> Vec<SentenceFrag<'_>> {
     frags
 }
 
+// ── BM25 ─────────────────────────────────────────────────────────────────────
+
+/// Tokenize text into lowercase alphanumeric terms (≥2 chars).
+pub fn bm25_tokenize(text: &str) -> Vec<String> {
+    text.to_lowercase()
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() >= 2)
+        .map(|w| w.to_string())
+        .collect()
+}
+
+/// Precomputed BM25 corpus statistics for a set of chunks.
+pub struct Bm25Index {
+    /// Number of documents containing each term.
+    doc_freq: std::collections::HashMap<String, usize>,
+    /// Total number of documents.
+    n_docs: usize,
+    /// Average document length (in tokens).
+    avg_dl: f32,
+    /// Per-document token counts (parallel to the chunk slice).
+    doc_lens: Vec<usize>,
+}
+
+impl Bm25Index {
+    /// Build the index from chunk texts.
+    pub fn build(texts: &[&str]) -> Self {
+        let mut doc_freq: std::collections::HashMap<String, usize> =
+            std::collections::HashMap::new();
+        let mut doc_lens = Vec::with_capacity(texts.len());
+        let mut total_tokens = 0usize;
+
+        for text in texts {
+            let tokens = bm25_tokenize(text);
+            doc_lens.push(tokens.len());
+            total_tokens += tokens.len();
+
+            let unique: std::collections::HashSet<&str> =
+                tokens.iter().map(|s| s.as_str()).collect();
+            for term in unique {
+                *doc_freq.entry(term.to_string()).or_insert(0) += 1;
+            }
+        }
+
+        let n_docs = texts.len();
+        let avg_dl = if n_docs > 0 {
+            total_tokens as f32 / n_docs as f32
+        } else {
+            1.0
+        };
+
+        Bm25Index { doc_freq, n_docs, avg_dl, doc_lens }
+    }
+
+    /// Score a single document against a query. Returns BM25 score.
+    /// `doc_idx` is the index into the original texts slice.
+    /// `doc_text` is the document text (re-tokenized per query for TF).
+    pub fn score(&self, query_terms: &[String], doc_text: &str, doc_idx: usize) -> f32 {
+        const K1: f32 = 1.2;
+        const B: f32 = 0.75;
+
+        let doc_tokens = bm25_tokenize(doc_text);
+        let dl = self.doc_lens[doc_idx] as f32;
+
+        // Count term frequencies in this document.
+        let mut tf: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+        for t in &doc_tokens {
+            *tf.entry(t.as_str()).or_insert(0) += 1;
+        }
+
+        let mut score = 0.0f32;
+        for qt in query_terms {
+            let n = *self.doc_freq.get(qt.as_str()).unwrap_or(&0) as f32;
+            let idf = ((self.n_docs as f32 - n + 0.5) / (n + 0.5) + 1.0).ln();
+            let idf = idf.max(0.0); // clamp negative IDF for very common terms
+
+            let term_tf = *tf.get(qt.as_str()).unwrap_or(&0) as f32;
+            let tf_norm = (term_tf * (K1 + 1.0))
+                / (term_tf + K1 * (1.0 - B + B * dl / self.avg_dl));
+
+            score += idf * tf_norm;
+        }
+        score
+    }
+
+    /// Score all documents against query terms, returning scores in index order.
+    pub fn score_all(&self, query_terms: &[String], texts: &[&str]) -> Vec<f32> {
+        texts
+            .iter()
+            .enumerate()
+            .map(|(i, text)| self.score(query_terms, text, i))
+            .collect()
+    }
+}
+
+/// Compute hybrid scores: `alpha * cosine + (1-alpha) * normalized_bm25`.
+/// `cosine_scores` and `bm25_scores` must be parallel arrays.
+pub fn hybrid_scores(cosine_scores: &[f32], bm25_scores: &[f32], alpha: f32) -> Vec<f32> {
+    // Normalize BM25 scores to [0, 1] so they're on the same scale as cosine.
+    let max_bm25 = bm25_scores.iter().cloned().fold(0.0f32, f32::max);
+    let norm = if max_bm25 > 0.0 { max_bm25 } else { 1.0 };
+
+    cosine_scores
+        .iter()
+        .zip(bm25_scores.iter())
+        .map(|(&cos, &bm25)| alpha * cos + (1.0 - alpha) * (bm25 / norm))
+        .collect()
+}
+
+/// Like `hybrid_scores` but with form-data awareness.
+/// Chunks whose text starts with "FILLED FORM DATA" get a configurable boost.
+pub fn hybrid_scores_with_boost(
+    cosine_scores: &[f32],
+    bm25_scores: &[f32],
+    chunk_texts: &[&str],
+    alpha: f32,
+    form_boost: f32,
+) -> Vec<f32> {
+    let max_bm25 = bm25_scores.iter().cloned().fold(0.0f32, f32::max);
+    let norm = if max_bm25 > 0.0 { max_bm25 } else { 1.0 };
+
+    cosine_scores
+        .iter()
+        .zip(bm25_scores.iter())
+        .zip(chunk_texts.iter())
+        .map(|((&cos, &bm25), &text)| {
+            let base = alpha * cos + (1.0 - alpha) * (bm25 / norm);
+            if text.starts_with("FILLED FORM DATA") {
+                (base + form_boost).min(1.0)
+            } else {
+                base
+            }
+        })
+        .collect()
+}
+
+/// Reciprocal Rank Fusion: merge multiple ranked lists by rank position.
+/// Each score list is sorted independently; the fused score for item `i` is:
+///   `sum over lists: 1 / (k + rank_of_i_in_list)`
+/// where `k` is a smoothing constant (standard: 60).
+/// This avoids score normalization issues and is robust across heterogeneous scorers.
+pub fn rrf_scores(score_lists: &[Vec<f32>], chunk_texts: &[&str], form_boost: f32) -> Vec<f32> {
+    const K: f32 = 60.0;
+    let n = score_lists[0].len();
+    let mut fused = vec![0.0f32; n];
+
+    for scores in score_lists {
+        // Rank by descending score.
+        let mut ranked: Vec<(usize, f32)> = scores.iter().cloned().enumerate().collect();
+        ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        for (rank, &(idx, _)) in ranked.iter().enumerate() {
+            fused[idx] += 1.0 / (K + rank as f32 + 1.0);
+        }
+    }
+
+    // Apply form-data boost on top of fused scores.
+    for (i, &text) in chunk_texts.iter().enumerate() {
+        if text.starts_with("FILLED FORM DATA") {
+            fused[i] += form_boost;
+        }
+    }
+
+    fused
+}
+
 // ── Retrieval helpers ─────────────────────────────────────────────────────────
 
 /// Expand query keywords with common legal/employment synonyms.
@@ -762,6 +928,338 @@ pub fn mmr_select(
         .collect()
 }
 
+// ── Pluggable Retrieval Backend ───────────────────────────────────────────────
+
+/// A scored result referencing a corpus item by index.
+pub struct ScoredResult {
+    pub score: f32,
+    /// Index into the `RetrievalCorpus` arrays.
+    pub chunk_index: usize,
+}
+
+/// Borrowed corpus of chunk texts and embedding vectors.
+pub struct RetrievalCorpus<'a> {
+    pub texts: Vec<&'a str>,
+    pub vectors: Vec<&'a [f32]>,
+}
+
+/// Knobs for a retrieval pass.
+pub struct RetrievalConfig {
+    pub top_k: usize,
+    /// How many top candidates to feed into MMR. 0 = skip MMR, return raw top-k.
+    pub candidate_pool_k: usize,
+    /// Minimum hybrid score to include. 0.0 = no threshold.
+    pub score_threshold: f32,
+    /// MMR lambda (0.0–1.0). Ignored when `candidate_pool_k == 0`.
+    pub mmr_lambda: f32,
+    /// Whether to expand query keywords with legal synonyms.
+    pub expand_keywords: bool,
+}
+
+impl Default for RetrievalConfig {
+    fn default() -> Self {
+        Self {
+            top_k: 6,
+            candidate_pool_k: 36,
+            score_threshold: SCORE_THRESHOLD,
+            mmr_lambda: 0.7,
+            expand_keywords: true,
+        }
+    }
+}
+
+/// Pluggable retrieval backend. Implementations score and rank corpus chunks
+/// for a given query. Embedding happens upstream; this trait is pure CPU math.
+pub trait RetrievalBackend {
+    fn retrieve(
+        &self,
+        query_text: &str,
+        query_vector: &[f32],
+        corpus: &RetrievalCorpus<'_>,
+        config: &RetrievalConfig,
+    ) -> Vec<ScoredResult>;
+
+    fn name(&self) -> &str;
+}
+
+/// Post-process retrieval results: ensure any "FILLED FORM DATA" chunks are
+/// always included. These tiny chunks contain the actual user-specific values
+/// and are always relevant when the user asks about document content.
+pub fn ensure_form_data_included(
+    results: &mut Vec<ScoredResult>,
+    corpus: &RetrievalCorpus<'_>,
+    max_extra: usize,
+) {
+    let already: std::collections::HashSet<usize> =
+        results.iter().map(|r| r.chunk_index).collect();
+    let mut added = 0;
+    for (i, text) in corpus.texts.iter().enumerate() {
+        if added >= max_extra { break; }
+        if already.contains(&i) { continue; }
+        if text.starts_with("FILLED FORM DATA") {
+            // Insert at position 1 (after the top result) so it's prominent
+            // but doesn't displace the best semantic match.
+            let insert_pos = 1.min(results.len());
+            results.insert(insert_pos, ScoredResult {
+                score: 0.5, // neutral score
+                chunk_index: i,
+            });
+            added += 1;
+        }
+    }
+}
+
+// ── Default backend: hybrid BM25 + cosine ────────────────────────────────────
+
+pub struct HybridBm25Cosine {
+    pub alpha: f32,
+    pub form_boost: f32,
+}
+
+impl Default for HybridBm25Cosine {
+    fn default() -> Self {
+        Self { alpha: 0.5, form_boost: 0.15 }
+    }
+}
+
+pub fn default_backend() -> HybridBm25Cosine {
+    HybridBm25Cosine::default()
+}
+
+/// Stop words filtered out during keyword extraction.
+const STOP_WORDS: &[&str] = &[
+    "a","an","the","is","are","was","were","be","been","being","have","has","had",
+    "do","does","did","will","would","could","should","may","might","shall","can",
+    "i","me","my","we","our","you","your","he","she","it","they","what","which",
+    "who","this","that","these","those","of","in","on","at","by","for","with",
+    "about","as","into","to","from","and","but","or","not","any","all","some",
+    "how","when","where","why","there","find","show","tell","explain","give",
+    "please","provide","describe",
+];
+
+/// Extract meaningful keywords from query text, optionally expanding with synonyms.
+pub fn extract_query_keywords(query: &str, expand: bool) -> std::collections::HashSet<String> {
+    let stop: std::collections::HashSet<&str> = STOP_WORDS.iter().cloned().collect();
+    let base: std::collections::HashSet<String> = query
+        .to_lowercase()
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() >= 3 && !stop.contains(*w))
+        .map(|w| w.to_string())
+        .collect();
+    if expand { expand_keywords(&base) } else { base }
+}
+
+impl RetrievalBackend for HybridBm25Cosine {
+    fn retrieve(
+        &self,
+        query_text: &str,
+        query_vector: &[f32],
+        corpus: &RetrievalCorpus<'_>,
+        config: &RetrievalConfig,
+    ) -> Vec<ScoredResult> {
+        if corpus.texts.is_empty() {
+            return vec![];
+        }
+
+        // 1. BM25 scoring
+        let bm25_index = Bm25Index::build(&corpus.texts);
+        let mut query_terms = bm25_tokenize(&query_text.to_lowercase());
+        if config.expand_keywords {
+            let keywords = extract_query_keywords(query_text, true);
+            for kw in &keywords {
+                if !query_terms.contains(kw) {
+                    query_terms.push(kw.clone());
+                }
+            }
+        }
+        let bm25_scores = bm25_index.score_all(&query_terms, &corpus.texts);
+
+        // 2. Cosine scoring
+        let cosine_scores: Vec<f32> = corpus.vectors
+            .iter()
+            .map(|v| RagState::cosine_similarity(query_vector, v))
+            .collect();
+
+        // 3. Reciprocal Rank Fusion — merge BM25 and cosine by rank position.
+        // RRF is more robust than linear blending because it doesn't require
+        // score normalization and handles heterogeneous score distributions well.
+        let hybrid = rrf_scores(
+            &[cosine_scores, bm25_scores], &corpus.texts, self.form_boost,
+        );
+
+        // 4. Sort by fused score descending
+        let mut indexed: Vec<(usize, f32)> = hybrid.into_iter().enumerate().collect();
+        indexed.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+
+        // 5. Threshold filter
+        let above: Vec<(usize, f32)> = if config.score_threshold > 0.0 {
+            let filtered: Vec<_> = indexed.iter()
+                .filter(|(_, s)| *s >= config.score_threshold)
+                .cloned()
+                .collect();
+            if filtered.is_empty() { indexed.clone() } else { filtered }
+        } else {
+            indexed
+        };
+
+        // 6. MMR diversity selection (if candidate_pool_k > 0)
+        if config.candidate_pool_k > 0 {
+            let pool_size = config.candidate_pool_k.min(above.len());
+            let pool: Vec<(f32, ChunkMetadata, Vec<f32>)> = above[..pool_size]
+                .iter()
+                .map(|&(idx, score)| {
+                    let meta = ChunkMetadata {
+                        id: idx.to_string(),
+                        document_id: String::new(),
+                        file_name: String::new(),
+                        file_path: String::new(),
+                        page_number: 0,
+                        chunk_index: idx,
+                        text: corpus.texts[idx].to_string(),
+                        token_count: 0,
+                    };
+                    (score, meta, corpus.vectors[idx].to_vec())
+                })
+                .collect();
+
+            let mmr = mmr_select(pool, config.top_k, config.mmr_lambda);
+            mmr.into_iter()
+                .map(|(score, meta)| ScoredResult { score, chunk_index: meta.chunk_index })
+                .collect()
+        } else {
+            // No MMR — raw top-k
+            above.into_iter()
+                .take(config.top_k)
+                .map(|(idx, score)| ScoredResult { score, chunk_index: idx })
+                .collect()
+        }
+    }
+
+    fn name(&self) -> &str {
+        "hybrid-bm25-cosine"
+    }
+}
+
+// ── Reranker backend ─────────────────────────────────────────────────────────
+
+// Singleton for the cross-encoder reranker model (~38 MB ONNX, downloaded on first use).
+static RERANK_MODEL: OnceLock<Arc<Mutex<Option<fastembed::TextRerank>>>> = OnceLock::new();
+
+/// Two-stage retrieval: cheap first-pass (BM25+cosine) → cross-encoder rerank.
+/// Uses JINA Reranker v1 Turbo (~38 MB) via fastembed's TextRerank.
+pub struct RerankerBackend {
+    /// First-pass retrieval backend.
+    pub first_pass: HybridBm25Cosine,
+    /// How many candidates the first pass returns for reranking.
+    pub first_pass_k: usize,
+    /// Cache directory for the reranker ONNX model.
+    pub cache_dir: std::path::PathBuf,
+}
+
+impl RerankerBackend {
+    pub fn new(cache_dir: std::path::PathBuf) -> Self {
+        Self {
+            first_pass: HybridBm25Cosine::default(),
+            // For small corpora (≤500 chunks), reranking all of them is fast (~100ms).
+            // Set high so the reranker sees everything by default.
+            first_pass_k: 500,
+            cache_dir,
+        }
+    }
+}
+
+impl RetrievalBackend for RerankerBackend {
+    fn retrieve(
+        &self,
+        query_text: &str,
+        query_vector: &[f32],
+        corpus: &RetrievalCorpus<'_>,
+        config: &RetrievalConfig,
+    ) -> Vec<ScoredResult> {
+        if corpus.texts.is_empty() {
+            return vec![];
+        }
+
+        // Stage 1: cheap first-pass retrieval to narrow candidates.
+        let mut first_pass_config = RetrievalConfig {
+            top_k: self.first_pass_k,
+            candidate_pool_k: 0, // no MMR in first pass
+            score_threshold: 0.0,
+            expand_keywords: config.expand_keywords,
+            mmr_lambda: config.mmr_lambda,
+        };
+        // If corpus is small enough, skip first pass and rerank everything.
+        if corpus.texts.len() <= self.first_pass_k {
+            first_pass_config.top_k = corpus.texts.len();
+        }
+        let candidates = self.first_pass.retrieve(query_text, query_vector, corpus, &first_pass_config);
+
+        if candidates.is_empty() {
+            return vec![];
+        }
+
+        // Stage 2: cross-encoder reranking.
+        let docs: Vec<&str> = candidates.iter()
+            .map(|r| corpus.texts[r.chunk_index])
+            .collect();
+        let candidate_indices: Vec<usize> = candidates.iter().map(|r| r.chunk_index).collect();
+
+        match rerank_with_model(query_text, &docs, &self.cache_dir) {
+            Ok(reranked) => {
+                reranked.into_iter()
+                    .take(config.top_k)
+                    .map(|rr| ScoredResult {
+                        score: rr.score,
+                        chunk_index: candidate_indices[rr.index],
+                    })
+                    .collect()
+            }
+            Err(e) => {
+                log::warn!("Reranker failed, falling back to first-pass results: {e}");
+                // Graceful fallback: return first-pass results truncated to top_k.
+                candidates.into_iter().take(config.top_k).collect()
+            }
+        }
+    }
+
+    fn name(&self) -> &str {
+        "reranker-jina-v1-turbo"
+    }
+}
+
+/// Internal: run the reranker model (lazy-loaded singleton).
+fn rerank_with_model(
+    query: &str,
+    documents: &[&str],
+    cache_dir: &std::path::Path,
+) -> Result<Vec<fastembed::RerankResult>, String> {
+    use fastembed::{RerankInitOptions, RerankerModel, TextRerank};
+
+    let model_arc = RERANK_MODEL.get_or_init(|| Arc::new(Mutex::new(None)));
+    let mut guard = model_arc.lock().map_err(|e| format!("Rerank model mutex poisoned: {e}"))?;
+
+    let rerank_cache = cache_dir.join("fastembed-reranker");
+    if guard.is_none() {
+        std::fs::create_dir_all(&rerank_cache)
+            .map_err(|e| format!("Cannot create reranker cache dir: {e}"))?;
+        let model = TextRerank::try_new(
+            RerankInitOptions::new(RerankerModel::JINARerankerV1TurboEn)
+                .with_cache_dir(rerank_cache)
+                .with_show_download_progress(false),
+        )
+        .map_err(|e| format!("Failed to initialize reranker model: {e}"))?;
+        *guard = Some(model);
+    }
+
+    let model = guard.as_ref()
+        .ok_or_else(|| "Reranker model unavailable after initialization".to_string())?;
+
+    let doc_vec: Vec<&str> = documents.to_vec();
+    model
+        .rerank(query, doc_vec, false, None)
+        .map_err(|e| format!("Rerank inference failed: {e}"))
+}
+
 // ── Unit tests ─────────────────────────────────────────────────────────────────
 #[cfg(test)]
 mod tests {
@@ -773,6 +1271,7 @@ mod tests {
             chunk_size: 500,
             chunk_overlap: 50,
             top_k: 6,
+            theme: "dark".to_string(),
         }
     }
 
@@ -893,6 +1392,183 @@ mod tests {
         let has_full_sentence = frags.iter().any(|f| f.text.contains("Mr.") && f.text.contains("Smith"));
         assert!(has_full_sentence, "Split on 'Mr.' abbreviation — should not split here. Frags: {:?}",
             frags.iter().map(|f| f.text).collect::<Vec<_>>());
+    }
+
+    // ── BM25 ───────────────────────────────────────────────────────────────
+
+    #[test]
+    fn bm25_tokenize_basic() {
+        let tokens = super::bm25_tokenize("Hello, World! This is a test.");
+        assert!(tokens.contains(&"hello".to_string()));
+        assert!(tokens.contains(&"world".to_string()));
+        assert!(tokens.contains(&"test".to_string()));
+        // Single-char words filtered out
+        assert!(!tokens.contains(&"a".to_string()));
+    }
+
+    #[test]
+    fn bm25_exact_match_scores_higher() {
+        let texts = vec![
+            "Liam Neild 18 Eagle Row Atlanta GA 30339",
+            "The requester must provide form W-9 to the payee for tax purposes.",
+            "Section references are to the Internal Revenue Code unless otherwise noted.",
+        ];
+        let index = Bm25Index::build(&texts);
+        let query = super::bm25_tokenize("liam neild name");
+        let s0 = index.score(&query, texts[0], 0);
+        let s1 = index.score(&query, texts[1], 1);
+        let s2 = index.score(&query, texts[2], 2);
+        assert!(s0 > s1, "Chunk with 'Liam Neild' should score higher: {s0} vs {s1}");
+        assert!(s0 > s2, "Chunk with 'Liam Neild' should score higher: {s0} vs {s2}");
+    }
+
+    #[test]
+    fn hybrid_scores_blend() {
+        let cosine = vec![0.8, 0.3, 0.5];
+        let bm25 = vec![0.0, 2.0, 1.0];
+        let hybrid = super::hybrid_scores(&cosine, &bm25, 0.5);
+        // chunk 0: 0.5*0.8 + 0.5*(0/2) = 0.4
+        // chunk 1: 0.5*0.3 + 0.5*(2/2) = 0.65
+        // chunk 2: 0.5*0.5 + 0.5*(1/2) = 0.5
+        assert!((hybrid[0] - 0.4).abs() < 0.01);
+        assert!((hybrid[1] - 0.65).abs() < 0.01);
+        assert!((hybrid[2] - 0.5).abs() < 0.01);
+        // BM25 match now boosts chunk 1 above chunk 0
+        assert!(hybrid[1] > hybrid[0]);
+    }
+
+    #[test]
+    fn rrf_fuses_rankings_correctly() {
+        // 5 items so rank spread is big enough for RRF to differentiate.
+        // cosine ranks: 0 > 2 > 4 > 3 > 1
+        let cosine = vec![0.9, 0.1, 0.7, 0.2, 0.5];
+        // bm25 ranks: 1 > 2 > 3 > 4 > 0
+        let bm25   = vec![0.0, 5.0, 4.0, 3.0, 1.0];
+        let texts   = vec!["a", "b", "c", "d", "e"];
+
+        let fused = super::rrf_scores(&[cosine, bm25], &texts, 0.0);
+
+        // chunk2: rank 2 in cosine + rank 2 in bm25 → best combined
+        // chunk0: rank 1 in cosine + rank 5 in bm25
+        // chunk1: rank 5 in cosine + rank 1 in bm25
+        assert!(fused[2] > fused[0], "chunk2 should beat chunk0: {:.5} vs {:.5}", fused[2], fused[0]);
+        assert!(fused[2] > fused[1], "chunk2 should beat chunk1: {:.5} vs {:.5}", fused[2], fused[1]);
+        // chunk0 and chunk1 have symmetric ranks (1+5 vs 5+1) → should be equal
+        assert!((fused[0] - fused[1]).abs() < 0.001,
+            "chunk0 and chunk1 should tie (symmetric ranks): {:.5} vs {:.5}", fused[0], fused[1]);
+    }
+
+    #[test]
+    fn rrf_form_boost_applies() {
+        let cosine = vec![0.5, 0.5];
+        let bm25 = vec![1.0, 1.0];
+        let texts = vec!["FILLED FORM DATA: name=Liam", "Regular chunk text"];
+
+        let fused = super::rrf_scores(&[cosine, bm25], &texts, 0.15);
+        assert!(fused[0] > fused[1], "Form data chunk should get boosted");
+    }
+
+    // ── RetrievalBackend ───────────────────────────────────────────────────
+
+    #[test]
+    fn backend_retrieve_returns_top_k() {
+        let texts = vec![
+            "The contract states the salary is $50,000 per year.",
+            "Liam Neild 18 Eagle Row Atlanta GA 30339",
+            "Section references are to the Internal Revenue Code.",
+        ];
+        let v0 = vec![1.0, 0.0, 0.0];
+        let v1 = vec![0.0, 1.0, 0.0];
+        let v2 = vec![0.5, 0.5, 0.0];
+        let query_vec = vec![0.9, 0.1, 0.0]; // close to v0
+
+        let corpus = RetrievalCorpus {
+            texts: texts.iter().map(|s| *s).collect(),
+            vectors: vec![v0.as_slice(), v1.as_slice(), v2.as_slice()],
+        };
+        let config = RetrievalConfig {
+            top_k: 2,
+            candidate_pool_k: 0, // no MMR
+            score_threshold: 0.0,
+            expand_keywords: false,
+            ..Default::default()
+        };
+        let backend = HybridBm25Cosine::default();
+        let results = backend.retrieve("salary contract", &query_vec, &corpus, &config);
+
+        assert_eq!(results.len(), 2);
+        // First result should be chunk 0 (high cosine + BM25 match on "salary" and "contract")
+        assert_eq!(results[0].chunk_index, 0);
+    }
+
+    #[test]
+    fn backend_retrieve_with_mmr_reduces_duplicates() {
+        // MMR should return fewer results than top_k when corpus is tiny,
+        // and should prefer diverse chunks over near-duplicates when possible.
+        let texts = vec![
+            "The salary is fifty thousand dollars per year.",
+            "The salary is 50000 dollars annually.",
+            "The office is located at 123 Main Street.",
+        ];
+        let v0 = vec![1.0, 0.0, 0.0];
+        let v1 = vec![0.99, 0.01, 0.0]; // near-duplicate of v0
+        let v2 = vec![0.0, 1.0, 0.0];   // diverse
+        let query_vec = vec![0.95, 0.05, 0.0];
+
+        let corpus = RetrievalCorpus {
+            texts: texts.iter().map(|s| *s).collect(),
+            vectors: vec![v0.as_slice(), v1.as_slice(), v2.as_slice()],
+        };
+        // With MMR
+        let config_mmr = RetrievalConfig {
+            top_k: 3,
+            candidate_pool_k: 3,
+            score_threshold: 0.0,
+            mmr_lambda: 0.7,
+            expand_keywords: false,
+        };
+        // Without MMR
+        let config_raw = RetrievalConfig {
+            top_k: 3,
+            candidate_pool_k: 0,
+            score_threshold: 0.0,
+            mmr_lambda: 0.7,
+            expand_keywords: false,
+        };
+        let backend = HybridBm25Cosine::default();
+        let with_mmr = backend.retrieve("salary", &query_vec, &corpus, &config_mmr);
+        let without_mmr = backend.retrieve("salary", &query_vec, &corpus, &config_raw);
+
+        // Both should return all 3 chunks (corpus is tiny)
+        assert_eq!(with_mmr.len(), 3);
+        assert_eq!(without_mmr.len(), 3);
+        // MMR should reorder: the diverse chunk (2) should rank higher than
+        // without MMR, where the near-duplicate (1) stays in its raw position
+        let mmr_rank_of_2 = with_mmr.iter().position(|r| r.chunk_index == 2).unwrap();
+        let raw_rank_of_2 = without_mmr.iter().position(|r| r.chunk_index == 2).unwrap();
+        assert!(mmr_rank_of_2 <= raw_rank_of_2,
+            "MMR should promote diverse chunk 2: mmr_rank={mmr_rank_of_2} raw_rank={raw_rank_of_2}");
+    }
+
+    #[test]
+    fn backend_name() {
+        assert_eq!(default_backend().name(), "hybrid-bm25-cosine");
+    }
+
+    #[test]
+    fn extract_query_keywords_filters_stopwords() {
+        let kw = extract_query_keywords("What is the person's name?", false);
+        assert!(!kw.contains("what"));
+        assert!(!kw.contains("the"));
+        assert!(kw.contains("person"));
+        assert!(kw.contains("name"));
+    }
+
+    #[test]
+    fn extract_query_keywords_expands() {
+        let kw = extract_query_keywords("salary contract", true);
+        assert!(kw.contains("salary"));
+        assert!(kw.contains("compensation"), "Should expand 'salary' to include 'compensation'");
     }
 
     // ── format_history ─────────────────────────────────────────────────────

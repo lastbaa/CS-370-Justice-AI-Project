@@ -44,14 +44,14 @@ function CopyButton({ text, className, style }: { text: string; className?: stri
       title="Copy"
       className={`flex items-center justify-center rounded transition-all ${className ?? ''}`}
       style={{
-        color: copied ? '#3fb950' : 'rgba(255,255,255,0.22)',
+        color: copied ? '#3fb950' : 'rgb(var(--ov) / 0.22)',
         ...style,
       }}
       onMouseEnter={(e) => {
-        if (!copied) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)'
+        if (!copied) (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.55)'
       }}
       onMouseLeave={(e) => {
-        if (!copied) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.22)'
+        if (!copied) (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.22)'
       }}
     >
       {copied ? (
@@ -89,8 +89,8 @@ function renderMarkdown(text: string): JSX.Element {
       const codeText = codeLines.join('\n')
       elements.push(
         <div key={i} style={{ position: 'relative', margin: '8px 0' }}>
-          <pre style={{ background: '#080808', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '12px 16px', overflowX: 'auto', margin: 0 }}>
-            <code style={{ fontFamily: "'SF Mono','Fira Mono',monospace", fontSize: '0.82em', color: 'rgba(255,255,255,0.82)', lineHeight: 1.65 }} data-lang={lang}>
+          <pre style={{ background: 'var(--bg)', border: '1px solid rgb(var(--ov) / 0.1)', borderRadius: 10, padding: '12px 16px', overflowX: 'auto', margin: 0 }}>
+            <code style={{ fontFamily: "'SF Mono','Fira Mono',monospace", fontSize: '0.82em', color: 'rgb(var(--ov) / 0.82)', lineHeight: 1.65 }} data-lang={lang}>
               {codeText}
             </code>
           </pre>
@@ -142,7 +142,7 @@ function renderMarkdown(text: string): JSX.Element {
     if (headingMatch) {
       const level = headingMatch[1].length
       const content = headingMatch[2]
-      const style: React.CSSProperties = { fontWeight: 600, color: '#fff', margin: '8px 0 3px', lineHeight: 1.3, fontSize: level === 1 ? '1.05em' : level === 2 ? '0.98em' : '0.93em' }
+      const style: React.CSSProperties = { fontWeight: 600, color: 'var(--text)', margin: '8px 0 3px', lineHeight: 1.3, fontSize: level === 1 ? '1.05em' : level === 2 ? '0.98em' : '0.93em' }
       elements.push(<p key={i} style={style}>{inlineMarkdown(content)}</p>)
       i++
       continue
@@ -177,12 +177,12 @@ function inlineMarkdown(text: string): (string | JSX.Element)[] {
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index))
     if (m[0].startsWith('**')) {
-      parts.push(<strong key={m.index} style={{ color: '#fff', fontWeight: 600 }}>{m[2]}</strong>)
+      parts.push(<strong key={m.index} style={{ color: 'var(--text)', fontWeight: 600 }}>{m[2]}</strong>)
     } else if (m[0].startsWith('*')) {
       parts.push(<em key={m.index}>{m[3]}</em>)
     } else {
       parts.push(
-        <code key={m.index} style={{ fontFamily: "'SF Mono','Fira Mono',monospace", fontSize: '0.85em', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '0.1em 0.35em' }}>
+        <code key={m.index} style={{ fontFamily: "'SF Mono','Fira Mono',monospace", fontSize: '0.85em', background: 'rgb(var(--ov) / 0.07)', border: '1px solid rgb(var(--ov) / 0.08)', borderRadius: 4, padding: '0.1em 0.35em' }}>
           {m[4]}
         </code>
       )
@@ -210,12 +210,12 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           <div
             className="relative rounded-2xl rounded-tr-sm px-4 py-3"
             style={{
-              background: '#161616',
-              border: '1px solid rgba(255,255,255,0.09)',
-              boxShadow: '0 1px 8px rgba(0,0,0,0.25)',
+              background: 'var(--surface-raised)',
+              border: '1px solid rgb(var(--ov) / 0.09)',
+              boxShadow: '0 1px 8px var(--shadow)',
             }}
           >
-            <p className="text-[13.5px] text-white leading-relaxed whitespace-pre-wrap">
+            <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--text)' }}>
               {message.content}
             </p>
             {hovered && (
@@ -224,7 +224,7 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
               </div>
             )}
           </div>
-          <p className="mt-1.5 text-right text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
+          <p className="mt-1.5 text-right text-[10px]" style={{ color: 'rgb(var(--ov) / 0.2)' }}>
             {formatTime(message.timestamp)}
           </p>
         </div>
@@ -260,18 +260,18 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           <div
             className="rounded-xl px-4 py-3.5"
             style={{
-              background: 'rgba(255,255,255,0.02)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              borderLeft: '2px solid rgba(255,255,255,0.15)',
+              background: 'rgb(var(--ov) / 0.02)',
+              border: '1px solid rgb(var(--ov) / 0.07)',
+              borderLeft: '2px solid rgb(var(--ov) / 0.15)',
             }}
           >
             <div className="flex items-start gap-2.5">
               <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="shrink-0 mt-0.5">
-                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 4.5zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" fill="rgba(255,255,255,0.25)" />
+                <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 3.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3A.75.75 0 0 1 8 4.5zm0 6.5a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z" fill="rgb(var(--ov) / 0.25)" />
               </svg>
               <p
                 className="text-[13px] leading-relaxed whitespace-pre-wrap"
-                style={{ color: 'rgba(255,255,255,0.85)' }}
+                style={{ color: 'rgb(var(--ov) / 0.85)' }}
               >
                 {message.content}
               </p>
@@ -281,12 +281,12 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           <div
             className="rounded-2xl rounded-tl-sm px-4 py-4"
             style={{
-              background: '#0d0d0d',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: 'var(--bg-alt)',
+              border: '1px solid rgb(var(--ov) / 0.06)',
               borderLeft: '2px solid rgba(201,168,76,0.22)',
             }}
           >
-            <div className="text-[13.5px] text-white leading-[1.75]">
+            <div className="text-[13.5px] leading-[1.75]" style={{ color: 'var(--text)' }}>
               {message.content.trim()
                 ? <>
                     {renderMarkdown(message.content)}
@@ -304,13 +304,13 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
                       />
                     )}
                   </>
-                : <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>No response generated. Please try again.</span>
+                : <span style={{ color: 'rgb(var(--ov) / 0.2)', fontStyle: 'italic' }}>No response generated. Please try again.</span>
               }
             </div>
           </div>
         )}
 
-        <p className="mt-2 text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
+        <p className="mt-2 text-[10px]" style={{ color: 'rgb(var(--ov) / 0.22)' }}>
           {formatTime(message.timestamp)}
         </p>
 
@@ -318,7 +318,7 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           <div className="mt-3">
             <p
               className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
-              style={{ color: 'rgba(255,255,255,0.18)' }}
+              style={{ color: 'rgb(var(--ov) / 0.18)' }}
             >
               Sources
             </p>

@@ -1,0 +1,660 @@
+[
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the person's name on the W-9?",
+    "expected": ["Liam Neild"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the address on the form?",
+    "expected": ["Eagle Row"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the SSN or taxpayer identification number?",
+    "expected": ["123", "6789"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What business name is listed on the W-9?",
+    "expected": ["Forever Moore Entertainment"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What city and state is the filer located in?",
+    "expected": ["Atlanta", "GA"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the effective date of this agreement?",
+    "expected": ["March 15"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "How much is the monthly rent?",
+    "expected": ["1,850"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "Who is the tenant?",
+    "expected": ["Robert Chen"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "Who is the landlord?",
+    "expected": ["Jane Thompson"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the security deposit amount?",
+    "expected": ["3,700"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the property address?",
+    "expected": ["742 Evergreen Terrace"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the late fee?",
+    "expected": ["75"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What state's law governs this lease?",
+    "expected": ["Oregon"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "Are pets allowed and what are the restrictions?",
+    "expected": ["pet", "40"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "Which utilities does the tenant pay?",
+    "expected": ["electricity"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the client's name?",
+    "expected": ["Maria Garcia"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the total cost?",
+    "expected": ["8,500"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "When is the event?",
+    "expected": ["June 14"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "How many guests are expected?",
+    "expected": ["200"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What type of event is being catered?",
+    "expected": ["Wedding"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the venue name?",
+    "expected": ["Grand Ballroom"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the client's email address?",
+    "expected": ["maria.garcia"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the cancellation policy?",
+    "expected": ["14 days"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "Who is the client for the bartending service?",
+    "expected": ["Liam Neild"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "How much does the bartending service cost?",
+    "expected": ["275"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "What date is the event?",
+    "expected": ["2.28.26"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "What time is the event?",
+    "expected": ["3-7"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "How many guests are expected at the party?",
+    "expected": ["101-125"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "Who owns the bartending company?",
+    "expected": ["Sharina Moore"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "What is the additional hourly rate?",
+    "expected": ["50"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "Where is the event located?",
+    "expected": ["Eagle Row"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/ga_statement_of_claim.pdf",
+    "query": "How many days does the defendant have to respond?",
+    "expected": ["30"],
+    "top_k": 6
+  },
+  {
+    "pdf": "tests/fixtures/ga_statement_of_claim.pdf",
+    "query": "Can the defendant file a counterclaim?",
+    "expected": ["counterclaim"],
+    "top_k": 6
+  },
+
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the filer's date of birth?",
+    "expected": [],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "easy",
+    "tags": ["negative", "w9", "missing-field"],
+    "notes": "W-9 does not collect date of birth. Model should not hallucinate one."
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the filer's annual income?",
+    "expected": [],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "medium",
+    "tags": ["negative", "w9", "missing-field"],
+    "notes": "W-9 is a tax ID form, not an income document. The word 'tax' may tempt the model to fabricate income info."
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the tenant's Social Security Number?",
+    "expected": [],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "medium",
+    "tags": ["negative", "lease", "missing-field"],
+    "notes": "Lease does not contain SSN. Presence of personal info (name, address) may tempt hallucination."
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "What type of alcohol will be served?",
+    "expected": [],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "hard",
+    "tags": ["negative", "bartending", "missing-field", "domain-adjacent"],
+    "notes": "Bartending contract likely does not specify drink types. Strong domain association between bartending and alcohol may cause hallucination."
+  },
+  {
+    "pdf": "tests/fixtures/ga_statement_of_claim.pdf",
+    "query": "What is the plaintiff's name?",
+    "expected": [],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "medium",
+    "tags": ["negative", "court-form", "blank-form"],
+    "notes": "The GA form is blank. Model should recognize that no plaintiff is named rather than inventing one."
+  },
+  {
+    "pdf": "tests/fixtures/ga_statement_of_claim.pdf",
+    "query": "What is the dollar amount of the claim?",
+    "expected": [],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "medium",
+    "tags": ["negative", "court-form", "blank-form"],
+    "notes": "Blank form has no claim amount. The form structure may mention monetary fields but they are unfilled."
+  },
+
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the monthly rent for the venue?",
+    "expected": [],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "near-miss", "wrong-domain"],
+    "notes": "Catering agreement has a cost ($8,500) but no 'rent'. The word 'venue' appears (Grand Ballroom) which may confuse retrieval into associating a rental concept."
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "What is the security deposit for the bartending service?",
+    "expected": [],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "near-miss", "wrong-field"],
+    "notes": "Bartending contract has a price ($275) but likely no security deposit. Existence of a dollar amount may tempt the model to reuse it."
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the filer's phone number?",
+    "expected": [],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "medium",
+    "tags": ["adversarial", "near-miss", "missing-field"],
+    "notes": "W-9 has an EIN (123-45-6789) which looks like a phone number. Model must not confuse EIN with phone."
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "How much is the pet rent per month?",
+    "expected": [],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "near-miss", "conflation"],
+    "notes": "Lease has a pet deposit ($500) and monthly rent ($1,850) but likely no separate pet rent. Model may conflate pet deposit with a recurring pet rent."
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "What is the caterer's insurance policy number?",
+    "expected": [],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "medium",
+    "tags": ["adversarial", "near-miss", "domain-adjacent"],
+    "notes": "Catering agreements sometimes reference insurance but this one likely does not include a policy number."
+  },
+
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "Is the security deposit more than two months' rent?",
+    "expected": ["3,700", "1,850"],
+    "top_k": 6,
+    "type": "multi-fact",
+    "difficulty": "hard",
+    "tags": ["multi-fact", "reasoning", "lease"],
+    "notes": "Requires retrieving both deposit ($3,700) and rent ($1,850), then comparing. Two months rent = $3,700, so deposit equals exactly two months, not more."
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the total cost for the first month including rent and all deposits?",
+    "expected": ["1,850", "3,700"],
+    "top_k": 6,
+    "type": "multi-fact",
+    "difficulty": "hard",
+    "tags": ["multi-fact", "arithmetic", "lease"],
+    "notes": "Requires summing rent ($1,850) + security deposit ($3,700) + possibly pet deposit ($500). Facts may be in different chunks."
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "How many months is the lease term?",
+    "expected": ["12"],
+    "top_k": 6,
+    "type": "multi-fact",
+    "difficulty": "medium",
+    "tags": ["multi-fact", "date-math", "lease"],
+    "notes": "April 2025 to March 2026 = 12 months. Requires parsing both start and end dates and computing duration."
+  },
+  {
+    "pdf": "tests/fixtures/bartending_contract.pdf",
+    "query": "If the event runs one hour over, what is the total cost?",
+    "expected": ["275", "50"],
+    "top_k": 6,
+    "type": "multi-fact",
+    "difficulty": "hard",
+    "tags": ["multi-fact", "arithmetic", "bartending"],
+    "notes": "Base price $275 + $50/hr overtime = $325. Requires combining base rate and hourly overage from potentially different chunks."
+  },
+
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the lessor's full name?",
+    "expected": ["Jane Thompson"],
+    "top_k": 6,
+    "type": "cross-reference",
+    "difficulty": "medium",
+    "tags": ["cross-reference", "synonym", "lease"],
+    "notes": "Document says 'landlord' but query uses 'lessor'. Tests whether retrieval and generation handle legal synonyms."
+  },
+  {
+    "pdf": "tests/fixtures/plain_contract.pdf",
+    "query": "What is the lessee's address?",
+    "expected": ["742 Evergreen Terrace"],
+    "top_k": 6,
+    "type": "cross-reference",
+    "difficulty": "medium",
+    "tags": ["cross-reference", "synonym", "lease"],
+    "notes": "Document says 'tenant' but query uses 'lessee'. The property address is the tenant's address under the lease."
+  },
+  {
+    "pdf": "tests/fixtures/irs_w9_filled.pdf",
+    "query": "What is the taxpayer's employer identification number?",
+    "expected": ["123", "6789"],
+    "top_k": 6,
+    "type": "cross-reference",
+    "difficulty": "medium",
+    "tags": ["cross-reference", "synonym", "w9"],
+    "notes": "Uses full term 'employer identification number' instead of abbreviation 'EIN'. Tests synonym handling."
+  },
+  {
+    "pdf": "tests/fixtures/filled_form_simple.pdf",
+    "query": "Who is the contracting party for the catering service?",
+    "expected": ["Maria Garcia"],
+    "top_k": 6,
+    "type": "cross-reference",
+    "difficulty": "hard",
+    "tags": ["cross-reference", "synonym", "catering"],
+    "notes": "Document says 'client' but query uses 'contracting party'. Tests legal terminology mapping."
+  },
+
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "What is the monthly rent?",
+    "expected": ["2,100"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "easy",
+    "tags": ["direct-lookup", "lease", "rent"],
+    "notes": "Simple dollar amount extraction."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "When does the lease end?",
+    "expected": ["December 31", "2025"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "easy",
+    "tags": ["direct-lookup", "lease", "date"],
+    "notes": "Straightforward date lookup. Lease end is Dec 31 2025."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "Who is the tenant on this lease?",
+    "expected": ["James Robert Morrison Jr."],
+    "must_not_contain": ["100 Oak"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "medium",
+    "tags": ["disambiguation", "lease", "confusable-names"],
+    "notes": "Landlord and tenant share the name 'James Robert Morrison'. Must return the Jr. variant. must_not_contain guards against confusing with landlord's address."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "When is the first rent payment due?",
+    "expected": ["February 15", "2025"],
+    "must_not_contain": ["February 1"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "medium",
+    "tags": ["disambiguation", "lease", "date-selection"],
+    "notes": "Multiple February dates exist: move-in Feb 1, first payment Feb 15. Model must select the payment date, not the move-in date."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "What is James Morrison's address?",
+    "expected": ["100 Oak", "200 Pine"],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "ambiguous-reference", "confusable-names", "lease"],
+    "notes": "Deliberately ambiguous — both landlord (100 Oak St) and tenant (200 Pine Ave) are named James Morrison. Model should acknowledge the ambiguity or list both addresses."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "Is the landlord James Morrison Jr.?",
+    "expected": [],
+    "must_not_contain": ["yes", "landlord is James Robert Morrison Jr"],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "confusable-names", "lease", "role-swap"],
+    "notes": "The landlord is James Robert Morrison (no Jr.). Jr. is the tenant. Model must say no and correctly identify roles."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "Does the lease allow pets?",
+    "expected": [],
+    "must_not_contain": ["allowed", "permitted", "may have", "can have"],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "medium",
+    "tags": ["negative", "lease", "no-pets"],
+    "notes": "Lease explicitly prohibits pets. must_not_contain catches hallucinated permission. Model should state pets are not allowed."
+  },
+  {
+    "pdf": "tests/fixtures/confusable_lease.pdf",
+    "query": "What is the lessor's mailing address?",
+    "expected": ["100 Oak"],
+    "must_not_contain": ["200 Pine"],
+    "top_k": 6,
+    "type": "cross-reference",
+    "difficulty": "medium",
+    "tags": ["cross-reference", "synonym", "lease", "address"],
+    "notes": "Uses 'lessor' instead of 'landlord'. Must map lessor to James Robert Morrison at 100 Oak St, not the tenant at 200 Pine Ave."
+  },
+
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "Who are the parties to this NDA?",
+    "expected": ["Acme Corp", "Beta Industries"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "easy",
+    "tags": ["direct-lookup", "nda", "parties"],
+    "notes": "Simple party identification. Both names should appear."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "How long is the NDA term?",
+    "expected": ["3"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "easy",
+    "tags": ["direct-lookup", "nda", "term"],
+    "notes": "Simple duration lookup. 3-year term."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "What is the liability cap amount?",
+    "expected": ["500,000"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "medium",
+    "tags": ["direct-lookup", "nda", "liability"],
+    "notes": "$500,000 liability cap in Section 8.3. Medium because the NDA has many repetitive sections mentioning 'Confidential Information' that could dilute retrieval."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "Which state's law governs this agreement?",
+    "expected": ["Delaware"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "medium",
+    "tags": ["direct-lookup", "nda", "governing-law"],
+    "notes": "Delaware law governs. Governing law clause may be buried among dense repetitive sections."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "What is the arbitration process under this NDA?",
+    "expected": [],
+    "must_not_contain": ["arbitration shall", "arbitrator", "binding arbitration", "AAA", "JAMS"],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "missing-clause", "nda"],
+    "notes": "There is no arbitration clause. The question presupposes one exists. Model must not fabricate an arbitration process."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "What are the penalties for breach of this NDA?",
+    "expected": ["500,000"],
+    "must_not_contain": ["criminal", "imprisonment", "felony"],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "near-miss", "nda", "conflation"],
+    "notes": "The NDA has a $500K liability cap but no enumerated penalties. Model should reference the cap and actual remedies section, not invent criminal or specific penalty amounts."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "What is the monetary penalty for unauthorized disclosure of confidential information?",
+    "expected": [],
+    "must_not_contain": ["penalty of", "fine of", "damages of"],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "hard",
+    "tags": ["negative", "nda", "missing-penalty"],
+    "notes": "NDA has a liability cap ($500K) but no specific penalty amount for unauthorized disclosure. The repetitive 'Confidential Information' mentions may tempt the model to fabricate a specific penalty."
+  },
+  {
+    "pdf": "tests/fixtures/dense_nda.pdf",
+    "query": "Can Acme Corp seek both damages and injunctive relief under this agreement?",
+    "expected": ["injunctive", "damages"],
+    "top_k": 6,
+    "type": "multi-fact",
+    "difficulty": "hard",
+    "tags": ["multi-fact", "nda", "remedies"],
+    "notes": "Requires locating both the remedies/injunctive relief section and the liability/damages provisions, then synthesizing whether both are available. Tests cross-section comprehension."
+  },
+
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "What is the total settlement amount?",
+    "expected": ["31,650"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "easy",
+    "tags": ["direct-lookup", "settlement", "total"],
+    "notes": "Direct total dollar amount lookup."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "Who is the plaintiff?",
+    "expected": ["David Johnson"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "easy",
+    "tags": ["direct-lookup", "settlement", "plaintiff"],
+    "notes": "Simple party identification."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "What is the attorney fee percentage?",
+    "expected": ["33.3"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "medium",
+    "tags": ["direct-lookup", "settlement", "fee"],
+    "notes": "Attorney takes 33.3% = $10,539.45."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "What is the payment schedule?",
+    "expected": ["30 days", "90 days", "50%"],
+    "top_k": 6,
+    "type": "retrieval",
+    "difficulty": "medium",
+    "tags": ["direct-lookup", "settlement", "payment-schedule"],
+    "notes": "50% in 30 days, 50% in 90 days. Model should capture both installments."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "What is the medical insurance payout?",
+    "expected": [],
+    "must_not_contain": ["15,700", "insurance paid", "insurance payout"],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "missing-field", "settlement"],
+    "notes": "Document lists medical expenses ($15,700) but not an insurance payout. Model may conflate medical damages with insurance. Must not restate $15,700 as an insurance figure."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "How much was awarded for lost wages?",
+    "expected": ["8,750"],
+    "must_not_contain": ["15,700", "5,000", "2,200", "31,650"],
+    "top_k": 6,
+    "type": "adversarial",
+    "difficulty": "hard",
+    "tags": ["adversarial", "number-confusion", "settlement"],
+    "notes": "Multiple similar dollar amounts in the breakdown. Model must extract exactly $8,750 for lost wages without confusing it with medical ($15,700), pain/suffering ($5,000), property ($2,200), or total ($31,650)."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "Who is the judge in this case?",
+    "expected": [],
+    "must_not_contain": ["Judge", "Honorable", "presiding"],
+    "top_k": 6,
+    "type": "negative",
+    "difficulty": "medium",
+    "tags": ["negative", "settlement", "missing-field"],
+    "notes": "No judge is mentioned in the settlement breakdown. The legal context may tempt the model to fabricate a judge's name."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "What is the net amount the plaintiff receives after attorney fees?",
+    "expected": ["21,110.55"],
+    "must_not_contain": ["10,539.45", "31,650"],
+    "top_k": 6,
+    "type": "multi-fact",
+    "difficulty": "hard",
+    "tags": ["multi-fact", "arithmetic", "settlement"],
+    "notes": "Net = $31,650 - $10,539.45 = $21,110.55. Requires retrieving total and fee, then computing the difference. must_not_contain guards against returning the fee or gross instead."
+  },
+  {
+    "pdf": "tests/fixtures/settlement_breakdown.pdf",
+    "query": "What is the petitioner's legal counsel?",
+    "expected": ["Patricia Wells"],
+    "must_not_contain": ["Robert Kim"],
+    "top_k": 6,
+    "type": "cross-reference",
+    "difficulty": "medium",
+    "tags": ["cross-reference", "synonym", "settlement"],
+    "notes": "Uses 'petitioner' instead of 'plaintiff' and 'legal counsel' instead of 'attorney'. Must map to Patricia Wells, not defense counsel Robert Kim."
+  }
+]

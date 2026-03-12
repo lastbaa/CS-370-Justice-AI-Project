@@ -79,16 +79,20 @@ export interface OllamaStatus {
 
 // ─── Settings Types ────────────────────────────────────────────────────────────
 
+export type Theme = 'dark' | 'light';
+
 export interface AppSettings {
   chunkSize: number;
   chunkOverlap: number;
   topK: number;
+  theme: Theme;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   chunkSize: 1000,
   chunkOverlap: 150,
   topK: 6,
+  theme: 'dark',
 };
 
 // ─── Model Status Types ────────────────────────────────────────────────────────

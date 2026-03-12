@@ -28,9 +28,9 @@ function ToastItem({
     <div
       className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl"
       style={{
-        background: '#141414',
+        background: 'var(--surface-raised)',
         border: `1px solid ${s.border}`,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+        boxShadow: '0 8px 32px var(--shadow-heavy)',
         animation: 'fadeUp 0.22s ease both',
         minWidth: 220,
         maxWidth: 340,
@@ -57,15 +57,15 @@ function ToastItem({
         )}
       </div>
 
-      <p className="flex-1 text-[12px] leading-snug" style={{ color: 'rgba(255,255,255,0.78)' }}>
+      <p className="flex-1 text-[12px] leading-snug" style={{ color: 'rgb(var(--ov) / 0.78)' }}>
         {toast.message}
       </p>
 
       <button
         onClick={() => onDismiss(toast.id)}
-        style={{ color: 'rgba(255,255,255,0.2)' }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.5)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.2)' }}
+        style={{ color: 'rgb(var(--ov) / 0.2)' }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.5)' }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.2)' }}
       >
         <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
           <path d="M1.22 1.22a.75.75 0 0 1 1.06 0L6 4.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L7.06 6l3.72 3.72a.75.75 0 1 1-1.06 1.06L6 7.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06L4.94 6 1.22 2.28a.75.75 0 0 1 0-1.06z" />

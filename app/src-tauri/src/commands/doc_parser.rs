@@ -13,13 +13,12 @@ pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
     if let Ok(raw) = pdf_extract::extract_text(path) {
         let mut pages = pdf_extract_pages(&raw);
         if !pages.is_empty() {
-            // If pdf-extract collapsed multiple pages into one (no form-feeds),
-            // try lopdf per-page extraction to get proper page boundaries.
             if let Ok(doc) = lopdf::Document::load(path) {
+                // If pdf-extract collapsed multiple pages into one (no form-feeds),
+                // try lopdf per-page extraction to get proper page boundaries.
                 let lopdf_page_count = doc.get_pages().len();
                 if pages.len() == 1 && lopdf_page_count > 1 {
                     let lopdf_pages = extract_lopdf_pages(&doc);
-                    // Only use lopdf pages if they actually have text content
                     let has_content = lopdf_pages.iter().any(|p| !p.text.trim().is_empty());
                     if lopdf_pages.len() > 1 && has_content {
                         pages = lopdf_pages;
@@ -29,8 +28,14 @@ pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
                 // Try to improve form-field extraction by re-interleaving with coordinates
                 let improved = reinterleave_form_fields(&doc, &pages);
                 if !improved.is_empty() {
-                    return Ok(improved);
+                    pages = improved;
                 }
+
+                // Append AcroForm field values that aren't already in the text.
+                // AcroForm fields (widget annotations with /V values) are invisible
+                // to pdf-extract and lopdf::extract_text — they live in annotation
+                // dictionaries, not the page content stream.
+                append_acroform_values(&doc, &mut pages);
             }
             return Ok(pages);
         }
@@ -38,7 +43,9 @@ pub fn parse_pdf(path: &str) -> Result<Vec<DocumentPage>, String> {
 
     // --- Attempt 2: plain lopdf ---
     let doc = lopdf::Document::load(path).map_err(|e| format!("PDF load error: {e}"))?;
-    Ok(extract_lopdf_pages(&doc))
+    let mut pages = extract_lopdf_pages(&doc);
+    append_acroform_values(&doc, &mut pages);
+    Ok(pages)
 }
 
 /// Extract text per-page using lopdf.
@@ -59,6 +66,231 @@ fn extract_lopdf_pages(doc: &lopdf::Document) -> Vec<DocumentPage> {
     pages
 }
 
+/// Read AcroForm widget annotation values and append them to page text.
+///
+/// AcroForm fields (the kind created by Adobe Acrobat, IRS forms, etc.) store
+/// filled values in annotation dictionaries under the `/V` key. Neither
+/// `pdf-extract` nor `lopdf::extract_text` reads these — they only see the
+/// page content stream. This function reads `/V` values and appends any that
+/// aren't already present in the page text.
+fn append_acroform_values(doc: &lopdf::Document, pages: &mut [DocumentPage]) {
+    let page_map = doc.get_pages();
+    let mut page_nums: Vec<u32> = page_map.keys().cloned().collect();
+    page_nums.sort();
+
+    // Also try the global AcroForm /Fields array as a fallback.
+    // XFA-based PDFs (like IRS forms) may store field annotations in the
+    // document catalog's AcroForm rather than in individual page /Annots.
+    let global_fields = extract_global_acroform_fields(doc);
+    if !global_fields.is_empty() && !pages.is_empty() {
+        prepend_form_summary(&global_fields, pages);
+        return;
+    }
+
+    for (page_idx, &page_num) in page_nums.iter().enumerate() {
+        let page_id = match page_map.get(&page_num) {
+            Some(id) => *id,
+            None => continue,
+        };
+
+        // Get the page dictionary
+        let page_dict = match doc.get_dictionary(page_id) {
+            Ok(d) => d,
+            Err(_) => continue,
+        };
+
+        // Get /Annots array
+        let annots = match page_dict.get(b"Annots") {
+            Ok(obj) => {
+                match doc.dereference(obj) {
+                    Ok((_, lopdf::Object::Array(arr))) => arr.clone(),
+                    _ => match obj {
+                        lopdf::Object::Array(arr) => arr.clone(),
+                        _ => continue,
+                    },
+                }
+            }
+            Err(_) => continue,
+        };
+
+        // Collect field values with their y-position for sorting
+        let mut field_entries: Vec<(String, String, f32)> = Vec::new(); // (label, value, y)
+
+        for annot_ref in &annots {
+            let annot_id = match annot_ref {
+                lopdf::Object::Reference(id) => id,
+                _ => continue,
+            };
+            let annot_dict = match doc.get_dictionary(*annot_id) {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+
+            // Only process Widget annotations with text fields (FT = Tx)
+            let is_widget = annot_dict
+                .get(b"Subtype")
+                .ok()
+                .and_then(|o| o.as_name().ok())
+                .map_or(false, |n| n == b"Widget");
+            if !is_widget {
+                continue;
+            }
+
+            let is_text = annot_dict
+                .get(b"FT")
+                .ok()
+                .and_then(|o| o.as_name().ok())
+                .map_or(false, |n| n == b"Tx");
+            if !is_text {
+                continue;
+            }
+
+            // Get /V (value)
+            let value = match annot_dict.get(b"V") {
+                Ok(lopdf::Object::String(bytes, _)) => {
+                    String::from_utf8_lossy(bytes).trim().to_string()
+                }
+                _ => continue,
+            };
+            if value.is_empty() {
+                continue;
+            }
+
+            // Get /T (field name) for a readable label
+            let label = annot_dict
+                .get(b"T")
+                .ok()
+                .and_then(|o| match o {
+                    lopdf::Object::String(bytes, _) => {
+                        Some(String::from_utf8_lossy(bytes).to_string())
+                    }
+                    _ => None,
+                })
+                .unwrap_or_default();
+
+            // Get /Rect for y-position (for sorting top-to-bottom)
+            let y = annot_dict
+                .get(b"Rect")
+                .ok()
+                .and_then(|o| match o {
+                    lopdf::Object::Array(arr) if arr.len() >= 4 => {
+                        // Rect = [x0, y0, x1, y1] — use y1 (top of field)
+                        arr[3].as_float().ok().or_else(|| {
+                            arr[3].as_i64().ok().map(|i| i as f32)
+                        })
+                    }
+                    _ => None,
+                })
+                .unwrap_or(0.0);
+
+            field_entries.push((label, value, y));
+        }
+
+        if field_entries.is_empty() {
+            continue;
+        }
+
+        // Sort top-to-bottom (descending y = top of page first)
+        field_entries.sort_by(|a, b| {
+            b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        // Collect as (label, value) pairs for the summary
+        if page_idx >= pages.len() {
+            continue;
+        }
+        let fields: Vec<(String, String)> = field_entries
+            .into_iter()
+            .map(|(label, value, _)| (label, value))
+            .collect();
+        if !fields.is_empty() {
+            prepend_form_summary(&fields, &mut pages[page_idx..]);
+        }
+    }
+}
+
+/// Prepend a structured "FORM DATA" summary to the first page so that
+/// filled values get their own dense, fact-rich chunk. Without this,
+/// form values appended at the end of a huge boilerplate page get lost
+/// in embedding space and never surface during retrieval.
+/// Heuristic label for a form field value when the PDF field name is generic (f1_01, etc.).
+fn infer_field_label(value: &str) -> &'static str {
+    let v = value.trim();
+    // SSN pattern: 3-2-4 digits or just digits in that range
+    if v.len() <= 4 && v.chars().all(|c| c.is_ascii_digit()) {
+        // Could be part of SSN or a short numeric field
+        return "ID Number";
+    }
+    // Looks like a full SSN (xxx-xx-xxxx)
+    if v.len() == 11 && v.chars().filter(|c| *c == '-').count() == 2
+        && v.replace('-', "").chars().all(|c| c.is_ascii_digit()) {
+        return "Social Security Number";
+    }
+    // ZIP code
+    if (v.len() == 5 || v.len() == 10) && v.chars().next().map_or(false, |c| c.is_ascii_digit())
+        && v.replace('-', "").chars().all(|c| c.is_ascii_digit()) {
+        return "ZIP Code";
+    }
+    // State abbreviation (2 uppercase letters)
+    if v.len() == 2 && v.chars().all(|c| c.is_ascii_uppercase()) {
+        return "State";
+    }
+    // Contains comma + state pattern → city/state
+    if v.contains(',') && v.split(',').count() == 2 {
+        let parts: Vec<&str> = v.split(',').collect();
+        let after = parts[1].trim();
+        if after.len() >= 2 && after.len() <= 12 {
+            return "City, State, ZIP";
+        }
+    }
+    // Looks like a street address (starts with digits, has words)
+    if v.chars().next().map_or(false, |c| c.is_ascii_digit())
+        && v.contains(' ')
+        && v.len() > 5 {
+        return "Address";
+    }
+    // Multiple capitalized words → likely a name or business
+    let words: Vec<&str> = v.split_whitespace().collect();
+    if words.len() >= 2 && words.len() <= 5
+        && words.iter().all(|w| w.chars().next().map_or(false, |c| c.is_uppercase())) {
+        if words.len() <= 3 && words.iter().all(|w| w.len() <= 15) {
+            return "Name";
+        }
+        return "Business/Entity Name";
+    }
+    "Form Field"
+}
+
+fn prepend_form_summary(fields: &[(String, String)], pages: &mut [DocumentPage]) {
+    if fields.is_empty() || pages.is_empty() {
+        return;
+    }
+
+    let page_text = &pages[0].text;
+    let mut lines = Vec::new();
+
+    for (label, value) in fields {
+        if page_text.contains(value.as_str()) {
+            continue; // Already in the text
+        }
+        let clean_label = label
+            .replace("[0]", "")
+            .replace("[1]", "");
+        // For generic field names (f1_01, etc.), infer a descriptive label from the value
+        if clean_label.is_empty() || clean_label.starts_with("f1_") || clean_label.starts_with("f2_") {
+            let inferred = infer_field_label(value);
+            lines.push(format!("{inferred}: {value}"));
+        } else {
+            lines.push(format!("{clean_label}: {value}"));
+        }
+    }
+
+    if !lines.is_empty() {
+        let summary = format!("FILLED FORM DATA:\n{}\n\n", lines.join("\n"));
+        pages[0].text = format!("{}{}", summary, pages[0].text);
+    }
+}
+
 /// Re-interleave filled form values next to their template labels.
 ///
 /// PDFs with filled forms have two layers: template labels and filled values,
@@ -70,6 +302,116 @@ fn extract_lopdf_pages(doc: &lopdf::Document) -> Vec<DocumentPage> {
 /// 3. Extracts text from small XObjects (simple encoding, works with lopdf)
 /// 4. Matches each filled value to the nearest template label by y-coordinate
 /// 5. Inserts filled values next to their labels in the template text
+/// Extract field values from the document-level AcroForm /Fields array.
+///
+/// IRS forms and other XFA-based PDFs store field widgets in the document
+/// catalog's `/AcroForm` dictionary rather than (or in addition to) page-level
+/// `/Annots`. This function walks the AcroForm field tree recursively to find
+/// all text field values.
+fn extract_global_acroform_fields(doc: &lopdf::Document) -> Vec<(String, String)> {
+    let mut results = Vec::new();
+
+    // Get the catalog → AcroForm → Fields
+    let catalog = match doc.catalog() {
+        Ok(c) => c,
+        Err(_) => return results,
+    };
+
+    let acroform_obj = match catalog.get(b"AcroForm") {
+        Ok(obj) => obj,
+        Err(_) => return results,
+    };
+
+    let acroform = match doc.dereference(acroform_obj) {
+        Ok((_, lopdf::Object::Dictionary(d))) => d,
+        _ => match acroform_obj {
+            lopdf::Object::Dictionary(d) => d,
+            _ => return results,
+        },
+    };
+
+    let fields = match acroform.get(b"Fields") {
+        Ok(lopdf::Object::Array(arr)) => arr.clone(),
+        Ok(obj) => match doc.dereference(obj) {
+            Ok((_, lopdf::Object::Array(arr))) => arr.clone(),
+            _ => return results,
+        },
+        Err(_) => return results,
+    };
+
+    // Walk field tree
+    for field_ref in &fields {
+        collect_acroform_field(doc, field_ref, &mut results);
+    }
+
+    results
+}
+
+/// Recursively collect text field values from an AcroForm field node.
+fn collect_acroform_field(
+    doc: &lopdf::Document,
+    obj: &lopdf::Object,
+    results: &mut Vec<(String, String)>,
+) {
+    let dict = match obj {
+        lopdf::Object::Reference(id) => match doc.get_dictionary(*id) {
+            Ok(d) => d,
+            Err(_) => return,
+        },
+        lopdf::Object::Dictionary(d) => d,
+        _ => return,
+    };
+
+    // Check for /Kids (intermediate node in field tree)
+    if let Ok(lopdf::Object::Array(kids)) = dict.get(b"Kids") {
+        for kid in kids {
+            // Dereference the kid
+            match doc.dereference(kid) {
+                Ok((_, lopdf::Object::Dictionary(_))) => {
+                    collect_acroform_field(doc, kid, results);
+                }
+                _ => {
+                    collect_acroform_field(doc, kid, results);
+                }
+            }
+        }
+        return;
+    }
+
+    // Leaf node — check for /V value on text fields
+    let is_text = dict
+        .get(b"FT")
+        .ok()
+        .and_then(|o| o.as_name().ok())
+        .map_or(false, |n| n == b"Tx");
+    if !is_text {
+        return;
+    }
+
+    let value = match dict.get(b"V") {
+        Ok(lopdf::Object::String(bytes, _)) => {
+            String::from_utf8_lossy(bytes).trim().to_string()
+        }
+        _ => return,
+    };
+    if value.is_empty() {
+        return;
+    }
+
+    let label = dict
+        .get(b"T")
+        .ok()
+        .and_then(|o| match o {
+            lopdf::Object::String(bytes, _) => Some(decode_pdf_string(bytes)),
+            _ => None,
+        })
+        .unwrap_or_default()
+        .replace("[0]", "")
+        .replace("[1]", "");
+
+    results.push((label, value));
+}
+
 fn reinterleave_form_fields(
     doc: &lopdf::Document,
     original_pages: &[DocumentPage],
@@ -938,6 +1280,22 @@ fn is_printable_pdf_char(ch: char) -> bool {
         return false;
     }
     true
+}
+
+/// Decode a PDF string that may be UTF-16BE (with BOM) or plain Latin-1.
+fn decode_pdf_string(bytes: &[u8]) -> String {
+    // UTF-16BE strings start with BOM: FE FF
+    if bytes.len() >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF {
+        let chars: Vec<u16> = bytes[2..]
+            .chunks(2)
+            .filter_map(|c| {
+                if c.len() == 2 { Some(u16::from_be_bytes([c[0], c[1]])) } else { None }
+            })
+            .collect();
+        String::from_utf16_lossy(&chars)
+    } else {
+        String::from_utf8_lossy(bytes).to_string()
+    }
 }
 
 fn clean_pdf_text(text: &str) -> String {

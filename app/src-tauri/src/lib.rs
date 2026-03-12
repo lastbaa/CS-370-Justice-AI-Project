@@ -1,3 +1,4 @@
+pub mod assertions;
 pub mod commands;
 pub mod pipeline;
 pub mod state;

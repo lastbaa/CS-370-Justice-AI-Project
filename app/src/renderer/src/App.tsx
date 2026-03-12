@@ -555,8 +555,13 @@ export default function App(): JSX.Element {
     }
   }
 
+  // Apply theme to root so CSS variables cascade
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme)
+  }, [settings.theme])
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#080808]">
+    <div className="flex h-screen w-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
       <Sidebar
         sessions={sessions}
         currentSessionId={currentSessionId}

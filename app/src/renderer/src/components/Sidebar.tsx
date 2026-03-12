@@ -88,7 +88,7 @@ function SessionItem({
     return (
       <div
         className="relative flex items-center gap-2 rounded-lg px-3 py-1.5"
-        style={{ background: '#191919', border: '1px solid rgba(201,168,76,0.3)' }}
+        style={{ background: 'var(--surface-active)', border: '1px solid rgba(201,168,76,0.3)' }}
       >
         <div
           className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full"
@@ -101,8 +101,8 @@ function SessionItem({
           onBlur={commitEdit}
           onKeyDown={handleEditKeyDown}
           autoFocus
-          className="flex-1 bg-transparent text-[12px] leading-snug outline-none text-white placeholder-white/30"
-          style={{ minWidth: 0 }}
+          className="flex-1 bg-transparent text-[12px] leading-snug outline-none placeholder-white/30"
+          style={{ minWidth: 0, color: 'var(--text)' }}
           maxLength={60}
         />
       </div>
@@ -117,8 +117,8 @@ function SessionItem({
       onDoubleClick={startEdit}
       className="group relative flex items-center gap-2 rounded-lg px-3 py-2 cursor-pointer transition-all"
       style={{
-        background: isActive ? '#191919' : hovered ? '#111' : 'transparent',
-        color: isActive ? 'rgba(255,255,255,0.85)' : hovered ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.32)',
+        background: isActive ? 'var(--surface-active)' : hovered ? 'var(--surface-hover)' : 'transparent',
+        color: isActive ? 'rgb(var(--ov) / 0.85)' : hovered ? 'rgb(var(--ov) / 0.6)' : 'rgb(var(--ov) / 0.32)',
       }}
     >
       {isActive && (
@@ -137,9 +137,9 @@ function SessionItem({
             onClick={startEdit}
             title="Rename (or double-click)"
             className="flex h-4 w-4 items-center justify-center rounded transition-colors"
-            style={{ color: 'rgba(255,255,255,0.18)' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.55)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.18)' }}
+            style={{ color: 'rgb(var(--ov) / 0.18)' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.55)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.18)' }}
           >
             <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
               <path d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064l6.286-6.286zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354l-1.086-1.086z" />
@@ -150,9 +150,9 @@ function SessionItem({
             onClick={(e) => { e.stopPropagation(); onDelete() }}
             title="Delete"
             className="flex h-4 w-4 items-center justify-center rounded transition-colors"
-            style={{ color: 'rgba(255,255,255,0.18)' }}
+            style={{ color: 'rgb(var(--ov) / 0.18)' }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = '#f85149' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.18)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.18)' }}
           >
             <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
               <path d="M1.22 1.22a.75.75 0 0 1 1.06 0L6 4.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L7.06 6l3.72 3.72a.75.75 0 1 1-1.06 1.06L6 7.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06L4.94 6 1.22 2.28a.75.75 0 0 1 0-1.06z" />
@@ -196,8 +196,8 @@ export default function Sidebar({
     <aside
       className="flex h-screen shrink-0 flex-col"
       style={{
-        background: '#080808',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
+        background: 'var(--bg)',
+        borderRight: '1px solid rgb(var(--ov) / 0.05)',
         width: collapsed ? 52 : 240,
         minWidth: collapsed ? 52 : 240,
         transition: 'width 0.22s ease, min-width 0.22s ease',
@@ -212,7 +212,7 @@ export default function Sidebar({
         >
           <GavelIcon size={17} />
           {!collapsed && (
-            <span className="text-[14px] font-semibold tracking-[-0.015em] text-white">
+            <span className="text-[14px] font-semibold tracking-[-0.015em]" style={{ color: 'var(--text)' }}>
               Justice <span style={{ color: '#c9a84c' }}>AI</span>
             </span>
           )}
@@ -221,9 +221,9 @@ export default function Sidebar({
           onClick={() => setCollapsed((v) => !v)}
           className="no-drag flex h-6 w-6 items-center justify-center rounded transition-opacity"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          style={{ color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.6)' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.25)' }}
+          style={{ color: 'rgb(var(--ov) / 0.25)', flexShrink: 0 }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.6)' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.25)' }}
         >
           {collapsed ? (
             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -244,22 +244,22 @@ export default function Sidebar({
           title={collapsed ? 'New chat' : undefined}
           className="no-drag flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-[12px] font-medium transition-all"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            color: 'rgba(255,255,255,0.45)',
+            background: 'rgb(var(--ov) / 0.04)',
+            border: '1px solid rgb(var(--ov) / 0.07)',
+            color: 'rgb(var(--ov) / 0.45)',
             justifyContent: collapsed ? 'center' : undefined,
           }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLButtonElement
-            el.style.background = 'rgba(255,255,255,0.07)'
-            el.style.borderColor = 'rgba(255,255,255,0.1)'
-            el.style.color = 'rgba(255,255,255,0.75)'
+            el.style.background = 'rgb(var(--ov) / 0.07)'
+            el.style.borderColor = 'rgb(var(--ov) / 0.1)'
+            el.style.color = 'rgb(var(--ov) / 0.75)'
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget as HTMLButtonElement
-            el.style.background = 'rgba(255,255,255,0.04)'
-            el.style.borderColor = 'rgba(255,255,255,0.07)'
-            el.style.color = 'rgba(255,255,255,0.45)'
+            el.style.background = 'rgb(var(--ov) / 0.04)'
+            el.style.borderColor = 'rgb(var(--ov) / 0.07)'
+            el.style.color = 'rgb(var(--ov) / 0.45)'
           }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -270,13 +270,13 @@ export default function Sidebar({
       </div>
 
       {/* Divider */}
-      <div className="mx-3 mb-2 h-px" style={{ background: 'rgba(255,255,255,0.04)' }} />
+      <div className="mx-3 mb-2 h-px" style={{ background: 'rgb(var(--ov) / 0.04)' }} />
 
       {/* Sessions header + search */}
       {!collapsed && sessions.length > 0 && (
         <>
           <div className="flex items-center justify-between px-5 mb-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'rgba(255,255,255,0.18)' }}>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'rgb(var(--ov) / 0.18)' }}>
               Chats
             </span>
             <button
@@ -284,9 +284,9 @@ export default function Sidebar({
               title="Clear all conversations"
               className="flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-md transition-all"
               style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'rgba(255,255,255,0.25)',
+                background: 'rgb(var(--ov) / 0.04)',
+                border: '1px solid rgb(var(--ov) / 0.08)',
+                color: 'rgb(var(--ov) / 0.25)',
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLButtonElement
@@ -295,8 +295,8 @@ export default function Sidebar({
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLButtonElement
-                el.style.color = 'rgba(255,255,255,0.25)'
-                el.style.borderColor = 'rgba(255,255,255,0.08)'
+                el.style.color = 'rgb(var(--ov) / 0.25)'
+                el.style.borderColor = 'rgb(var(--ov) / 0.08)'
               }}
             >
               <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
@@ -310,19 +310,20 @@ export default function Sidebar({
           <div className="px-3 mb-1.5">
             <div
               className="flex items-center gap-2 rounded-lg px-2.5 py-1.5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+              style={{ background: 'rgb(var(--ov) / 0.03)', border: '1px solid rgb(var(--ov) / 0.06)' }}
             >
-              <svg width="10" height="10" viewBox="0 0 16 16" fill="rgba(255,255,255,0.25)" className="shrink-0">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="rgb(var(--ov) / 0.25)" className="shrink-0">
                 <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04zm-5.943-1.044a4.5 4.5 0 1 0 6.364-6.364 4.5 4.5 0 0 0-6.364 6.364z" />
               </svg>
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search chats…"
-                className="flex-1 bg-transparent text-[11px] text-white placeholder-white/20 outline-none"
+                className="flex-1 bg-transparent text-[11px] placeholder-white/20 outline-none"
+                style={{ color: 'var(--text)' }}
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} style={{ color: 'rgba(255,255,255,0.25)' }}>
+                <button onClick={() => setSearchQuery('')} style={{ color: 'rgb(var(--ov) / 0.25)' }}>
                   <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor">
                     <path d="M1.22 1.22a.75.75 0 0 1 1.06 0L6 4.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L7.06 6l3.72 3.72a.75.75 0 1 1-1.06 1.06L6 7.06l-3.72 3.72a.75.75 0 0 1-1.06-1.06L4.94 6 1.22 2.28a.75.75 0 0 1 0-1.06z" />
                   </svg>
@@ -344,13 +345,13 @@ export default function Sidebar({
                 title={session.name}
                 className="flex items-center justify-center w-full py-1.5 rounded-lg transition-all"
                 style={{
-                  background: session.id === currentSessionId ? 'rgba(255,255,255,0.06)' : 'transparent',
-                  color: session.id === currentSessionId ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)',
+                  background: session.id === currentSessionId ? 'rgb(var(--ov) / 0.06)' : 'transparent',
+                  color: session.id === currentSessionId ? 'rgb(var(--ov) / 0.85)' : 'rgb(var(--ov) / 0.35)',
                 }}
               >
                 <span
                   className="text-[11px] font-semibold flex items-center justify-center rounded-full"
-                  style={{ width: 26, height: 26, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }}
+                  style={{ width: 26, height: 26, background: 'rgb(var(--ov) / 0.06)', flexShrink: 0 }}
                 >
                   {session.name.charAt(0).toUpperCase()}
                 </span>
@@ -361,23 +362,23 @@ export default function Sidebar({
           <div className="flex flex-col items-center py-12 text-center px-4">
             <div
               className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}
+              style={{ background: 'rgb(var(--ov) / 0.03)', border: '1px solid rgb(var(--ov) / 0.05)' }}
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <path
                   d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l-2.573 2.573A1.458 1.458 0 0 1 4 13.543V12H2.75A1.75 1.75 0 0 1 1 10.25z"
-                  stroke="rgba(255,255,255,0.1)"
+                  stroke="rgb(var(--ov) / 0.1)"
                   strokeWidth="1.2"
                   fill="none"
                 />
               </svg>
             </div>
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.15)' }}>No chats yet</p>
-            <p className="mt-0.5 text-[10px]" style={{ color: 'rgba(255,255,255,0.09)' }}>Sessions auto-save</p>
+            <p className="text-[11px]" style={{ color: 'rgb(var(--ov) / 0.15)' }}>No chats yet</p>
+            <p className="mt-0.5 text-[10px]" style={{ color: 'rgb(var(--ov) / 0.09)' }}>Sessions auto-save</p>
           </div>
         ) : filteredSessions.length === 0 ? (
           <div className="flex flex-col items-center py-8 text-center px-4">
-            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.18)' }}>No results for "{searchQuery}"</p>
+            <p className="text-[11px]" style={{ color: 'rgb(var(--ov) / 0.18)' }}>No results for "{searchQuery}"</p>
           </div>
         ) : (
           <div className="flex flex-col gap-5 py-1">
@@ -385,7 +386,7 @@ export default function Sidebar({
               <div key={group.label}>
                 <p
                   className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-[0.1em]"
-                  style={{ color: 'rgba(255,255,255,0.18)' }}
+                  style={{ color: 'rgb(var(--ov) / 0.18)' }}
                 >
                   {group.label}
                 </p>
@@ -410,23 +411,23 @@ export default function Sidebar({
       {/* Bottom actions */}
       <div
         className="px-3 py-3 flex flex-col gap-1"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ borderTop: '1px solid rgb(var(--ov) / 0.04)' }}
       >
         <button
           onClick={onAddFiles}
           disabled={isLoading}
           title={collapsed ? 'Add Documents' : undefined}
           className="no-drag flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[12px] transition-all disabled:opacity-40"
-          style={{ color: 'rgba(255,255,255,0.35)', justifyContent: collapsed ? 'center' : undefined }}
+          style={{ color: 'rgb(var(--ov) / 0.35)', justifyContent: collapsed ? 'center' : undefined }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLButtonElement
-            el.style.background = 'rgba(255,255,255,0.04)'
-            el.style.color = 'rgba(255,255,255,0.65)'
+            el.style.background = 'rgb(var(--ov) / 0.04)'
+            el.style.color = 'rgb(var(--ov) / 0.65)'
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget as HTMLButtonElement
             el.style.background = 'transparent'
-            el.style.color = 'rgba(255,255,255,0.35)'
+            el.style.color = 'rgb(var(--ov) / 0.35)'
           }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="rgba(201,168,76,0.6)">
@@ -438,16 +439,16 @@ export default function Sidebar({
           onClick={onOpenSettings}
           title={collapsed ? 'Settings' : undefined}
           className="no-drag flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[12px] transition-all"
-          style={{ color: 'rgba(255,255,255,0.35)', justifyContent: collapsed ? 'center' : undefined }}
+          style={{ color: 'rgb(var(--ov) / 0.35)', justifyContent: collapsed ? 'center' : undefined }}
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLButtonElement
-            el.style.background = 'rgba(255,255,255,0.04)'
-            el.style.color = 'rgba(255,255,255,0.65)'
+            el.style.background = 'rgb(var(--ov) / 0.04)'
+            el.style.color = 'rgb(var(--ov) / 0.65)'
           }}
           onMouseLeave={(e) => {
             const el = e.currentTarget as HTMLButtonElement
             el.style.background = 'transparent'
-            el.style.color = 'rgba(255,255,255,0.35)'
+            el.style.color = 'rgb(var(--ov) / 0.35)'
           }}
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">

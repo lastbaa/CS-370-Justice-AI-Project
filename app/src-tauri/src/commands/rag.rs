@@ -1,4 +1,4 @@
-use crate::pipeline::{self, chunk_document, embed_text, expand_keywords, mmr_select, GGUF_MIN_SIZE, SAUL_GGUF_URL, SCORE_THRESHOLD};
+use crate::pipeline::{self, chunk_document, embed_text, RetrievalBackend, GGUF_MIN_SIZE, SAUL_GGUF_URL, SCORE_THRESHOLD};
 use crate::state::{
     AppSettings, ChatSession, ChunkMetadata, Citation, EmbeddedChunkEntry, FileInfo,
     ModelStatus, QueryResult, RagState,
@@ -399,28 +399,6 @@ pub async fn query(
     window.emit("query-status", serde_json::json!({"phase": "embedding"})).ok();
     let query_vec = embed_text(&question, true, &model_dir).await?;
 
-    // Build a set of meaningful query keywords for hybrid re-ranking.
-    // Hybrid score = 0.80 * cosine_sim + 0.20 * keyword_overlap.
-    // BGE-small-en-v1.5 is a retrieval model so cosine scores are reliable; keyword is a light fallback.
-    let stop_words: std::collections::HashSet<&str> = [
-        "a","an","the","is","are","was","were","be","been","being","have","has","had",
-        "do","does","did","will","would","could","should","may","might","shall","can",
-        "i","me","my","we","our","you","your","he","she","it","they","what","which",
-        "who","this","that","these","those","of","in","on","at","by","for","with",
-        "about","as","into","to","from","and","but","or","not","any","all","some",
-        "how","when","where","why","there","find","show","tell","explain","give",
-        "please","provide","describe",
-    ].iter().cloned().collect();
-
-    let base_keywords: std::collections::HashSet<String> = question
-        .to_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|w| w.len() >= 3 && !stop_words.contains(*w))
-        .map(|w| w.to_string())
-        .collect();
-    // Expand with synonyms so "salary" also matches "compensation", etc.
-    let query_keywords = expand_keywords(&base_keywords);
-
     let candidate_k = (settings.top_k * 6).min(60);
     let results = {
         let s = state.lock().await;
@@ -436,52 +414,29 @@ pub async fn query(
             });
         }
 
-        // Include vectors so MMR can compute inter-chunk similarity.
-        let mut scored: Vec<(f32, ChunkMetadata, Vec<f32>)> = s
-            .embedded_chunks
-            .iter()
-            .map(|entry| {
-                let cosine = RagState::cosine_similarity(&query_vec, &entry.vector);
-
-                // Keyword overlap bonus: fraction of query keywords found in chunk text.
-                let text_lower = entry.meta.text.to_lowercase();
-                let kw_hits = query_keywords
-                    .iter()
-                    .filter(|kw| text_lower.contains(kw.as_str()))
-                    .count();
-                let kw_score = if query_keywords.is_empty() {
-                    0.0f32
-                } else {
-                    kw_hits as f32 / query_keywords.len() as f32
-                };
-
-                let hybrid = 0.80 * cosine + 0.20 * kw_score;
-                (hybrid, entry.meta.clone(), entry.vector.clone())
-            })
-            .collect();
-
-        scored.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
-
-        // Keep everything above threshold; if nothing qualifies, use bare top-k so
-        // the LLM always has some context (it will say "not found" if truly irrelevant).
-        let above_threshold: Vec<_> = scored
-            .iter()
-            .filter(|(score, _, _)| *score >= SCORE_THRESHOLD)
-            .cloned()
-            .collect();
-
-        let pool = if above_threshold.is_empty() {
-            scored.into_iter().take(candidate_k).collect::<Vec<_>>()
-        } else {
-            above_threshold.into_iter().take(candidate_k).collect::<Vec<_>>()
+        // Use the pluggable retrieval backend.
+        let backend = pipeline::default_backend();
+        let corpus = pipeline::RetrievalCorpus {
+            texts: s.embedded_chunks.iter().map(|e| e.meta.text.as_str()).collect(),
+            vectors: s.embedded_chunks.iter().map(|e| e.vector.as_slice()).collect(),
         };
+        let config = pipeline::RetrievalConfig {
+            top_k: settings.top_k,
+            candidate_pool_k: candidate_k,
+            score_threshold: SCORE_THRESHOLD,
+            mmr_lambda: 0.7,
+            expand_keywords: true,
+        };
+        let mut ranked = backend.retrieve(&question, &query_vec, &corpus, &config);
 
-        // MMR: select top_k maximally diverse chunks from the candidate pool.
-        // lambda=0.7 → 70 % relevance / 30 % diversity.
-        // This replaces the old per-page cap + take: MMR naturally prevents the LLM
-        // from receiving multiple near-identical excerpts from the same paragraph
-        // while genuinely relevant passages from other sections are ignored.
-        mmr_select(pool, settings.top_k, 0.7)
+        // Always include filled form data chunks — they're tiny and contain the actual answers.
+        pipeline::ensure_form_data_included(&mut ranked, &corpus, 2);
+
+        // Map ScoredResult indices back to (score, ChunkMetadata) for downstream use.
+        ranked
+            .into_iter()
+            .map(|r| (r.score, s.embedded_chunks[r.chunk_index].meta.clone()))
+            .collect::<Vec<(f32, ChunkMetadata)>>()
     };
 
     let context_parts: Vec<String> = results
@@ -701,9 +656,10 @@ pub async fn delete_session(
 // ── Unit tests ────────────────────────────────────────────────────────────────
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
     use crate::pipeline::{
-        chunk_document, expand_keywords, format_history, is_section_header, mmr_select,
+        chunk_document, format_history, is_section_header,
         split_at_char_boundaries, split_sentences, FragKind,
     };
     use crate::state::AppSettings;
@@ -713,6 +669,7 @@ mod tests {
             chunk_size: 500,
             chunk_overlap: 50,
             top_k: 6,
+            theme: "dark".to_string(),
         }
     }
 

@@ -35,6 +35,7 @@ log = "0.4"
 tauri-plugin-log = "2"
 fastembed = "4"
 llama-cpp-2 = "0.1"
+regex = "1"
 
 [profile.release]
 codegen-units = 4   # reduce peak memory vs default lto=thin
