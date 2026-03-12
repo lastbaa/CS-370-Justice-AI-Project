@@ -170,7 +170,7 @@ export default function ProductDemo() {
                         <path d="M10 2v3h3" stroke="rgba(255,255,255,0.3)" strokeWidth="1.2" strokeLinejoin="round" />
                       </svg>
                       <div>
-                        <p className="text-xs leading-snug" style={{ color: i === 0 ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.35)', wordBreak: 'break-all' }}>
+                        <p className="text-xs leading-snug" style={{ color: i === 0 ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.5)', wordBreak: 'break-all' }}>
                           {f.name}
                         </p>
                         <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.2)' }}>
@@ -330,7 +330,7 @@ export default function ProductDemo() {
               style={{ background: '#0f0f0f', border: '1px solid rgba(255,255,255,0.06)' }}
             >
               <p className="text-xs font-semibold text-white mb-1.5">{item.label}</p>
-              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>{item.body}</p>
+              <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>{item.body}</p>
             </div>
           ))}
         </Reveal>

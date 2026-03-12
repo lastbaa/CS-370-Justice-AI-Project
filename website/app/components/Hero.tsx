@@ -164,10 +164,7 @@ export default function Hero() {
         <div className="hero-ctas flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
           <a
             href="#download"
-            className="inline-flex items-center gap-2.5 font-semibold text-sm px-8 py-3.5 rounded-lg transition-all duration-200"
-            style={{ background: '#c9a84c', color: '#080808' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#e8c97e' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = '#c9a84c' }}
+            className="gold-solid-btn inline-flex items-center gap-2.5 font-semibold text-sm px-8 py-3.5 rounded-lg"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M8 2v9M4 8l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -177,16 +174,7 @@ export default function Hero() {
           </a>
           <a
             href="#product"
-            className="inline-flex items-center gap-2 text-sm font-medium px-7 py-3.5 rounded-lg transition-all duration-200"
-            style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.55)' }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(201,168,76,0.4)'
-              ;(e.currentTarget as HTMLAnchorElement).style.color = '#fff'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)'
-              ;(e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.55)'
-            }}
+            className="gold-outline-btn inline-flex items-center gap-2 text-sm font-medium px-7 py-3.5 rounded-lg"
           >
             See It In Action
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -205,7 +193,7 @@ export default function Hero() {
               >
                 {s.value}
               </span>
-              <span className="text-xs tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              <span className="text-xs tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>
                 {s.label}
               </span>
             </div>

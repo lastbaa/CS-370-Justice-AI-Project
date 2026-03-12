@@ -54,7 +54,7 @@ function FAQItem({ item, isLast }: { item: typeof faqs[0]; isLast: boolean }): J
           style={{
             background: open ? 'rgba(201,168,76,0.12)' : 'rgba(255,255,255,0.05)',
             border: `1px solid ${open ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.1)'}`,
-            color: open ? '#c9a84c' : 'rgba(255,255,255,0.35)',
+            color: open ? '#c9a84c' : 'rgba(255,255,255,0.5)',
             transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
           }}
         >

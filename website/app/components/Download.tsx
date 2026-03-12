@@ -162,7 +162,7 @@ export default function Download() {
                   {step.number}
                 </span>
                 <p className="text-sm font-semibold text-white mb-2">{step.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
                   {step.body}
                 </p>
               </div>
@@ -277,7 +277,7 @@ export default function Download() {
                           )}
                         </div>
 
-                        <p className="text-sm font-semibold mb-0.5" style={{ color: isUnavailable ? 'rgba(255,255,255,0.35)' : 'white' }}>
+                        <p className="text-sm font-semibold mb-0.5" style={{ color: isUnavailable ? 'rgba(255,255,255,0.5)' : 'white' }}>
                           {isActive ? 'Downloading…' : isUnavailable ? `${p.label} — Coming Soon` : `Download for ${p.label}`}
                         </p>
                         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>

@@ -319,7 +319,7 @@ export default function Sidebar({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search chats…"
-                className="flex-1 bg-transparent text-[11px] placeholder-white/20 outline-none"
+                className="flex-1 bg-transparent text-[11px] placeholder:text-[var(--placeholder)] outline-none"
                 style={{ color: 'var(--text)' }}
               />
               {searchQuery && (

@@ -87,7 +87,7 @@ export default function Compare() {
               <div className="px-6 py-4">
                 <span
                   className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: 'rgba(255,255,255,0.35)' }}
+                  style={{ color: 'rgba(255,255,255,0.5)' }}
                 >
                   Feature
                 </span>
@@ -101,7 +101,7 @@ export default function Compare() {
                     className="w-2 h-2 rounded-full"
                     style={{ background: 'rgba(248,81,73,0.7)' }}
                   />
-                  <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     Cloud AI Tools
                   </span>
                 </div>

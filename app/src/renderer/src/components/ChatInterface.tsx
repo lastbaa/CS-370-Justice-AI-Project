@@ -373,18 +373,7 @@ export default function ChatInterface({
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); onAddFolder() }}
-                  className="text-[12px] transition-colors no-drag px-3 py-2 rounded-lg"
-                  style={{ color: 'rgb(var(--ov) / 0.3)', background: 'transparent', border: '1px solid rgb(var(--ov) / 0.10)' }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.55)'
-                    ;(e.currentTarget as HTMLButtonElement).style.background = 'rgb(var(--ov) / 0.04)'
-                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgb(var(--ov) / 0.18)'
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.color = 'rgb(var(--ov) / 0.3)'
-                    ;(e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                    ;(e.currentTarget as HTMLButtonElement).style.border = '1px solid rgb(var(--ov) / 0.10)'
-                  }}
+                  className="btn-outline text-[12px] no-drag px-3 py-2 rounded-lg"
                 >
                   Load folder
                 </button>
@@ -394,9 +383,9 @@ export default function ChatInterface({
                 <div className="flex items-center gap-2 mt-1">
                   <div
                     className="h-3.5 w-3.5 rounded-full animate-spin"
-                    style={{ border: '2px solid rgba(201,168,76,0.2)', borderTopColor: '#c9a84c' }}
+                    style={{ border: '2px solid var(--gold-border)', borderTopColor: 'var(--gold)' }}
                   />
-                  <p className="text-[12px]" style={{ color: '#c9a84c' }}>
+                  <p className="text-[12px]" style={{ color: 'var(--gold)' }}>
                     Processing documents…
                   </p>
                 </div>
@@ -685,22 +674,7 @@ export default function ChatInterface({
                 </p>
                 <button
                   onClick={onAddFiles}
-                  className="flex items-center gap-2 rounded-xl px-6 py-3 text-[13px] font-semibold transition-all"
-                  style={{
-                    background: '#c9a84c',
-                    color: 'var(--text-on-gold)',
-                    boxShadow: 'var(--shadow)',
-                  }}
-                  onMouseEnter={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.background = '#e8c97e'
-                    el.style.boxShadow = '0 6px 20px rgba(201,168,76,0.32)'
-                  }}
-                  onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLButtonElement
-                    el.style.background = '#c9a84c'
-                    el.style.boxShadow = 'var(--shadow)'
-                  }}
+                  className="btn-gold flex items-center gap-2 rounded-xl px-6 py-3 text-[13px] font-semibold"
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2z" />
@@ -722,25 +696,7 @@ export default function ChatInterface({
                     <button
                       key={q}
                       onClick={() => { setInput(q); textareaRef.current?.focus() }}
-                      className="rounded-xl px-4 py-3.5 text-left text-[12px] leading-relaxed"
-                      style={{
-                        background: 'var(--surface)',
-                        border: '1px solid rgb(var(--ov) / 0.06)',
-                        color: 'rgb(var(--ov) / 0.38)',
-                        transition: 'background 0.12s ease, border-color 0.12s ease, color 0.12s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        const el = e.currentTarget as HTMLButtonElement
-                        el.style.background = 'var(--surface-hover)'
-                        el.style.borderColor = 'rgba(201,168,76,0.22)'
-                        el.style.color = 'rgb(var(--ov) / 0.78)'
-                      }}
-                      onMouseLeave={(e) => {
-                        const el = e.currentTarget as HTMLButtonElement
-                        el.style.background = 'var(--surface)'
-                        el.style.borderColor = 'rgb(var(--ov) / 0.06)'
-                        el.style.color = 'rgb(var(--ov) / 0.38)'
-                      }}
+                      className="btn-surface rounded-xl px-4 py-3.5 text-left text-[12px] leading-relaxed"
                     >
                       {q}
                     </button>
@@ -788,21 +744,10 @@ export default function ChatInterface({
             </div>
           )}
           <div
-            className="rounded-2xl"
+            className="rounded-2xl input-focus-ring"
             style={{
               background: 'var(--bg-alt)',
               border: '1px solid rgb(var(--ov) / 0.08)',
-              transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
-            }}
-            onFocusCapture={(e) => {
-              const el = e.currentTarget as HTMLDivElement
-              el.style.borderColor = 'rgba(201,168,76,0.35)'
-              el.style.boxShadow = '0 0 0 3px rgba(201,168,76,0.07)'
-            }}
-            onBlurCapture={(e) => {
-              const el = e.currentTarget as HTMLDivElement
-              el.style.borderColor = 'rgb(var(--ov) / 0.08)'
-              el.style.boxShadow = 'none'
             }}
           >
             <div className="flex items-end gap-3 px-4 py-3.5">
@@ -814,7 +759,7 @@ export default function ChatInterface({
                 disabled={isQuerying}
                 placeholder="Ask a question about your documents…"
                 rows={1}
-                className="flex-1 bg-transparent text-[13.5px] leading-6 outline-none placeholder-white/20 disabled:opacity-50"
+                className="flex-1 bg-transparent text-[13.5px] leading-6 outline-none placeholder:text-[var(--placeholder)] disabled:opacity-50"
                 style={{ maxHeight: 128, overflowY: 'auto', color: 'var(--text)' }}
               />
               <button
@@ -823,7 +768,7 @@ export default function ChatInterface({
                 title={!hasFiles ? 'Add documents first' : undefined}
                 className="flex shrink-0 h-8 w-8 items-center justify-center rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{
-                  background: input.trim() && !isQuerying ? '#c9a84c' : 'rgb(var(--ov) / 0.06)',
+                  background: input.trim() && !isQuerying ? 'var(--gold)' : 'rgb(var(--ov) / 0.06)',
                   color: input.trim() && !isQuerying ? 'var(--text-on-gold)' : 'rgb(var(--ov) / 0.3)',
                   transition: 'background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease',
                   boxShadow: input.trim() && !isQuerying ? 'var(--shadow)' : 'none',

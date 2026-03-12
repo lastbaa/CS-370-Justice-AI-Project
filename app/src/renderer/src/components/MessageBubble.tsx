@@ -208,7 +208,7 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
       >
         <div style={{ maxWidth: '72%' }}>
           <div
-            className="relative rounded-2xl rounded-tr-sm px-4 py-3"
+            className="relative rounded-2xl rounded-tr-sm px-4 py-3.5"
             style={{
               background: 'var(--surface-raised)',
               border: '1px solid rgb(var(--ov) / 0.09)',
@@ -279,7 +279,7 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           </div>
         ) : (
           <div
-            className="rounded-2xl rounded-tl-sm px-4 py-4"
+            className="rounded-2xl rounded-tl-sm px-4 py-3.5"
             style={{
               background: 'var(--bg-alt)',
               border: '1px solid rgb(var(--ov) / 0.06)',
@@ -310,7 +310,7 @@ export default function MessageBubble({ message, onViewCitation }: Props): JSX.E
           </div>
         )}
 
-        <p className="mt-2 text-[10px]" style={{ color: 'rgb(var(--ov) / 0.22)' }}>
+        <p className="mt-1.5 text-[10px]" style={{ color: 'rgb(var(--ov) / 0.22)' }}>
           {formatTime(message.timestamp)}
         </p>
 

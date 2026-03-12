@@ -140,4 +140,57 @@ body::before {
 ::-webkit-scrollbar-track { background: #080808; }
 ::-webkit-scrollbar-thumb { background: #1c1c1c; border-radius: 4px; }
 
+/* ─── Interactive elements ────────────────────────────────────── */
+.nav-link {
+  color: rgba(255,255,255,0.45);
+  transition: color 0.2s ease;
+}
+.nav-link:hover, .nav-link:focus-visible {
+  color: rgba(255,255,255,0.85);
+}
+
+.nav-cta {
+  border: 1px solid rgba(201,168,76,0.45);
+  color: #c9a84c;
+  background: rgba(201,168,76,0.06);
+  transition: all 0.2s ease;
+}
+.nav-cta:hover, .nav-cta:focus-visible {
+  background: rgba(201,168,76,0.12);
+  border-color: rgba(201,168,76,0.7);
+  color: #e8c97e;
+}
+
+.footer-link {
+  color: rgba(255,255,255,0.4);
+  transition: color 0.2s ease;
+}
+.footer-link:hover, .footer-link:focus-visible {
+  color: #c9a84c;
+}
+
+.gold-outline-btn {
+  border: 1px solid rgba(201,168,76,0.45);
+  color: #c9a84c;
+  background: rgba(201,168,76,0.06);
+  transition: all 0.2s ease;
+}
+.gold-outline-btn:hover {
+  background: rgba(201,168,76,0.14);
+  border-color: rgba(201,168,76,0.7);
+  color: #e8c97e;
+  box-shadow: 0 0 20px rgba(201,168,76,0.1);
+}
+
+.gold-solid-btn {
+  background: #c9a84c;
+  color: #080808;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 12px rgba(201,168,76,0.25);
+}
+.gold-solid-btn:hover {
+  background: #e8c97e;
+  box-shadow: 0 6px 24px rgba(201,168,76,0.35);
+}
+
 @layer base { * { box-sizing: border-box; } }
