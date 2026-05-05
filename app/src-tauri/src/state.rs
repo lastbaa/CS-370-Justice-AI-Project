@@ -146,8 +146,11 @@ pub struct QueryResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
+    #[serde(default = "default_chunk_size")]
     pub chunk_size: usize,
+    #[serde(default = "default_chunk_overlap")]
     pub chunk_overlap: usize,
+    #[serde(default = "default_top_k")]
     pub top_k: usize,
     #[serde(default = "default_theme")]
     pub theme: String,
@@ -157,8 +160,11 @@ pub struct AppSettings {
     pub inference_mode: InferenceMode,
 }
 
+fn default_chunk_size() -> usize { 1000 }
+fn default_chunk_overlap() -> usize { 150 }
+fn default_top_k() -> usize { 6 }
 fn default_theme() -> String {
-    "dark".to_string()
+    "navy".to_string()
 }
 
 impl Default for AppSettings {
@@ -201,6 +207,8 @@ pub struct ChatMessage {
     pub not_found: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_assertions: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub confidence: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inference_mode: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

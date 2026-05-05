@@ -638,31 +638,46 @@ pub fn jurisdiction_prompt_fragment(j: &Jurisdiction) -> String {
 // fastembed TextEmbedding: ~22 MB ONNX, downloaded to model_dir/fastembed/ on first use.
 static EMBED_MODEL: OnceLock<Arc<Mutex<Option<fastembed::TextEmbedding>>>> = OnceLock::new();
 
-// llama.cpp backend stored as Option so init failures don't poison the OnceLock.
-static LLAMA_BACKEND: OnceLock<Option<LlamaBackend>> = OnceLock::new();
+// llama.cpp backend stored behind a Mutex so transient init failures can be retried
+// without permanently caching None (which OnceLock would do).
+static LLAMA_BACKEND: std::sync::Mutex<Option<LlamaBackend>> = std::sync::Mutex::new(None);
 
-pub fn get_llama_backend() -> Result<&'static LlamaBackend, String> {
-    let slot = LLAMA_BACKEND.get_or_init(|| {
-        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(LlamaBackend::init)) {
-            Ok(Ok(b)) => Some(b),
-            Ok(Err(e)) => {
-                log::error!("LlamaBackend::init failed: {e}");
-                None
-            }
-            Err(_) => {
-                log::error!("LlamaBackend::init panicked");
-                None
-            }
+/// Get a reference to the llama.cpp backend, initializing it on first call.
+/// Unlike OnceLock, if initialization fails, subsequent calls will retry.
+pub fn get_llama_backend() -> Result<std::sync::MutexGuard<'static, Option<LlamaBackend>>, String> {
+    let mut guard = LLAMA_BACKEND.lock().map_err(|e| format!("LlamaBackend lock poisoned: {e}"))?;
+    if guard.is_some() {
+        return Ok(guard);
+    }
+    // Not yet initialized (or previous attempt failed) — try (re-)init
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(LlamaBackend::init)) {
+        Ok(Ok(b)) => {
+            *guard = Some(b);
+            Ok(guard)
         }
-    });
-    slot.as_ref()
-        .ok_or_else(|| "llama.cpp backend failed to initialize. The app may need to be restarted.".to_string())
+        Ok(Err(e)) => {
+            log::error!("LlamaBackend::init failed: {e}");
+            Err(format!("llama.cpp backend failed to initialize: {e}"))
+        }
+        Err(_) => {
+            log::error!("LlamaBackend::init panicked");
+            Err("llama.cpp backend initialization panicked. Try restarting the app.".to_string())
+        }
+    }
 }
 
-/// Validate GGUF magic bytes before loading — prevents llama.cpp from calling
-/// abort() on a corrupted or incomplete file, which would kill the process.
+/// Validate GGUF magic bytes and file size before loading — prevents llama.cpp
+/// from calling abort() on a corrupted or incomplete file, which would kill the process.
 pub fn validate_gguf(path: &std::path::Path) -> Result<(), String> {
     use std::io::Read;
+    let meta = std::fs::metadata(path)
+        .map_err(|e| format!("Cannot stat model file: {e}"))?;
+    let size_gb = meta.len() as f64 / 1_073_741_824.0;
+    if meta.len() < GGUF_MIN_SIZE {
+        return Err(format!(
+            "Model file is incomplete ({size_gb:.1} GB of ~5 GB). Please delete it and restart to re-download."
+        ));
+    }
     let mut f = std::fs::File::open(path)
         .map_err(|e| format!("Cannot open model file: {e}"))?;
     let mut magic = [0u8; 4];
@@ -759,7 +774,10 @@ impl PromptCache {
             last_hash: 0,
         }));
 
-        let mut cache = cache.lock().unwrap();
+        let mut cache = match cache.lock() {
+            Ok(g) => g,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         if cache.last_hash == hash && !cache.last_prompt.is_empty() {
             return cache.last_prompt.clone();
         }
@@ -989,7 +1007,9 @@ Answer using ONLY these excerpts.\n\
 
     tokio::task::spawn_blocking(move || {
         // Get (or lazily initialize) the global llama.cpp backend.
-        let backend = get_llama_backend()?;
+        let backend_guard = get_llama_backend()?;
+        let backend = backend_guard.as_ref()
+            .ok_or_else(|| "llama.cpp backend not initialized".to_string())?;
 
         // Validate GGUF magic bytes before loading.
         validate_gguf(&gguf_path)?;

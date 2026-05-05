@@ -26,7 +26,7 @@
     ],
     "macOSPrivateApi": true,
     "security": {
-      "csp": "default-src 'self'; script-src 'self' blob: 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: http://127.0.0.1:*; connect-src 'self' http://127.0.0.1:* https://huggingface.co; font-src 'self'; frame-src http://127.0.0.1:*"
+      "csp": "default-src 'self'; script-src 'self' blob: 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: http://127.0.0.1:*; connect-src 'self' http://127.0.0.1:* https://huggingface.co https://ocrs-models.s3-accelerate.amazonaws.com; font-src 'self'; frame-src http://127.0.0.1:*"
     }
   },
   "bundle": {
@@ -42,7 +42,7 @@
     "category": "Productivity",
     "copyright": "© 2025 Justice AI",
     "macOS": {
-      "minimumSystemVersion": "12.0",
+      "minimumSystemVersion": "14.0",
       "frameworks": [],
       "signingIdentity": null,
       "providerShortName": null,

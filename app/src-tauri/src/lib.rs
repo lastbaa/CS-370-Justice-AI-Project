@@ -64,10 +64,20 @@ async fn start_file_server(rag_state: Arc<Mutex<state::RagState>>) -> u16 {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
 
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("PDF file server: failed to bind");
-    let port = listener.local_addr().unwrap().port();
+    let listener = match TcpListener::bind("127.0.0.1:0").await {
+        Ok(l) => l,
+        Err(e) => {
+            log::warn!("PDF file server: failed to bind: {e}. PDF viewer will be unavailable.");
+            return 0;
+        }
+    };
+    let port = match listener.local_addr() {
+        Ok(addr) => addr.port(),
+        Err(e) => {
+            log::warn!("PDF file server: failed to get local address: {e}. PDF viewer will be unavailable.");
+            return 0;
+        }
+    };
     log::info!("PDF file server listening on 127.0.0.1:{port}");
 
     tokio::spawn(async move {

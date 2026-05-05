@@ -56,10 +56,12 @@ export interface Citation {
 export type AssertionType =
   | 'citation_format'
   | 'citation_filename'
+  | 'citation_page'
   | 'number_exactness'
   | 'blocklist'
   | 'hallucination'
   | 'fabricated_entity'
+  | 'misattribution'
 
 export interface AssertionResult {
   passed: boolean

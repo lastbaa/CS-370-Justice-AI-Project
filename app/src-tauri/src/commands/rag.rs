@@ -116,6 +116,28 @@ pub async fn delete_old_model(
     Ok(())
 }
 
+/// Categorize a reqwest error string into a user-friendly message.
+fn categorize_download_error(err: &str) -> String {
+    let lower = err.to_lowercase();
+    if lower.contains("dns") || lower.contains("resolve") || lower.contains("connect") {
+        "Could not connect to the download server. Check your internet connection.".to_string()
+    } else if lower.contains("timeout") || lower.contains("timed out") {
+        "Download timed out. Your connection may be too slow for the ~5 GB model file.".to_string()
+    } else {
+        format!("Download failed: {err}")
+    }
+}
+
+/// Categorize an HTTP status code into a user-friendly message.
+fn categorize_http_error(status: u16) -> String {
+    match status {
+        403 | 404 => format!("Model file is temporarily unavailable (HTTP {status}). Please try again later."),
+        429 => "Too many download requests. Please wait a few minutes and try again.".to_string(),
+        500..=599 => "The download server is experiencing issues. Please try again later.".to_string(),
+        _ => format!("Download failed with HTTP {status}. Please try again."),
+    }
+}
+
 #[tauri::command]
 pub async fn download_models(
     window: tauri::Window,
@@ -187,7 +209,7 @@ pub async fn download_models(
             Err(e) => {
                 attempt += 1;
                 if attempt >= MAX_RETRIES {
-                    return Err(format!("Download failed after {MAX_RETRIES} attempts: {e}"));
+                    return Err(categorize_download_error(&e.to_string()));
                 }
                 let delay = std::time::Duration::from_secs(2u64.pow(attempt));
                 log::warn!("Download attempt {attempt} failed: {e}. Retrying in {delay:?}…");
@@ -204,7 +226,7 @@ pub async fn download_models(
         if !status.is_success() && status.as_u16() != 206 {
             attempt += 1;
             if attempt >= MAX_RETRIES {
-                return Err(format!("Download failed after {MAX_RETRIES} attempts: HTTP {status}"));
+                return Err(categorize_http_error(status.as_u16()));
             }
             let delay = std::time::Duration::from_secs(2u64.pow(attempt));
             log::warn!("Download attempt {attempt} got HTTP {status}. Retrying in {delay:?}…");
@@ -253,7 +275,7 @@ pub async fn download_models(
         loop {
             match response.chunk().await {
                 Ok(Some(chunk)) => {
-                    file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+                    file.write_all(&chunk).await.map_err(|e| format!("Could not save model file. Check disk space and permissions: {e}"))?;
                     downloaded += chunk.len() as u64;
 
                     // Throttle progress events to ~5 per second to prevent UI jitter
@@ -294,7 +316,7 @@ pub async fn download_models(
         if stream_failed {
             attempt += 1;
             if attempt >= MAX_RETRIES {
-                return Err(format!("Download failed after {MAX_RETRIES} attempts: stream error"));
+                return Err("Download failed: connection was interrupted. Check your internet and try again.".to_string());
             }
             let delay = std::time::Duration::from_secs(2u64.pow(attempt));
             log::warn!("Download stream failed on attempt {attempt}. Retrying in {delay:?}…");
@@ -331,6 +353,13 @@ pub async fn download_models(
             .await
             .map_err(|e2| format!("Failed to move model file: rename={e}, copy={e2}"))?;
         tokio::fs::remove_file(&tmp_path).await.ok();
+    }
+
+    // Validate the downloaded GGUF before proceeding
+    if let Err(e) = pipeline::validate_gguf(&gguf_path) {
+        // Corrupt/incomplete — delete and ask user to retry
+        tokio::fs::remove_file(&gguf_path).await.ok();
+        return Err(format!("{e} The file has been removed — please restart to re-download."));
     }
 
     // Download OCR models (~10MB total, fast)
@@ -373,15 +402,37 @@ async fn download_ocr_models(model_dir: &std::path::Path) -> Result<(), String> 
             continue;
         }
         log::info!("Downloading OCR model: {filename}");
-        let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
-        if !resp.status().is_success() {
-            return Err(format!("Failed to download {filename}: HTTP {}", resp.status()));
+
+        let mut last_err = String::new();
+        let mut success = false;
+        for attempt in 0u32..3 {
+            if attempt > 0 {
+                let delay = std::time::Duration::from_secs(2u64.pow(attempt));
+                log::warn!("OCR download retry {attempt} for {filename} in {delay:?}…");
+                tokio::time::sleep(delay).await;
+            }
+            match client.get(url).send().await {
+                Ok(resp) if resp.status().is_success() => {
+                    match resp.bytes().await {
+                        Ok(bytes) => {
+                            if let Err(e) = tokio::fs::write(&dest, &bytes).await {
+                                last_err = format!("Failed to write {filename}: {e}");
+                                continue;
+                            }
+                            log::info!("Downloaded OCR model: {filename} ({} bytes)", bytes.len());
+                            success = true;
+                            break;
+                        }
+                        Err(e) => { last_err = e.to_string(); }
+                    }
+                }
+                Ok(resp) => { last_err = format!("HTTP {}", resp.status()); }
+                Err(e) => { last_err = e.to_string(); }
+            }
         }
-        let bytes = resp.bytes().await.map_err(|e| e.to_string())?;
-        tokio::fs::write(&dest, &bytes)
-            .await
-            .map_err(|e| e.to_string())?;
-        log::info!("Downloaded OCR model: {filename} ({} bytes)", bytes.len());
+        if !success {
+            return Err(format!("Failed to download OCR model {filename} after 3 attempts: {last_err}"));
+        }
     }
 
     Ok(())
@@ -2658,6 +2709,7 @@ pub async fn remove_file(
     }
     s.save_chunks().await;
     s.save_file_hashes().await;
+    s.save_file_registry().await;
     Ok(())
 }
 

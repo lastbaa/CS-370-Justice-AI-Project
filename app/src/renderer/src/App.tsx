@@ -58,6 +58,7 @@ export default function App(): JSX.Element {
   const [currentSessionId, setCurrentSessionId] = useState<string>(() => uuidv4())
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
   const [showModelSetup, setShowModelSetup] = useState(false)
+  const [modelReady, setModelReady] = useState(false)
   const [modelUpgradeAvailable, setModelUpgradeAvailable] = useState(false)
   const [chatMode, setChatMode] = useState(false)
   const [sessionCreatedAt, setSessionCreatedAt] = useState<number>(() => Date.now())
@@ -190,10 +191,15 @@ export default function App(): JSX.Element {
       }
       try {
         const modelStatus = await window.api.checkModels()
-        if (!modelStatus.llmReady || modelStatus.upgradeAvailable) setShowModelSetup(true)
+        if (!modelStatus.llmReady || modelStatus.upgradeAvailable) {
+          setShowModelSetup(true)
+        } else {
+          setModelReady(true)
+        }
         setModelUpgradeAvailable(!!modelStatus.upgradeAvailable)
       } catch {
-        addToast('error', 'Failed to check model status')
+        addToast('error', 'Failed to check model status. Showing setup screen.')
+        setShowModelSetup(true)
       }
     }
     init()
@@ -435,6 +441,10 @@ export default function App(): JSX.Element {
   // Preserve previous citations until new results arrive to avoid flashing the empty context panel.
   // Citations are replaced when result lands, or preserved on error/cancel.
   async function handleQuery(question: string): Promise<void> {
+    if (!modelReady) {
+      addToast('warning', 'AI model is still loading. Please wait for setup to complete.')
+      return
+    }
     queryAbortRef.current = false
     // Collect last 3 completed user→assistant pairs for conversation context
     const historyPairs: [string, string][] = []
@@ -786,9 +796,11 @@ export default function App(): JSX.Element {
     if (sessionToSave) {
       try {
         await window.api.saveSession(sessionToSave)
-      } catch { }
+        addToast('success', 'Conversation renamed')
+      } catch {
+        addToast('error', 'Failed to save renamed conversation')
+      }
     }
-    addToast('success', 'Conversation renamed')
   }
 
   // ── Cases ───────────────────────────────────────────────────
@@ -1162,7 +1174,7 @@ export default function App(): JSX.Element {
       {showModelSetup && (
         <ModelSetup
           upgradeAvailable={modelUpgradeAvailable}
-          onComplete={() => { setShowModelSetup(false); setModelUpgradeAvailable(false) }}
+          onComplete={() => { setShowModelSetup(false); setModelUpgradeAvailable(false); setModelReady(true) }}
         />
       )}
 
